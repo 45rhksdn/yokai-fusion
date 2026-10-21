@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
-<title>솔로몬의 계약</title>
+<title>솔로몬의 인장</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -124,6 +124,7 @@ td:first-child{font-family:var(--body)}
 .recipes li{flex-direction:column;align-items:stretch}
 .rtop{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .rdiff{font-size:12px;color:var(--hot);font-weight:600}
+.rrow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.qf{padding:6px 12px;font-size:12.5px;white-space:nowrap}.qf.arm{background:var(--hot,#B3261E)}
 .ring{font-size:13px}.ring .have{color:var(--accent);font-weight:600}.ring .need{color:var(--muted)}
 .seg{display:flex;gap:4px;background:var(--line);padding:3px;border-radius:10px}
 .seg button{flex:1;border:0;border-radius:8px;padding:8px;font:600 14px var(--body);background:transparent;color:var(--muted);cursor:pointer}
@@ -202,17 +203,27 @@ h2{color:#E7C27A}
 .scene::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.78) 100%);z-index:1}
 .scene .hud,.scene .ult,.scene .modebtn,.scene .skills{z-index:2}
 .scene canvas.gl{filter:contrast(1.08) saturate(.85)}
-.skills{position:absolute;left:10px;bottom:10px;display:flex;gap:8px}
-.skills button{width:58px;height:58px;border-radius:50%;border:2px solid #7E1712;background:radial-gradient(circle at 40% 35%,#3A1A14,#120A08);color:#F2D8B8;font:700 11px var(--body);cursor:pointer;position:relative;overflow:hidden}
-.skills button span{position:absolute;inset:0;background:rgba(0,0,0,.65);transform-origin:bottom;transform:scaleY(var(--cd,0))}
-.skills button b{position:relative;z-index:1}
+.skills{position:absolute;left:8px;bottom:8px;display:flex;gap:6px}
+.skills button{width:54px;height:54px;border-radius:12px;border:2px solid var(--c,#7E1712);background:radial-gradient(circle at 40% 30%,#2A1612,#0E0807);color:#F2D8B8;cursor:pointer;position:relative;overflow:hidden;padding:0}
+.skills button.ready{box-shadow:0 0 10px var(--c)}
+.skills button span{position:absolute;inset:0;background:rgba(0,0,0,.72);transform-origin:bottom;transform:scaleY(var(--cd,0));z-index:2}
+.skills button i{position:absolute;inset:2px 2px 12px;display:flex;align-items:center;justify-content:center;font-size:30px}
+.skills button i img.art{width:38px;height:38px}
+.skills button .sig{position:absolute;inset:0 0 10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#F2C24A;text-shadow:0 0 8px #F2C24A}
+.skills button small{position:absolute;left:0;right:0;bottom:1px;font:600 8.5px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1;text-shadow:0 1px 2px #000}
+.skills button em{position:absolute;right:3px;top:1px;font:600 9px var(--mono);font-style:normal;color:#A39079;z-index:3}
+.story{display:flex;flex-direction:column;gap:8px;max-width:62ch}
+.story .sub{font-size:12px;color:var(--hot);letter-spacing:.12em}
+.story h3{font-family:var(--display);font-weight:800;font-size:20px;color:#E7C27A}
+.story p{margin:0;line-height:1.75;color:#D8CBB4}
+.story hr{border:0;border-top:1px solid var(--line);margin:8px 0}
 .skills button:focus-visible{outline:2px solid #FFD166;outline-offset:2px}
 label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 </style>
 
 <header class="top">
   <div class="wrap">
-    <div class="logo">솔로몬의 계약</div>
+    <div class="logo">솔로몬의 인장</div>
     <div class="stat"><small>골드</small><b id="gold">0</b></div>
     <div class="stat"><small>진행</small><b id="stageTop">1</b></div>
   </div>
@@ -234,14 +245,14 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
           <canvas id="scene" aria-label="자동 사냥 장면" role="img"></canvas>
           <div class="hud"><span id="hudKills">처치 0</span><span id="hudLoot"></span><span id="hudMode"></span></div>
           <button class="modebtn" id="modeBtn" aria-pressed="false">직접 조작</button>
-          <div class="skills" id="skills" hidden><button id="skDash" aria-label="돌진 베기"><span></span><b>돌진</b></button><button id="skRing" aria-label="지옥불 고리"><span></span><b>지옥불</b></button></div>
+          <div class="skills" id="skills"></div>
           <button class="ult" id="ultBtn" disabled>필살기</button>
         </div>
         <details class="panel" id="autoSet">
           <summary><b>자동 사냥 설정</b> <span class="muted" id="autoSum"></span></summary>
           <div class="setrow"><label for="fltItem">장비 · 이 등급 미만은 자동 분해</label><select id="fltItem"></select></div>
-          <div class="setrow"><label for="fltMon">악마 · 이 등급 미만은 자동으로 놓아주기</label><select id="fltMon"></select></div>
-          <div class="note">분해하거나 놓아준 만큼 골드를 받아요. SS 이상 악마는 설정과 상관없이 항상 보관해요.</div>
+          <div class="setrow"><label for="fltMon">악마 · 이 등급 미만은 자동으로 퇴마</label><select id="fltMon"></select></div>
+          <div class="note">분해하거나 퇴마한 만큼 골드를 받아요. SS 이상 악마는 설정과 상관없이 항상 보관해요.</div>
         </details>
         <div class="panel">
           <div class="stepper">
@@ -256,6 +267,7 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
           </div>
           <div class="note">이 지역에서 만날 수 있는 악마 · <span id="dexNote"></span></div>
           <div class="dex" id="dex"></div>
+          <div class="row"><button class="btn" id="storyBtn">지금까지의 이야기</button></div>
         </div>
         <div class="panel">
           <div class="row"><h2 id="stageTitle">스테이지 1</h2><span class="muted" style="margin-left:auto" id="gps"></span></div>
@@ -292,7 +304,7 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
       <div style="display:flex;flex-direction:column;gap:12px">
         <div class="row">
           <h2>보관함</h2>
-          <details style="flex-basis:100%;order:9"><summary class="muted">계약 등급 확률 보기</summary><div class="dex" id="odds" style="margin-top:8px"></div></details>
+          <details style="flex-basis:100%;order:9"><summary class="muted">봉인 등급 확률 보기</summary><div class="dex" id="odds" style="margin-top:8px"></div></details>
           <span class="muted" id="invNote"></span>
           <select id="sort" style="margin-left:auto" aria-label="정렬">
             <option value="grade">등급순</option><option value="power">전투력순</option><option value="new">최신순</option>
@@ -327,7 +339,7 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
         <div id="fresult"></div>
         <div class="panel">
           <div class="row"><h2>조합법</h2><span class="muted" id="recipeNote"></span></div>
-          <div class="note">아래 두 종류를 함께 합성하면 확률적으로 희귀 악마가 태어나요. 재료를 구하기 어려운 조합일수록 태어나는 악마의 기본 능력치가 강해요. 재료가 많을수록 성공 확률이 오르고, 희귀 악마는 랜덤 보너스도 2번 받아요.</div>
+          <div class="note">아래 두 종류를 함께 합성하면 확률적으로 희귀 악마가 태어나요. 재료를 구하기 어려운 조합일수록 태어나는 악마의 기본 능력치가 강해요. 재료가 많을수록 성공 확률이 오르고, 희귀 악마는 랜덤 보너스도 2번 받아요. 두 재료를 모두 가지고 있으면 <b>즉시 합성</b> 버튼이 생겨요(팀에 없는 악마 중 등급 높은 쪽을 재료로 써요).</div>
           <ul class="recipes" id="recipes"></ul>
         </div>
         <div class="grid" id="fuseGrid"></div>
@@ -340,7 +352,7 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
         <div class="panel">
           <div class="row"><h2>악마 도감</h2><span class="muted" id="dexProg"></span></div>
           <div class="bar"><i id="dexBar"></i></div>
-          <div class="note">새로운 악마를 발견하면 도감에 등록돼요. 자동으로 놓아준 악마도 등록돼요. 도감 보상은 전투와 상관없이 계속 적용되는 영구 효과예요.</div>
+          <div class="note">새로운 악마를 발견하면 도감에 등록돼요. 자동으로 퇴마한 악마도 등록돼요. 도감 보상은 전투와 상관없이 계속 적용되는 영구 효과예요.</div>
           <div class="muted" id="dexTotals"></div>
         </div>
         <div class="panel"><h2>수집 보상</h2><ul class="miles" id="dexMiles"></ul></div>
@@ -379,14 +391,14 @@ const STAR_BONUS=[1,1.1,1.3,1.5];
 const gname=g=>g<=TOP?GRADES[g]:'SSR'+'★'.repeat(g-TOP);
 const starsOf=x=>Math.max(0,x.grade-TOP);
 const P_MIN=60;
-/* 계약 등급 확률(%). 계약은 하루 1,600마리 → SSR 0.0089%면 24시간 풀가동 시 약 1주일에 1마리 */
+/* 봉인 등급 확률(%). 봉인은 하루 1,600마리 → SSR 0.0089%면 24시간 풀가동 시 약 1주일에 1마리 */
 const CAPTURE=[null,27,13,6,2.6,0.9,0.3,0.08,0.02,0.0089];
 CAPTURE[0]=100-CAPTURE.slice(1).reduce((a,b)=>a+b,0);
 const MAXLV=100, MAXINV=200, MAXITEMS=60, TICK_MS=3000, KEY='solomon-72-v1';
 const FIND_RATE=MAXINV/(3*3600/(TICK_MS/1000));      /* 3시간에 보관함 200칸이 차는 속도 */
 const ITEM_RATE=(TICK_MS/1000)/3600;                  /* 장비: 1시간에 1개꼴 */
 const MAXSTAGE=20, UNLOCK_AT=10, EXCLUSIVE_RATE=0.65;
-const DIFFS=[{n:'훈련생',off:0},{n:'견습생',off:40},{n:'숙련자',off:80},{n:'전문가',off:120},{n:'마스터',off:160}];
+const DIFFS=[{n:'수습 퇴마사',off:0},{n:'정식 퇴마사',off:40},{n:'고참 퇴마사',off:80},{n:'대퇴마사',off:120},{n:'솔로몬의 후계자',off:160}];
 /* 솔로몬의 72악마 (Ars Goetia, 17세기 『레메게톤』 1부). [임시 기호, 이름, 지역(-2 = 왕: 조합 전용), 등장 난이도, 계급, 고에티아 서열]
    지역 7곳 × 9체(처음부터 5 + 견습생~마스터 1체씩) = 63체 + 왕 9체 = 72체 */
 const MAPS=[
@@ -412,7 +424,7 @@ const SPECIES=[
   ["⚔️","베리트",5,1,"공작",28],["🦁","알로케스",5,2,"공작",52],["🐊","살로스",5,3,"공작",19],["🐆","시트리",5,4,"군주",12],
   ["🏹","레라지에",6,0,"후작",14],["🐦‍⬛","안드라스",6,0,"후작",63],["🐴","사미기나",6,0,"후작",4],["🗡️","엘리고스",6,0,"공작",15],["🛡️","제파르",6,0,"공작",16],
   ["🏹","바르바토스",6,1,"공작",8],["🐉","부네",6,2,"공작",26],["🐉","아스타로트",6,3,"공작",29],["🐎","오로바스",6,4,"군주",55],
-  /* 왕 9체: 야생에서 나오지 않고 조합으로만 계약해요 */
+  /* 왕 9체: 야생에서 나오지 않고 조합으로만 봉인해요 */
   ["🦁","비네",-2,0,"왕",45],["🐂","자간",-2,0,"왕",61],["🐻","푸르손",-2,0,"왕",20],["🐎","벨레트",-2,0,"왕",13],["🐂","발람",-2,0,"왕",51],
   ["🐪","파이몬",-2,0,"왕",9],["🐉","아스모데우스",-2,0,"왕",32],["🕷️","바알",-2,0,"왕",1],["🔥","벨리알",-2,0,"왕",68]];
 const RECIPE_LIST=[
@@ -454,13 +466,13 @@ const GROW_BY_GRADE=[1.0323,1.0257,1.0212,1.0174,1.0137,1.0100,1.0057,1.0010,1.0
 const EXPECT=[2.5,2.15,1.8,1.45,1.1,0.75,0.4,0.05,0,0,0,0,0];
 /* SSR도 레벨업 중 SR·SS로 떨어질 수 있어요. 잠재력이 SSR 구간 끝에 닿으면 '각성(★)'해서 전투력이 영구히 +10% */
 const growC=x=>GROW_BY_GRADE[x.g0!=null?x.g0:x.grade];
-const r2=x=>Math.round(x*100)/100;
+const r2=x=>Math.round(x*100)/100, r4=x=>Math.round(x*1e4)/1e4, gf=x=>x>=10?x.toFixed(1):x>=1?x.toFixed(2):x.toFixed(3);
 function levelUp(m){
   const before=m.grade, ch=[];
   m.atk=r2(m.atk+m.gAtk);m.hp=r2(m.hp+m.gHp);m.def=r2(m.def+m.gDef);m.lv++;
   if(m.lv<MAXLV)for(const k of ['gAtk','gHp','gDef']){
     const r=Math.random(), f=r<0.15?rand(0.80,0.94):r<0.30?rand(1.06,1.20):rand(growC(m)-0.05,growC(m)+0.05);
-    m[k]=r2(m[k]*f);ch.push({k,pct:Math.round((f-1)*100),kind:r<0.15?'down':r<0.30?'up':''});
+    m[k]=r4(m[k]*f);ch.push({k,pct:Math.round((f-1)*100),kind:r<0.15?'down':r<0.30?'up':''});
   }
   finish(m);m.lastLv={lv:m.lv,ch,before,after:m.grade};
 }
@@ -490,7 +502,7 @@ const eff=()=>effOf(S.diff,S.map);
 const conquered=()=>curStage()>MAXSTAGE;
 const where=m=>{const h=SPECIES[m.sp][2],t=tierOf(m.sp);return `제${SPECIES[m.sp][5]}위 ${cultOf(m.sp)} · `+(h===-2?'9왕 · 조합 전용':h<0?'공통':`${MAPS[h].n} 전용${t?` · ${DIFFS[t].n}+`:''}`)};
 function rollCapture(){let x=Math.random()*100;for(let g=TOP;g>0;g--){if(x<CAPTURE[g])return g;x-=CAPTURE[g]}return 0}
-/* 계약 등급 확률은 모든 지역·난이도에서 같아요 */
+/* 봉인 등급 확률은 모든 지역·난이도에서 같아요 */
 const wildP=()=>{const g=rollCapture();return rand(Math.max(P_MIN,TH[g])+2,TH[g+1]-2)};
 const byId=id=>S.mons.find(m=>m.id===id);
 const itemById=id=>S.items.find(x=>x.id===id);
@@ -687,13 +699,15 @@ function makeItem(d,i,forceGrade){
   const E=effOf(d,i), s=Math.floor(Math.random()*SLOTS.length);
   const g=forceGrade!=null?forceGrade:Math.min(TOP,d*2+Math.floor(Math.pow(Math.random(),2.2)*4));
   const sc=(10+E*2.5)*(1+d*0.25)*0.6, pot=sc*rand(Math.max(0.6,IT[g])+0.02,IT[g+1]-0.02), r=rand(.35,.55);
-  return itemFinish({id:S.nextId++,slot:s,d,map:i,name:`${MAPS[i].adj} ${SLOTS[s].w}`,sc,lv:1,pw:r2(pot*r),g:r2(pot*(1-r)/(ILV-1)),isNew:true});
+  return itemFinish({id:S.nextId++,slot:s,d,map:i,name:`${MAPS[i].adj} ${SLOTS[s].w}`,sc,lv:1,pw:r2(pot*r),g:r4(pot*(1-r)/(ILV-1)),isNew:true});
 }
 const itemCost=it=>Math.round(10*Math.pow(it.lv,1.3)*(1+it.grade*0.2)*(1+it.d*0.3));
+/* +5 버튼 비용: 현재 등급이 유지된다고 보고 5레벨 비용을 합친 값(골드가 모자라면 가능한 만큼만 올려요) */
+const itemCost5=it=>{let c=0;for(let l=it.lv;l<Math.min(ILV,it.lv+5);l++)c+=itemCost({...it,lv:l});return c};
 function levelUpItem(it){
-  const before=it.grade;it.pw=r2(it.pw+it.g);it.lv++;let ch=null;
+  const before=it.grade;it.pw=r4(it.pw+it.g);it.lv++;let ch=null;
   if(it.lv<ILV){const x=Math.random(), f=x<0.15?rand(0.90,0.97):x<0.30?rand(1.03,1.10):rand(growC(it)-0.03,growC(it)+0.03);
-    it.g=r2(it.g*f);ch={pct:Math.round((f-1)*100),kind:x<0.15?'down':x<0.30?'up':''}}
+    it.g=r4(it.g*f);ch={pct:Math.round((f-1)*100),kind:x<0.15?'down':x<0.30?'up':''}}
   itemFinish(it);it.lastLv={lv:it.lv,ch,before,after:it.grade};
   if(it.grade>TOP&&it.grade>before)toast(`${it.name} 각성 ★${it.grade-TOP}! 전투력 +${Math.round((STAR_BONUS[it.grade-TOP]-1)*100)}%`);
 }
@@ -732,9 +746,9 @@ function newGame(){
   S={gold:50,diff:0,map:0,st:DIFFS.map((_,d)=>MAPS.map((_,i)=>d===0&&i===0?1:0)),charLv:1,mons:[],team:[null,null,null],
      items:[],equip:[null,null,null],log:[],seen:[],recipes:[],expX10:1,flt:{mon:0,item:0},kills:0,nextId:1,last:Date.now(),prog:0,fast:false,blocked:false};
   [80,95,120].forEach((p,i)=>{const m=makeMonster(p,[0,2,4][i],'시작');m.isNew=false;S.mons.push(m);S.team[i]=m.id});
-  for(let i=0;i<4;i++){const m=makeMonster(wildP(1),spFor(0,0),`훈련생 ${MAPS[0].n}`);m.isNew=false;S.mons.push(m)}
+  for(let i=0;i<4;i++){const m=makeMonster(wildP(1),spFor(0,0),`${DIFFS[0].n} ${MAPS[0].n}`);m.isNew=false;S.mons.push(m)}
   giveStarterItem();
-  addLog('소환사의 모험이 시작됐어요. 팀이 자동으로 탐험합니다.');
+  addLog('솔로몬의 인장 반지가 빛났어요. 첫 번째 악마를 찾아 나섭니다.');S.story={seen:[]};setTimeout(()=>{queueStory('prologue');queueStory('ch0')},300);
 }
 function addLog(text,hi){const d=new Date();S.log.unshift({t:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,text,hi:!!hi});S.log.length=Math.min(S.log.length,40)}
 function save(){S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -754,6 +768,7 @@ function load(){
     S.items.forEach((it,k)=>{if(it.lv==null){const n=makeItem(it.d,it.map,it.grade);n.id=it.id;n.slot=it.slot;n.name=it.name;n.isNew=false;S.items[k]=n}});
     S.mons.forEach(m=>finish(m));S.items.forEach(it=>{if(it.sc)itemFinish(it)});
     S.team=S.team.map(id=>id!=null&&byId(id)?id:null);S.equip=S.equip.map(id=>id!=null&&itemById(id)?id:null);
+    if(!S.story){S.story={seen:[]};setTimeout(()=>{queueStory('prologue');S.st[0].forEach((x,i)=>{if(x>0)queueStory('ch'+i)})},300)}
     checkUnlock(0);return true}
   catch(e){return false}
 }
@@ -767,15 +782,15 @@ function explore(){
   let changed=false;
   if(conquered()){}
   else if(tp>=req){const rw=Math.round(req*0.5);S.gold+=rw;addLog(`${tag} ${st}단계 돌파! +${fmt(rw)}G`,true);S.st[d][S.map]++;S.blocked=false;
-    if(d===0&&st===UNLOCK_AT&&S.map+1<MAPS.length&&!S.st[0][S.map+1]){S.st[0][S.map+1]=1;addLog(`새 지역 ${MAPS[S.map+1].e} ${MAPS[S.map+1].n} 개방!`,true)}
-    if(st===MAXSTAGE)addLog(`${tag} 정복! 여기 머물며 전용 악마를 계속 모을 수 있어요`,true);
+    if(d===0&&st===UNLOCK_AT&&S.map+1<MAPS.length&&!S.st[0][S.map+1]){S.st[0][S.map+1]=1;addLog(`새 지역 ${MAPS[S.map+1].e} ${MAPS[S.map+1].n} 개방!`,true);queueStory('ch'+(S.map+1))}
+    if(st===MAXSTAGE){addLog(`${tag} 정복! 여기 머물며 전용 악마를 계속 모을 수 있어요`,true);if(d===0)queueStory('clear'+S.map)}
     checkUnlock(d);changed=true}
   else if(!S.blocked){addLog(`${tag} ${st}단계에서 막혔어요. 전투력 ${fmt(req)}이 필요해요.`);S.blocked=true}
   if(Math.random()<FIND_RATE){
-    if(S.mons.length>=invMax())addLog('보관함이 가득 찼어요. 합성하거나 놓아주세요.');
+    if(S.mons.length>=invMax())addLog('보관함이 가득 찼어요. 합성하거나 퇴마하세요.');
     else{const m=makeMonster(wildP(eff()),spFor(S.map,d),tag);
       if(!keepMon(m)){const g=releaseGold(m);S.gold+=g;scenePush(`${nm(m)} ${gname(m.grade)} → +${fmt(g)}G`,'#8C8276');}
-      else{S.mons.push(m);scenePush(`계약! ${nm(m)} ${gname(m.grade)}`,RAR(m.grade),m.grade>=6);pushFeed(`${nm(m)} ${mb(m)}`,m.grade>=6?'hot':'');addLog(`${nm(m)} 발견 · ${gname(m.grade)}등급`,m.grade>=5);if(m.grade>=7)toast(`${gname(m.grade)}등급 ${nm(m)} 계약!`);changed=true}}
+      else{S.mons.push(m);scenePush(`봉인! ${nm(m)} ${gname(m.grade)}`,RAR(m.grade),m.grade>=6);pushFeed(`${nm(m)} ${mb(m)}`,m.grade>=6?'hot':'');addLog(`${nm(m)} 발견 · ${gname(m.grade)}등급`,m.grade>=5);if(m.grade>=7)toast(`${gname(m.grade)}등급 ${nm(m)} 봉인!`);changed=true}}
   }
   if(Math.random()<ITEM_RATE*(1+dexBonus().item)){
     if(S.items.length>=MAXITEMS)addLog('장비 가방이 가득 차서 장비를 놓쳤어요.');
@@ -817,9 +832,9 @@ function renderExplore(){
   const more=SPECIES.filter(sp=>sp[2]===S.map&&(sp[3]||0)>d).length;
   $('dexNote').textContent=`${pool.length}종`+(more?` · 더 높은 난이도에서 ${more}종 추가`:' · 이 지역 악마 전부 등장');
   $('gps').innerHTML=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;
-  const rule=d===0?`${UNLOCK_AT}단계를 넘으면 다음 지역이 열리고, 모든 지역이 열리면 견습생 난이도가 개방돼요.`
+  const rule=d===0?`${UNLOCK_AT}단계를 넘으면 다음 지역이 열리고, 모든 지역이 열리면 정식 퇴마사로 승급해요.`
     :d+1<DIFFS.length?`모든 지역에서 ${UNLOCK_AT}단계를 넘으면 ${DIFFS[d+1].n} 난이도가 개방돼요.`:'최고 난이도예요.';
-  $('stageNote').textContent=(conquered()?'정복한 지역이에요. 머물면서 전용 악마를 계속 모을 수 있어요. ':tp>=req?'다음 탐험에서 이 단계를 돌파해요. 계약 등급 확률은 모든 지역과 난이도에서 같아요. ':'전투력이 부족해요. 악마 레벨업, 합성, 소환사 강화, 장비로 팀을 키우세요. ')
+  $('stageNote').textContent=(conquered()?'정복한 지역이에요. 머물면서 전용 악마를 계속 모을 수 있어요. ':tp>=req?'다음 탐험에서 이 단계를 돌파해요. 봉인 등급 확률은 모든 지역과 난이도에서 같아요. ':'전투력이 부족해요. 악마 레벨업, 합성, 소환사 강화, 장비로 팀을 키우세요. ')
     +(conquered()?'':` 다음 단계에서는 사냥 1회 경험치가 ${fmt(expPerTick())} → ${fmt(expAt(Math.min(eff()+1,MAPS[S.map].off+MAXSTAGE),S.diff))}로 늘어나요.`)+' '+rule+` 악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 1시간에 1개 발견돼요.`;
   $('prog').style.width=(S.prog*100)+'%';
   let h=`<div class="teamcol"><button class="slot filled" data-char="1"><span class="em">🧑‍🌾</span><span class="nm">소환사 Lv${S.charLv}</span><span class="pw">${fmt(charPower()+gearPower())}</span><span class="xpbar"><i style="width:${Math.min(100,(S.charExp||0)/expNeed(S.charLv)*100)}%"></i></span></button>
@@ -925,13 +940,20 @@ function renderGear(){
   const a=[...S.items].sort((x,y)=>y.grade-x.grade||y.pw-x.pw);
   $('gearGrid').innerHTML=a.length?a.map(itemCard).join(''):'<div class="muted">아직 장비가 없어요.</div>';
 }
+/* 조합법 즉시 합성: 재료 두 종류를 모두 가지고 있으면 바로 합성해요.
+   재료 고르기: 팀에 없는 악마 우선, 그중 등급이 높은 악마 (결과 등급 = 재료 평균). 두 번 눌러 확정. */
+let qfArm=-1;
+function recipePair(r){
+  const pick=sp=>S.mons.filter(m=>m.sp===sp).sort((x,y)=>(S.team.includes(x.id)-S.team.includes(y.id))||y.grade-x.grade||y.lv-x.lv)[0];
+  const a=pick(r.a), b=pick(r.b);return a&&b?[a,b]:null}
 function renderRecipes(){
   $('recipeNote').textContent=`${S.recipes.length} / ${RECIPES.length} 제작함`;
   const has=k=>S.mons.some(m=>m.sp===k);
   const ing=k=>`<span class="${has(k)?'have':'need'}">${artHTML(k)} ${SPECIES[k][1]}${has(k)?' ✓':''}</span>`;
   $('recipes').innerHTML=RECIPES.map((r,i)=>({r,i})).sort((x,y)=>recipeD(x.r)-recipeD(y.r)).map(({r,i})=>{const c=SPECIES[r.r];
+    const pr=recipePair(r), cost=pr?fuseCost(pr):0;
     return `<li><div class="rtop"><b>${artHTML(r.r)} ${c[1]}</b><span class="rdiff">${dStars(r)} · 기본 능력치 ×${recipeMul(r)}${S.recipes.includes(i)?' · 제작함':''}</span></div>
-      <div class="ring">${ing(r.a)} + ${ing(r.b)}</div>
+      <div class="rrow"><div class="ring">${ing(r.a)} + ${ing(r.b)}</div>${pr?`<button class="btn primary qf${qfArm===i?' arm':''}" data-qf="${i}" ${S.gold<cost?'disabled':''}>${qfArm===i?`한 번 더: ${nm(pr[0])}+${nm(pr[1])} · 조합 ${Math.round(Math.min(0.95,RECIPE_BASE+dexBonus().rc)*100)}%`:`즉시 합성 · ${fmt(cost)}G`}</button>`:''}</div>
       <div class="note">재료 위치: ${findAt(r.a)} / ${findAt(r.b)}</div></li>`}).join('');
 }
 /* 헤더 아래 '방금' 띠: 직전 사냥의 경험치·골드 + 최근 획득물 */
@@ -972,7 +994,7 @@ function openDetail(id,fromTeam){
       <div class="gauge"><i style="width:${Math.min(100,xp/need*100)}%"></i></div>
       <div class="note">${inTeam?`사냥 중 · 다음 레벨까지 약 ${mins<60?mins+'분':(mins/60).toFixed(1)+'시간'}`:'팀에 넣으면 사냥하면서 경험치를 얻어요'}</div></div>`;
   const lo=TH[m.grade], hi=TH[m.grade+1], pct=Math.min(100,(m.pot-lo)/(hi-lo)*100);
-  const row=(k,g)=>`<tr><td>${LABEL[k]}</td><td>${fmt(m[k])}</td><td>+${m[g]}</td><td>${fmt(m[k]+m[g]*left)}</td></tr>`;
+  const row=(k,g)=>`<tr><td>${LABEL[k]}</td><td>${fmt(m[k])}</td><td>+${gf(m[g])}</td><td>${fmt(m[k]+m[g]*left)}</td></tr>`;
   const L=m.lastLv&&m.lastLv.lv===m.lv?m.lastLv:null;
   const lvBox=L?`<div class="lvbox"><b>Lv ${L.lv} 달성</b>${L.before!==L.after?` · 등급 ${badge(L.before)} → ${badge(L.after)} <b class="${L.after>L.before?'upc':'downc'}">${L.after>L.before?'상승!':'하락'}</b>`:''}
     <div>${L.ch.length?L.ch.map(c=>`<span class="${c.kind==='up'?'upc':c.kind==='down'?'downc':''}">${LABEL[c.k]} ${c.pct>=0?'+':''}${c.pct}%${c.kind==='up'?' 급성장':c.kind==='down'?' 정체':''}</span>`).join(' · '):'최대 레벨이라 더 이상 성장하지 않아요'}</div></div>`:'';
@@ -1000,7 +1022,7 @@ function openDetail(id,fromTeam){
       ${teamBtns}
     </div>
     <div class="row">
-      <button class="btn danger" data-act="release" ${inTeam?'disabled':''}>놓아주기 (+${fmt(releaseGold(m))}G)</button>
+      <button class="btn danger" data-act="release" ${inTeam?'disabled':''}>퇴마하기 (+${fmt(releaseGold(m))}G)</button>
       ${detailFromTeam?'<button class="btn" data-act="back" style="margin-left:auto">← 팀 편성</button>':'<button class="btn" data-act="close" style="margin-left:auto">닫기</button>'}
     </div>`;
   $('sheet').scrollTop=0;
@@ -1008,21 +1030,21 @@ function openDetail(id,fromTeam){
 }
 function openItem(id){
   const it=itemById(id);if(!it)return;it.isNew=false;armed=false;
-  const eq=S.equip[it.slot]===it.id, cur=itemById(S.equip[it.slot]), diff=cur&&!eq?ipw(it)-ipw(cur):null, cost=itemCost(it);
+  const eq=S.equip[it.slot]===it.id, cur=itemById(S.equip[it.slot]), diff=cur&&!eq?ipw(it)-ipw(cur):null, cost=itemCost(it), cost5=itemCost5(it);
   const q=itemPot(it)/it.sc, lo=IT[it.grade], hi=IT[it.grade+1], pct=Math.max(0,Math.min(100,(q-lo)/(hi-lo)*100));
   const need=it.grade<MAXG?Math.ceil(hi*it.sc-itemPot(it)):0;
   const L=it.lastLv&&it.lastLv.lv===it.lv?it.lastLv:null;
-  const lvBox=L?`<div class="lvbox"><b>Lv ${L.lv} 달성</b>${L.before!==L.after?` · 등급 ${badge(L.before)} → ${badge(L.after)} <b class="${L.after>L.before?'upc':'downc'}">${L.after>L.before?'상승!':'하락'}</b>`:''}
-    <div>${L.ch?`<span class="${L.ch.kind==='up'?'upc':L.ch.kind==='down'?'downc':''}">성장률 ${L.ch.pct>=0?'+':''}${L.ch.pct}%${L.ch.kind==='up'?' 급성장':L.ch.kind==='down'?' 정체':''}</span>`:'최대 레벨이라 더 이상 성장하지 않아요'}</div></div>`:'';
+  const lvBox=L?`<div class="lvbox"><b>${L.from?`Lv ${L.from} → `:''}Lv ${L.lv} 달성</b>${L.before!==L.after?` · 등급 ${badge(L.before)} → ${badge(L.after)} <b class="${L.after>L.before?'upc':'downc'}">${L.after>L.before?'상승!':'하락'}</b>`:''}
+    <div>${L.sum&&L.sum.length>1?`성장률 변화 ${L.sum.map(x=>`<span class="${x>=3?'upc':x<=-3?'downc':''}">${x>=0?'+':''}${x}%</span>`).join(' · ')}`:L.ch?`<span class="${L.ch.kind==='up'?'upc':L.ch.kind==='down'?'downc':''}">성장률 ${L.ch.pct>=0?'+':''}${L.ch.pct}%${L.ch.kind==='up'?' 급성장':L.ch.kind==='down'?' 정체':''}</span>`:'최대 레벨이라 더 이상 성장하지 않아요'}</div></div>`:'';
   $('sheet').innerHTML=`
     <div class="head"><span class="em">${SLOTS[it.slot].e}</span><div><h3>${it.name} ${mb(it)}</h3>
       <div class="muted">${SLOTS[it.slot].n} · ${DIFFS[it.d].n} ${MAPS[it.map].n}에서 획득 · Lv <span class="num">${it.lv}/${ILV}</span></div></div></div>
     ${lvBox}
     <table><thead><tr><th>전투력</th><th>현재</th><th>레벨당 성장</th><th>만렙 예상</th></tr></thead><tbody>
-      <tr><td>소환사에게 +</td><td>${fmt(ipw(it))}</td><td>+${it.g}</td><td>${fmt(itemPot(it))}</td></tr></tbody></table>
+      <tr><td>소환사에게 +</td><td>${fmt(ipw(it))}</td><td>+${gf(it.g)}</td><td>${fmt(itemPot(it))}</td></tr></tbody></table>
     <div><div class="gauge"><i style="width:${pct}%;background:${gc(it.grade)}"></i></div>
       <div class="note">${it.grade<MAXG?`${gname(it.grade+1)}까지 만렙 예상 전투력 ${fmt(need)} 부족`:'최대 각성(★3)'}${starsOf(it)?` · 각성 ★${starsOf(it)} 전투력 +${Math.round((STAR_BONUS[starsOf(it)]-1)*100)}%`:''} · 탄생 등급 ${gname(it.g0)} · 100레벨까지 평균 ${EXPECT[it.g0]?`+${EXPECT[it.g0]}등급`:'유지'} 기대</div></div>
-    <div class="row"><button class="btn" data-act="ilv" ${it.lv>=ILV||S.gold<cost?'disabled':''}>${it.lv>=ILV?'최대 레벨':`레벨업 · ${fmt(cost)}G`}</button></div>
+    <div class="row"><button class="btn" data-act="ilv" ${it.lv>=ILV||S.gold<cost?'disabled':''}>${it.lv>=ILV?'최대 레벨':`레벨업 · ${fmt(cost)}G`}</button>${it.lv<ILV?`<button class="btn" data-act="ilv5" ${S.gold<cost?'disabled':''}>+${Math.min(5,ILV-it.lv)} 레벨업 · ${fmt(cost5)}G</button>`:''}</div>
     <div class="row"><span class="muted">전투력</span><b class="num" style="font-size:22px">+${fmt(ipw(it))}</b>
       ${diff!=null?`<span class="num" style="color:${diff>=0?'var(--accent)':'var(--warn)'}">${diff>=0?'▲':'▼'} ${fmt(Math.abs(diff))}</span><span class="muted">장착 중인 ${cur.name} 대비</span>`:''}</div>
     <div class="row"><button class="btn primary" data-act="${eq?'unequip':'equip'}">${eq?'장착 해제':'장착하기'}</button></div>
@@ -1066,12 +1088,13 @@ function openTeam(slot){
     <div class="grid">${list.map(m=>card(m,S.team[teamSel]===m.id?'sel':'')).join('')}</div>`;
   $('sheet').dataset.kind='team';$('overlay').hidden=false;
 }
-function closeSheet(){$('overlay').hidden=true;renderAll()}
+function closeSheet(){$('overlay').hidden=true;renderAll();setTimeout(showNextStory,250)}
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
 $('sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const id=+$('sheet').dataset.id, act=b.dataset.act;
   if(act==='close')return closeSheet();
+  if($('sheet').dataset.kind==='story')return closeSheet();
   if($('sheet').dataset.kind==='char'){
     if(act==='gear'){$('overlay').hidden=true;return goTab('gear')}
     renderTop();renderExplore();return openChar();
@@ -1084,6 +1107,10 @@ $('sheet').addEventListener('click',e=>{
   }
   if($('sheet').dataset.kind==='item'){
     const it=itemById(id);if(!it)return closeSheet();
+    if(act==='ilv5'){const b0=it.grade,lv0=it.lv,chs=[];let n=0;
+      while(n<5&&it.lv<ILV&&S.gold>=itemCost(it)){S.gold-=itemCost(it);levelUpItem(it);if(it.lastLv.ch)chs.push(it.lastLv.ch.pct);n++}
+      if(n){it.lastLv={lv:it.lv,ch:it.lastLv.ch,before:b0,after:it.grade,from:n>1?lv0:0,sum:chs};
+        if(it.grade!==b0)addLog(`${it.name} Lv${it.lv} · 등급 ${gname(b0)} → ${gname(it.grade)}`,it.grade>b0)}}
     if(act==='ilv'){const c=itemCost(it);if(S.gold>=c&&it.lv<ILV){S.gold-=c;levelUpItem(it);
       if(it.lastLv.after!==it.lastLv.before)addLog(`${it.name} Lv${it.lv} · 등급 ${gname(it.lastLv.before)} → ${gname(it.lastLv.after)}`,it.lastLv.after>it.lastLv.before)}}
     if(act==='equip')S.equip[it.slot]=id;
@@ -1105,7 +1132,7 @@ $('sheet').addEventListener('click',e=>{
   if(act==='out'){S.team[S.team.indexOf(id)]=null}
   if(act==='swap'){S.team[+b.dataset.slot]=id}
   if(act==='release'){
-    if(!armed){armed=true;b.textContent='한 번 더 누르면 놓아줘요';return}
+    if(!armed){armed=true;b.textContent='한 번 더 누르면 퇴마해요';return}
     S.gold+=releaseGold(m);S.mons=S.mons.filter(x=>x.id!==id);fuseSel=fuseSel.filter(x=>x!==id);save();return detailFromTeam?openTeam():closeSheet();
   }
   save();openDetail(id,detailFromTeam);renderTop();renderExplore();
@@ -1128,7 +1155,7 @@ function doFuse(){
   for(let t=0;t<(rare?2:1);t++){const k=anyOf(keys), mul=rand(1.08,1.3);
     m[k]=k.startsWith('g')?+(m[k]*mul).toFixed(2):Math.round(m[k]*mul);bon.push(`${LABEL[k]} +${Math.round((mul-1)*100)}%`)}
   m.g0=null;finish(m);m.bonus=bon.join(', ');
-  if(rare){const first=!S.recipes.includes(rare.i);if(first)S.recipes.push(rare.i);
+  if(rare){const first=!S.recipes.includes(rare.i);if(first)S.recipes.push(rare.i);if(SPECIES[sp][1]==='벨리알')queueStory('ending');
     addLog(`${first?'처음 제작! ':''}희귀 악마 ${SPECIES[sp][1]} 탄생 · 기본 능력치 ×${spMul(sp)}`,true);toast(`희귀 악마 ${SPECIES[sp][1]} 탄생!`)}
   S.mons.push(m);fuseSel=[];
   lastResult={m,success:jump>0,jump,bonus:m.bonus,rare:!!rare};
@@ -1149,6 +1176,12 @@ $('rebGrid').addEventListener('click',e=>{
   else return toast('2마리까지 고를 수 있어요');
   m.isNew=false;renderReb();
 });
+$('recipes').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');if(!b)return;const i=+b.dataset.qf;
+  if(qfArm!==i){qfArm=i;return renderRecipes()}
+  qfArm=-1;const pr=recipePair(RECIPES[i]);if(!pr)return renderRecipes();
+  S.team=S.team.map(x=>pr.some(m=>m.id===x)?null:x);
+  fuseSel=pr.map(m=>m.id);doFuse();
+  $('fresult').scrollIntoView({behavior:'smooth',block:'center'})});
 $('fuseClear').onclick=()=>{fuseSel=[];lastResult=null;renderFuse()};
 $('fuseGrid').addEventListener('click',e=>{
   const b=e.target.closest('.card');if(!b)return;const id=+b.dataset.id;
@@ -1229,7 +1262,7 @@ function spawnMob(elite){
   const per=Math.max(5,teamPower()/4), hp=per*(elite?22:rand(4,7));
   SC.mobs.push({x,y,hp,max:hp,sp:rand(26,46)*(elite?0.55:1),k:spFor(S.map,S.diff),elite,hit:0,cd:rand(0.5,1.2),slam:elite?3:0,wind:0,kx:0,ky:0})}
 function nearestMob(x,y,maxd){let best=null,bd=maxd;SC.mobs.forEach(m=>{if(m.hp<=0)return;const d=Math.hypot(m.x-x,m.y-y);if(d<bd){bd=d;best=m}});return best}
-function dmgMob(mob,d,crit,fromX,fromY){
+function dmgMob(mob,d,crit,fromX,fromY){if(mob.vuln>0)d=Math.round(d*1.3);
   mob.hp-=d;mob.hit=0.12;
   const a=Math.atan2(mob.y-fromY,mob.x-fromX), k=(crit?16:7)*(mob.elite?0.3:1);mob.kx+=Math.cos(a)*k;mob.ky+=Math.sin(a)*k;
   if(crit&&!RM)SC.shake=Math.max(SC.shake,crit===2?9:4);
@@ -1254,23 +1287,11 @@ $('ultBtn').onclick=useUlt;
 /* ===== 수동 조작: 화면을 끌면 가상 조이스틱, 적을 톡 누르면 집중 공격, 키보드 WASD·방향키 ===== */
 SC.inp={x:0,y:0};SC.keys={};SC.manual=false;
 const MANUAL_BONUS=1.25;
-function setManual(on){SC.manual=on;$('modeBtn').setAttribute('aria-pressed',on);$('modeBtn').textContent=on?'자동 사냥으로':'직접 조작';$('skills').hidden=!on;$('sceneBox').classList.toggle('manual',on);
+function setManual(on){SC.manual=on;SC.trail=[{x:SC.lead?SC.lead.x:0,y:SC.lead?SC.lead.y:0}];SC.idle=1;SC.ms.forEach(a=>{a.vx=0;a.vy=0;a.go=false});$('modeBtn').setAttribute('aria-pressed',on);$('modeBtn').textContent=on?'자동 사냥으로':'직접 조작';$('sceneBox').classList.toggle('manual',on);
   SC.inp={x:0,y:0};SC.joy=null;SC.focus=null;$('hudMode').textContent=on?'수동 · 경험치·골드 +25%':'';
-  if(on)toast('화면을 끌어 이동, 적을 눌러 집중 공격, 왼쪽 아래 스킬. 경험치·골드 +25%')}
-/* 직접 조작 스킬 */
-SC.sk={dash:0,ring:0};const SK_CD={dash:4,ring:7};
-function leadPow(){return (charPower()+gearPower())}
-function skDash(){if(!SC.manual||SC.sk.dash>0)return;SC.sk.dash=SK_CD.dash;
-  let dx=SC.inp.x,dy=SC.inp.y;if(Math.hypot(dx,dy)<0.1){const t=SC.focus||nearestMob(SC.lead.x,SC.lead.y,400);if(t){dx=t.x-SC.lead.x;dy=t.y-SC.lead.y}else{dx=1;dy=0}}
-  const d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,x0=SC.lead.x,y0=SC.lead.y;SC.lead.x+=ux*85;SC.lead.y=Math.max(24,Math.min(SC.H-24,SC.lead.y+uy*85));
-  SC.mobs.forEach(m=>{const t=Math.max(0,Math.min(1,((m.x-x0)*ux+(m.y-y0)*uy)/85)),px=x0+ux*85*t,py=y0+uy*85*t;if(Math.hypot(m.x-px,m.y-py)<38)dmgMob(m,Math.round(leadPow()*rand(2.6,3.4)),1,x0,y0)});
-  SC.fx.push({k:'slash',x:(x0+SC.lead.x)/2,y:(y0+SC.lead.y)/2,a:Math.atan2(uy,ux),t:0,life:0.25});if(!RM)SC.shake=6}
-function skRing(){if(!SC.manual||SC.sk.ring>0)return;SC.sk.ring=SK_CD.ring;
-  SC.fx.push({k:'ring',x:SC.lead.x,y:SC.lead.y,t:0,life:0.5,r:95,col:'#FF4A1A',w:6});
-  SC.mobs.forEach(m=>{if(Math.hypot(m.x-SC.lead.x,m.y-SC.lead.y)<100)dmgMob(m,Math.round(leadPow()*rand(2.2,2.8)),1,SC.lead.x,SC.lead.y)});if(!RM)SC.shake=8}
-$('skDash').onclick=skDash;$('skRing').onclick=skRing;
-document.addEventListener('keydown',e=>{if(!SC.manual||tab!=='explore')return;if(e.code==='KeyJ'||e.code==='Space'){skDash();e.preventDefault()}if(e.code==='KeyK'){skRing();e.preventDefault()}});
+  if(on)toast('화면을 끌어 이동, 적을 눌러 집중 공격, 왼쪽 아래 스킬(1~4키). 경험치·골드 +25%')}
 $('modeBtn').onclick=()=>setManual(!SC.manual);
+$('storyBtn').onclick=()=>openStoryLog();
 function scenePt(e){const b=$('scene').getBoundingClientRect();return {x:e.clientX-b.left,y:e.clientY-b.top}}
 function pickMob(px,py){let best=null,bd=40;SC.mobs.forEach(m=>{const p=R3.on?proj3(m.x,m.y,0.6):{x:m.x,y:m.y};const d=Math.hypot(p.x-px,p.y-py);if(d<bd){bd=d;best=m}});return best}
 $('sceneBox').addEventListener('pointerdown',e=>{if(!SC.manual||e.target.closest('button'))return;const p=scenePt(e);SC.joy={ox:p.x,oy:p.y,dx:0,dy:0,id:e.pointerId,moved:false};
@@ -1284,8 +1305,101 @@ const anyKey=()=>Object.keys(SC.keys).some(k=>SC.keys[k]);
 function keyVec(){let x=0,y=0;for(const k in SC.keys)if(SC.keys[k]&&KEYMAP[k]){x+=KEYMAP[k][0];y+=KEYMAP[k][1]}SC.inp={x,y}}
 document.addEventListener('keydown',e=>{if(!SC.manual||tab!=='explore'||!KEYMAP[e.code]||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;SC.keys[e.code]=1;keyVec();e.preventDefault()});
 document.addEventListener('keyup',e=>{if(!KEYMAP[e.code])return;SC.keys[e.code]=0;if(!SC.joy)keyVec()});
+/* skills & story */
+/* ===== 스킬: 소환사 1개 + 팀 악마마다 1개. 자동 사냥 때는 알아서 쓰고, 직접 조작 때는 내가 눌러요 ===== */
+/* 종류: flame(대상 주변 화염) · strike(돌진 강타) · quake(자기 주변 진동) · bolt(강한 투사체) · mend(팀 회복) · hex(저주: 둔화 + 받는 피해 증가) */
+const SKILL_TXT=`역병의 포효|hex,잿불 검무|strike,약초의 가호|mend,회전 바퀴|quake,창백한 돌격|strike,예언의 일격|bolt,천 개의 얼굴|hex,날개 할퀴기|strike,잃어버린 것의 눈|bolt,
+탑 무너뜨리기|quake,보물 강탈|strike,피의 사냥|strike,지옥 불꽃|flame,화염 토하기|flame,도둑의 발굽|strike,불타는 눈|flame,순간 이동 강습|strike,증오의 주문|hex,
+황소 돌진|strike,연금 변성|mend,광기의 송곳니|strike,독사의 이빨|hex,도둑 심판|bolt,사막의 위안|mend,왕비의 축복|mend,방화의 횃불|flame,사자 천사의 용기|mend,
+해일|quake,눈멀게 하기|hex,검의 탑|bolt,별의 시선|bolt,쌍뱀의 독|hex,폭풍 바다|quake,익사의 손길|hex,물소리 치유|mend,천리 비행|strike,
+수사학의 지팡이|bolt,쉰 목소리|hex,무덤 촛불|flame,기하의 깃|bolt,검은 기마 돌격|strike,천상의 나팔|quake,대지 흔들기|quake,망자의 나팔|hex,별과 약초|mend,
+지옥불 기둥|flame,벼락|bolt,불사의 노래|mend,썩는 상처|hex,쌍두룡 숨결|flame,금의 연성|bolt,불꽃 눈 돌격|strike,악어의 턱|strike,매혹의 날개|hex,
+썩는 화살|bolt,불화의 검|quake,망자의 속삭임|hex,기사의 창|strike,붉은 일격|strike,화살비|bolt,세 머리 숨결|flame,독사의 숨|hex,진실의 질주|strike,
+폭풍 탑 붕괴|quake,피의 포도주|mend,숨은 보물의 나팔|quake,왕의 나팔|quake,불꽃 눈|flame,군대의 행진|mend,분노의 창|strike,투명 습격|bolt,불의 전차|flame`;
+const SKILLS=SKILL_TXT.split(',').map(x=>{const [n,t]=x.trim().split('|');return {n,t}});
+const SK_INFO={flame:{cd:7,col:'#FF5A1A',d:'화염'},strike:{cd:6,col:'#E8D8C0',d:'돌진 강타'},quake:{cd:8,col:'#C8A060',d:'주변 진동'},bolt:{cd:6,col:'#9AC8FF',d:'강한 투사체'},mend:{cd:10,col:'#6AE88A',d:'팀 회복'},hex:{cd:8,col:'#B86AFF',d:'저주'}};
+const SUMMONER_SKILL={n:'솔로몬의 인장',t:'seal',cd:7,col:'#F2C24A'};
+SC.skcd={};
+function skillOf(a){return a.key==='char'?SUMMONER_SKILL:Object.assign({},SKILLS[a.k],{cd:SK_INFO[SKILLS[a.k].t].cd,col:SK_INFO[SKILLS[a.k].t].col})}
+function hexMob(m,sec){m.slow=Math.max(m.slow||0,sec);m.vuln=Math.max(m.vuln||0,sec)}
+function castSkill(a,manual){
+  if(!a||a.down>0)return false;const sk=skillOf(a);if((SC.skcd[a.key]||0)>0)return false;
+  const pw=a.pw||10, t=(SC.focus&&SC.mobs.includes(SC.focus))?SC.focus:nearestMob(a.x,a.y,manual?420:260);
+  const R=(x,y,r,mul,stun)=>{SC.mobs.forEach(m=>{if(Math.hypot(m.x-x,m.y-y)<r){dmgMob(m,Math.round(pw*mul*rand(0.9,1.1)),1,x,y);if(stun)hexMob(m,stun)}})};
+  if(sk.t==='mend'){if(SC.ms.every(b=>b.hp>=b.max*0.98)&&!manual)return false;SC.ms.forEach(b=>{if(b.down<=0)b.hp=Math.min(b.max,b.hp+b.max*0.45)});SC.fx.push({k:'ring',x:a.x,y:a.y,t:0,life:0.6,r:110,col:sk.col,w:5})}
+  else{if(!t)return false;
+    if(sk.t==='seal'){R(t.x,t.y,95,3.0,1.6);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.7,r:95,col:sk.col,w:7});SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.45,r:60,col:'#FFF2C8',w:3});if(!RM)SC.shake=7}
+    else if(sk.t==='flame'){R(t.x,t.y,60,2.6);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.5,r:60,col:sk.col,w:6})}
+    else if(sk.t==='quake'){R(a.x,a.y,95,2.2);SC.fx.push({k:'ring',x:a.x,y:a.y,t:0,life:0.55,r:95,col:sk.col,w:6});if(!RM)SC.shake=6}
+    else if(sk.t==='bolt'){SC.shots.push({x:a.x,y:a.y-6,t,sp:420,dmg:Math.round(pw*3.6),crit:1,col:sk.col,fx:a.x,fy:a.y,big:1})}
+    else if(sk.t==='hex'){SC.mobs.forEach(m=>{if(Math.hypot(m.x-t.x,m.y-t.y)<100)hexMob(m,4)});R(t.x,t.y,100,1.0);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.6,r:100,col:sk.col,w:5})}
+    else if(sk.t==='strike'){const x0=a.x,y0=a.y,d=Math.hypot(t.x-a.x,t.y-a.y)||1;if(a.key!=='char'){a.x=t.x-(t.x-a.x)/d*16;a.y=t.y-(t.y-a.y)/d*16}
+      dmgMob(t,Math.round(pw*4.2),2,x0,y0);R(t.x,t.y,40,1.2);SC.fx.push({k:'slash',x:t.x,y:t.y,a:Math.atan2(t.y-y0,t.x-x0),t:0,life:0.25})}}
+  SC.skcd[a.key]=sk.cd;
+  SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:1.1,txt:sk.n,col:sk.col,sz:12});
+  return true}
+function autoSkills(){if(SC.manual)return;SC.ms.forEach(a=>{if((SC.skcd[a.key]||0)<=0&&SC.mobs.some(m=>Math.hypot(m.x-a.x,m.y-a.y)<240)){
+  const sk=skillOf(a);if(sk.t==='mend'&&!SC.ms.some(b=>b.hp<b.max*0.6))return;castSkill(a,false)}})}
+let skBarKey='';
+function renderSkillBar(){const key=SC.ms.map(a=>a.key).join(',');if(key===skBarKey)return;skBarKey=key;
+  $('skills').innerHTML=SC.ms.map((a,i)=>{const sk=skillOf(a);const pic=a.key==='char'?'<b class="sig">✡</b>':`<i>${artHTML(a.k)}</i>`;
+    return `<button data-sk="${a.key}" aria-label="${sk.n}" title="${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${sk.n}</small><em>${i+1}</em></button>`}).join('')}
+$('skills').addEventListener('click',e=>{const b=e.target.closest('button[data-sk]');if(!b)return;const a=SC.ms.find(x=>x.key===b.dataset.sk);
+  if(!a)return;if(!castSkill(a,true))toast((SC.skcd[a.key]||0)>0?'아직 재사용 대기 중이에요':'대상이 없어요')});
+document.addEventListener('keydown',e=>{if(tab!=='explore'||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;
+  const n='1234'.indexOf(e.key);if(n>=0&&SC.ms[n]){castSkill(SC.ms[n],true);e.preventDefault()}});
+function tickSkills(dt){for(const k in SC.skcd)SC.skcd[k]=Math.max(0,SC.skcd[k]-dt);autoSkills();renderSkillBar();
+  $('skills').querySelectorAll('button').forEach(b=>{const a=SC.ms.find(x=>x.key===b.dataset.sk);if(!a)return;const cd=SC.skcd[a.key]||0,mx=skillOf(a).cd;b.firstChild.style.setProperty('--cd',(cd/mx).toFixed(3));b.classList.toggle('ready',cd<=0)})}
+
+/* ===== 스토리: 솔로몬의 마지막 후계자, 퇴마사의 여정 ===== */
+const STORY={
+  prologue:{t:'서장 · 깨진 황동 그릇',x:`솔로몬 왕은 일흔두 악마를 황동 그릇에 봉인해 바빌론의 깊은 호수에 가라앉혔다.\n\n삼천 년이 흐른 어느 밤, 호수가 붉게 끓어오르고 그릇이 깨졌다. 풀려난 악마들은 세상 곳곳의 틈으로 흩어졌다.\n\n당신은 솔로몬의 마지막 혈통. 손가락에 낀 인장 반지가 처음으로 뜨겁게 빛난다. 반지는 악마를 다시 봉인할 수 있다. 그러나 봉인한 악마의 힘을 빌려야만, 더 강한 악마에게 맞설 수 있다.\n\n퇴마사여, 일흔두 악마를 모두 되찾아라.`},
+  ch:[
+    {t:'제1장 · 무너진 솔로몬 신전',i:`왕의 옛 신전. 촛불은 아직 꺼지지 않았고, 바닥의 인장 원은 누군가 일부러 긁어 지운 흔적이 있다.\n사자의 울음이 기둥 사이를 울린다. 첫 번째 악마, 마르바스가 이곳을 지키고 있다.`,
+      c:`신전 가장 깊은 곳에서 깨진 그릇의 조각을 찾았다. 조각 안쪽에는 그릇을 깬 자의 손톱자국과 함께, 왕관 모양의 낙인이 남아 있다.\n그릇은 저절로 깨진 것이 아니다. 누군가 안에서 깨뜨렸다.`},
+    {t:'제2장 · 잿빛 황야',i:`불타 버린 들판에 까마귀 떼가 맴돈다. 말파스와 라움이 무너진 성들의 보물을 쪼아 모으고 있다.\n"왕관 쓴 자가 우리를 풀어 주었다." 까마귀들이 웃으며 속삭인다.`,
+      c:`라움이 훔친 금화에는 아홉 개의 왕관이 새겨져 있었다. 그릇을 깬 것은 한 악마가 아니라, 아홉 왕 중 누군가다.`},
+    {t:'제3장 · 유황 사막',i:`유황 냄새가 코를 찌른다. 모래 위로 낙타 행렬의 발자국이 끝없이 이어진다.\n부알과 그레모리가 누군가의 행렬을 앞서 이끌고 있다. 그 끝에서 나팔 소리가 들린다.`,
+      c:`행렬의 주인은 왕 파이몬이었다. 그러나 파이몬은 그릇을 깬 자가 아니다. 그는 "나는 깨어났을 뿐, 깬 것은 가장 오래된 거짓말쟁이"라는 말만 남겼다.`},
+    {t:'제4장 · 피의 바다',i:`바다가 핏빛으로 물들었다. 파도 아래에서 거대한 그림자, 포르네우스가 배들을 삼킨다.\n베파르의 노래가 폭풍을 부르고, 물에 빠진 자들의 목소리가 섞여 들린다.`,
+      c:`크로셀이 물소리로 진실을 들려주었다. "그릇이 깨진 밤, 불타는 전차가 호수 위를 달렸다."`},
+    {t:'제5장 · 얼어붙은 코키토스',i:`배신자들이 갇힌 얼음 지옥. 얼음 아래로 수많은 얼굴이 비친다.\n왕관 쓴 올빼미 스톨라스가 별을 읽으며 당신을 기다리고 있다.`,
+      c:`스톨라스가 별의 배열로 이름을 알려 주었다. 그릇을 깬 자는 '무가치한 자', 벨리알. 솔로몬에게 가장 먼저 무릎 꿇는 척했던 왕이다.`},
+    {t:'제6장 · 불타는 심연',i:`땅 자체가 불타는 곳. 불사조 페넥스의 노래 위로 불의 전차 바퀴 자국이 깊게 패여 있다.\n벨리알의 기사들, 베리트와 알로케스가 길을 막는다.`,
+      c:`전차 자국은 판데모니움으로 이어진다. 아홉 왕이 모두 그곳에 모였다. 벨리알은 나머지 왕들을 설득해 새로운 왕좌를 세우려 한다.`},
+    {t:'제7장 · 판데모니움',i:`흑요석 첨탑이 하늘을 찌르는 악마들의 수도. 보랏빛 화로마다 왕들의 문장이 걸려 있다.\n여기서부터는 인장 반지의 힘만으로는 부족하다. 봉인한 악마들을 엮어, 왕을 직접 불러내 봉인해야 한다.`,
+      c:`판데모니움의 성문이 열렸다. 이제 남은 것은 아홉 왕. 두 악마의 힘을 엮는 조합의 의식으로 왕들을 하나씩 봉인하라. 마지막은 벨리알이다.`}],
+  ending:{t:'종장 · 다시 닫힌 그릇',x:`불의 전차가 멈추고, 두 천사의 얼굴을 한 왕이 인장 앞에 무릎 꿇었다.\n"솔로몬의 아이야, 너도 결국 우리의 힘을 빌려 여기까지 왔구나."\n\n벨리알의 웃음과 함께 반지가 마지막으로 빛났다. 깨진 그릇의 조각들이 다시 하나로 모인다.\n\n그러나 반지 안쪽에 새로운 균열이 하나 생겼다. 봉인은 영원하지 않다. 그리고 당신은, 이제 일흔두 악마의 힘을 지닌 유일한 사람이다.\n\n— 계속해서 남은 악마를 봉인하고, 더 높은 퇴마사 계급에 도전하세요.`}};
+const storyQ=[];
+function queueStory(key){if(!S.story)S.story={seen:[]};if(S.story.seen.includes(key))return;S.story.seen.push(key);storyQ.push(key);save();setTimeout(showNextStory,400)}
+function storyEntry(key){if(key==='prologue'||key==='ending')return STORY[key];const m=key.match(/^(ch|clear)(\d)$/);const c=STORY.ch[+m[2]];return m[1]==='ch'?{t:c.t,x:c.i}:{t:c.t+' · 완료',x:c.c}}
+function showNextStory(){if(!storyQ.length||!$('overlay').hidden)return;const e=storyEntry(storyQ.shift());
+  $('sheet').innerHTML=`<div class="story"><div class="sub">이야기</div><h3>${e.t}</h3>${e.x.split('\n').map(l=>l?`<p>${l}</p>`:'').join('')}</div>
+    <div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">계속</button></div>`;
+  $('sheet').dataset.kind='story';$('sheet').scrollTop=0;$('overlay').hidden=false}
+function openStoryLog(){const keys=(S.story&&S.story.seen)||[];
+  $('sheet').innerHTML=`<div class="story"><div class="sub">지금까지의 이야기</div>${keys.map(k=>{const e=storyEntry(k);return `<h3>${e.t}</h3>${e.x.split('\n').map(l=>l?`<p>${l}</p>`:'').join('')}`}).join('<hr>')||'<p>아직 펼쳐진 이야기가 없어요.</p>'}</div>
+    <div class="row"><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;$('sheet').dataset.kind='story';$('sheet').scrollTop=0;$('overlay').hidden=false}
+
 const manualMul=()=>SC.manual&&tab==='explore'&&!document.hidden?MANUAL_BONUS:1;
 let lastT=performance.now(), syncT=0;
+/* ===== 직접 조작 때 소환수 악마의 따라오기 =====
+   소환사가 지나간 발자국(trail)을 따라 각자 다른 거리만큼 뒤에서 걷고, 멈추면 소환사 주변에 느슨하게 모여요.
+   가속·감속, 출발·정지 문턱(히스테리시스), 서로 겹치지 않게 밀어내기로 자연스럽게 움직여요. */
+function trailPoint(back){const tr=SC.trail||[];let acc=0,prev={x:SC.lead.x,y:SC.lead.y};
+  for(let i=tr.length-1;i>=0;i--){const p=tr[i],d=Math.hypot(prev.x-p.x,prev.y-p.y);if(acc+d>=back){const k=(back-acc)/(d||1);return {x:prev.x+(p.x-prev.x)*k,y:prev.y+(p.y-prev.y)*k}}acc+=d;prev=p}
+  const f=SC.face||{x:1,y:0};return {x:prev.x-f.x*(back-acc),y:prev.y-f.y*(back-acc)}}
+function followGoal(a,rank){
+  const f=SC.face||{x:1,y:0},px=-f.y,py=f.x;
+  if((SC.idle||0)>0.45){const o=[[-26,-24],[-26,24],[-46,0]][rank]||[-40,0];return {x:SC.lead.x+f.x*o[0]+px*o[1],y:SC.lead.y+f.y*o[0]+py*o[1],stop:20}}
+  const p=trailPoint(32+rank*26),side=[-1,1,0][rank]*11;return {x:p.x+px*side,y:p.y+py*side,stop:12}}
+function steer(a,tx,ty,stop,maxSp,dt){
+  if(a.vx==null){a.vx=0;a.vy=0}if(a.spd==null)a.spd=rand(0.9,1.08);
+  const dx=tx-a.x,dy=ty-a.y,d=Math.hypot(dx,dy);
+  if(!a.go&&d>stop+14)a.go=true;if(a.go&&d<stop)a.go=false;
+  let wx_=0,wy_=0;if(a.go){const sp=Math.min(maxSp*a.spd,d*3.2);wx_=dx/d*sp;wy_=dy/d*sp}
+  SC.ms.forEach(b=>{if(b===a)return;const ex=a.x-b.x,ey=a.y-b.y,e=Math.hypot(ex,ey);if(e>0.01&&e<24){const push=(24-e)*5;wx_+=ex/e*push;wy_+=ey/e*push}});
+  const k=Math.min(1,dt*(a.go?5:8));a.vx+=(wx_-a.vx)*k;a.vy+=(wy_-a.vy)*k;a.x+=a.vx*dt;a.y+=a.vy*dt;a.y=Math.max(16,Math.min(SC.H-16,a.y))}
 function sceneStep(dt){
   dt*=S.fast?3:1;
   syncT-=dt;if(syncT<=0){syncTeam();syncT=0.5}
@@ -1298,19 +1412,20 @@ function sceneStep(dt){
   if(!SC.lead)SC.lead={x:SC.W*0.3,y:SC.H/2+8};
   if(SC.manual){
     const ix=SC.inp.x,iy=SC.inp.y,mag=Math.hypot(ix,iy);
-    if(mag>0.05){const sp=125*Math.min(1,mag);SC.lead.x+=ix/mag*sp*dt;SC.lead.y+=iy/mag*sp*dt;walk=1}
+    if(mag>0.05){const sp=125*Math.min(1,mag);SC.lead.x+=ix/mag*sp*dt;SC.lead.y+=iy/mag*sp*dt;walk=1;SC.face={x:ix/mag,y:iy/mag};SC.idle=0}else SC.idle=(SC.idle||0)+dt;
+    if(!SC.trail)SC.trail=[];const tl=SC.trail[SC.trail.length-1];if(!tl||Math.hypot(SC.lead.x-tl.x,SC.lead.y-tl.y)>4){SC.trail.push({x:SC.lead.x,y:SC.lead.y});if(SC.trail.length>240)SC.trail.shift()}
     SC.lead.y=Math.max(24,Math.min(SC.H-24,SC.lead.y));if(SC.lead.x<SC.W*0.08)SC.lead.x=SC.W*0.08;
     const edge=SC.W*0.55;if(SC.lead.x>edge){SC.walkDX=SC.lead.x-edge;SC.lead.x=edge}
   }else{
     SC.lead.x+=(SC.W*0.3-SC.lead.x)*Math.min(1,dt*2);SC.lead.y+=(SC.H/2+8-SC.lead.y)*Math.min(1,dt*2);
     const near=SC.mobs.some(m=>m.x<SC.W*0.72);walk=near?0:70;SC.walkDX=walk*dt;
   }
-  if(SC.walkDX){const d=SC.walkDX;SC.scroll+=d;SC.mobs.forEach(m=>m.x-=d);SC.drops.forEach(x=>x.x-=d);SC.fx.forEach(f=>{if(f.x!=null)f.x-=d;if(f.tx!=null)f.tx-=d});SC.shots.forEach(x=>{x.x-=d;x.fx-=d})}
+  if(SC.walkDX){const d=SC.walkDX;SC.scroll+=d;if(SC.trail)SC.trail.forEach(p=>p.x-=d);SC.mobs.forEach(m=>m.x-=d);SC.drops.forEach(x=>x.x-=d);SC.fx.forEach(f=>{if(f.x!=null)f.x-=d;if(f.tx!=null)f.tx-=d});SC.shots.forEach(x=>{x.x-=d;x.fx-=d})}
   SC.ms.forEach(a=>{if(a.ox!=null){a.sx=SC.lead.x+a.ox;a.sy=SC.lead.y+a.oy}});
   if(SC.focus&&(SC.focus.hp<=0||!SC.mobs.includes(SC.focus)))SC.focus=null;
   /* 파티 */
   SC.ms.forEach((a,i)=>{
-    a.flash=Math.max(0,a.flash-dt);a.lunge=Math.max(0,a.lunge-dt);a.bob+=dt*(walk?9:4);
+    a.flash=Math.max(0,a.flash-dt);a.lunge=Math.max(0,a.lunge-dt);a.bob+=dt*(SC.manual&&a.key!=='char'?(Math.hypot(a.vx||0,a.vy||0)>15?9:2):(walk?9:4));
     if(a.down>0){a.down-=dt;if(a.down<=0)a.hp=a.max;return}
     a.hp=Math.min(a.max,a.hp+a.max*0.05*dt);
     a.cd-=dt;
@@ -1322,7 +1437,7 @@ function sceneStep(dt){
     const t=a.tgt;
     if(a.kind==='melee'&&t){
       const d=Math.hypot(t.x-a.x,t.y-a.y);
-      if(d>20){a.x+=(t.x-a.x)/d*150*dt;a.y+=(t.y-a.y)/d*150*dt}
+      if(d>20){if(SC.manual)steer(a,t.x,t.y,18,175,dt);else{a.x+=(t.x-a.x)/d*150*dt;a.y+=(t.y-a.y)/d*150*dt}}
       else if(a.cd<=0){a.cd=rand(0.4,0.55);a.lunge=0.12;a.lx=(t.x-a.x)/d;a.ly=(t.y-a.y)/d;
         const crit=Math.random()<0.15?1:0, dmg=Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1)));
         SC.fx.push({k:'slash',x:(a.x+t.x)/2,y:(a.y+t.y)/2,a:Math.atan2(t.y-a.y,t.x-a.x),t:0,life:0.16});
@@ -1330,7 +1445,8 @@ function sceneStep(dt){
         if(Math.random()<0.2){SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.35,r:50,col:'#4FB6A4',w:3});
           SC.mobs.forEach(m=>{if(m!==t&&Math.hypot(m.x-t.x,m.y-t.y)<50)dmgMob(m,Math.round(dmg*0.6),0,t.x,t.y)})}}
     }else{
-      if(a.key!=='char'||!SC.manual){const dx=a.sx-a.x,dy=a.sy-a.y,d=Math.hypot(dx,dy),sp=SC.manual?150:110;if(d>2){a.x+=dx/d*Math.min(d,sp*dt);a.y+=dy/d*Math.min(d,sp*dt)}}
+      if(SC.manual&&a.key!=='char'){const rank=SC.ms.filter(b=>b.key!=='char').indexOf(a);const gl=followGoal(a,rank);steer(a,gl.x,gl.y,gl.stop,165,dt)}
+      else if(!SC.manual){const dx=a.sx-a.x,dy=a.sy-a.y,d=Math.hypot(dx,dy);if(d>2){a.x+=dx/d*Math.min(d,110*dt);a.y+=dy/d*Math.min(d,110*dt)}a.vx=0;a.vy=0}
       if(t&&a.cd<=0){a.cd=rand(0.5,0.7);const crit=Math.random()<0.12?1:0;
         SC.shots.push({x:a.x+10,y:a.y-6,t,sp:340,dmg:Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1))),crit,col:a.key==='char'?'#FFD166':'#7FD8C8',fx:a.x,fy:a.y})}
     }
@@ -1340,14 +1456,14 @@ function sceneStep(dt){
     s.x+=(s.t.x-s.x)/d*s.sp*dt;s.y+=(s.t.y-s.y)/d*s.sp*dt});
   SC.shots=SC.shots.filter(s=>!s.done);
   /* 적 */
-  SC.mobs.forEach(m=>{m.hit=Math.max(0,m.hit-dt);m.x+=m.kx;m.y+=m.ky;m.kx*=0.6;m.ky*=0.6;
+  SC.mobs.forEach(m=>{m.hit=Math.max(0,m.hit-dt);if(m.slow>0)m.slow-=dt;if(m.vuln>0)m.vuln-=dt;m.x+=m.kx;m.y+=m.ky;m.kx*=0.6;m.ky*=0.6;
     let tg=null,bd=1e9;SC.ms.forEach(a=>{if(a.down>0)return;const d=Math.hypot(a.x-m.x,a.y-m.y);if(d<bd){bd=d;tg=a}});
     if(!tg)return;
     if(m.elite){m.slam-=dt;
       if(m.wind>0){m.wind-=dt;if(m.wind<=0){SC.fx.push({k:'ring',x:m.x,y:m.y,t:0,life:0.3,r:70,col:'#FF5E3A',w:5});if(!RM)SC.shake=8;
         SC.ms.forEach(a=>{if(a.down<=0&&Math.hypot(a.x-m.x,a.y-m.y)<70){a.hp-=a.max*0.45;a.flash=0.25;if(a.hp<=0)a.down=2}});m.slam=rand(4,6)}return}
       if(m.slam<=0&&bd<90){m.wind=0.9;return}}
-    if(bd>18){m.x+=(tg.x-m.x)/bd*m.sp*dt;m.y+=(tg.y-m.y)/bd*m.sp*dt}
+    if(bd>18){const sl=m.slow>0?0.4:1;m.x+=(tg.x-m.x)/bd*m.sp*sl*dt;m.y+=(tg.y-m.y)/bd*m.sp*sl*dt}
     else{m.cd-=dt;if(m.cd<=0){m.cd=rand(0.9,1.4);tg.hp-=tg.max*(m.elite?0.12:0.05);tg.flash=0.15;if(tg.hp<=0){tg.down=2;SC.fx.push({k:'num',x:tg.x,y:tg.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}}
   });
   SC.mobs=SC.mobs.filter(m=>{if(m.hp<=0){killMob(m);return false}return m.x>-60});
@@ -1401,8 +1517,7 @@ function sceneLoop(now){
   if(!document.hidden&&tab==='explore'){
     if(!SC.W){sceneSize();syncTeam();init3D();size3D()}
     if(SC.W){sceneStep(dt);if(R3.on)render3D(dt);else sceneDraw()}
-    if(SC.sk){SC.sk.dash=Math.max(0,SC.sk.dash-dt*(S.fast?3:1));SC.sk.ring=Math.max(0,SC.sk.ring-dt*(S.fast?3:1));
-      $('skDash').firstChild.style.setProperty('--cd',(SC.sk.dash/SK_CD.dash).toFixed(3));$('skRing').firstChild.style.setProperty('--cd',(SC.sk.ring/SK_CD.ring).toFixed(3))}
+    tickSkills(dt*(S.fast?3:1));
     const u=$('ultBtn');u.style.setProperty('--p',Math.round(SC.ult*100)+'%');u.disabled=SC.ult<1;u.textContent=SC.ult<1?`필살기 ${Math.round(SC.ult*100)}%`:'필살기!';
     $('hudKills').textContent=`처치 ${fmt(S.kills||0)}`;
   }
@@ -1826,7 +1941,10 @@ function render3D(dt){
   SC.ms.forEach(a=>{const o=objFor('ms:'+a.key,()=>{const g=M3.get(a.key==='char'?'trainer':a.k);g.scale.setScalar(a.key==='char'?0.95:0.85);return g});
     const lx=a.lunge>0?a.lx*10*(a.lunge/0.12):0, lz=a.lunge>0?a.ly*10*(a.lunge/0.12):0;
     o.position.set(wx(a.x+lx),Math.abs(Math.sin(a.bob))*0.06,wz(a.y+lz));
-    const t=a.tgt&&SC.mobs.includes(a.tgt)?a.tgt:null;const fx=t?t.x-a.x:1, fy=t?t.y-a.y:0;o.rotation.y=Math.atan2(fx,fy*1.35);
+    const t=a.tgt&&SC.mobs.includes(a.tgt)?a.tgt:null;const mv=Math.hypot(a.vx||0,a.vy||0);
+    let fx,fy;if(a.key==='char'&&SC.manual&&SC.face&&!(t&&Math.hypot(t.x-a.x,t.y-a.y)<150&&SC.idle>0.2)){fx=SC.face.x;fy=SC.face.y}
+    else if(mv>20&&!(t&&Math.hypot(t.x-a.x,t.y-a.y)<60)){fx=a.vx;fy=a.vy}else{fx=t?t.x-a.x:1;fy=t?t.y-a.y:0}
+    const want=Math.atan2(fx,fy*1.35);let dr=want-o.rotation.y;dr=Math.atan2(Math.sin(dr),Math.cos(dr));o.rotation.y+=dr*Math.min(1,dt*10);
     o.rotation.z=a.down>0?Math.PI/2*0.9:0;const sq=a.flash>0?0.85:1;o.scale.y=o.scale.x*sq});
   /* 적 */
   SC.mobs.forEach(m=>{if(!m.oid)m.oid=++R3.nid||(R3.nid=1);const o=objFor('mob:'+m.oid,()=>{const g=M3.get(m.k);g.scale.setScalar(m.elite?1.3:0.8);
@@ -1912,7 +2030,7 @@ function offline(){
   const cups=gainCharExp(ox);
   const ni=Math.floor(sec/3600*(1+dexBonus().item)+Math.random());
   for(let i=0;i<ni&&S.items.length<MAXITEMS;i++){const it=makeItem(S.diff,S.map);if(keepItem(it)){S.items.push(it);items++}else S.gold+=itemSell(it)}
-  addLog(`자리를 비운 ${Math.round(sec/60)}분 동안 ${fmt(g)}G, 악마 ${found}마리${items?`, 장비 ${items}개`:''}를 얻었어요${freed?` · ${freed}마리는 설정에 따라 놓아줌`:''}${ups?` · 악마 총 ${ups}레벨 성장`:''}${cups?` · 소환사 ${cups}레벨 성장`:''}`,true);
+  addLog(`자리를 비운 ${Math.round(sec/60)}분 동안 ${fmt(g)}G, 악마 ${found}마리${items?`, 장비 ${items}개`:''}를 얻었어요${freed?` · ${freed}마리는 설정에 따라 퇴마함`:''}${ups?` · 악마 총 ${ups}레벨 성장`:''}${cups?` · 소환사 ${cups}레벨 성장`:''}`,true);
   setTimeout(()=>toast(`오프라인 보상: ${fmt(g)}G · 악마 ${found}마리${items?` · 장비 ${items}개`:''}`),300);
 }
 if(load())offline();else newGame();
