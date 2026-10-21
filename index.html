@@ -219,8 +219,67 @@ h2{color:#E7C27A}
 .story hr{border:0;border-top:1px solid var(--line);margin:8px 0}
 .skills button:focus-visible{outline:2px solid #FFD166;outline-offset:2px}
 label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+/* ===== 세로 전체 화면 전투 + 메뉴 + 서랍 ===== */
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{margin:0}
+body::before{display:none}
+.scene{position:fixed;inset:0;height:100%;height:100dvh;border:0;border-radius:0;background:#050403;z-index:0}
+.scene canvas.gl{z-index:0}
+.scene .dark{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(circle at var(--lx,50%) var(--ly,50%),transparent var(--r0,120px),rgba(3,2,2,.55) calc((var(--r0,120px) + var(--r1,260px))/2),rgba(2,1,1,.95) var(--r1,260px))}
+.scene canvas#scene{z-index:1}
+.scene.flat .dark{z-index:2}
+.scene .hud,.scene .ult,.scene .modebtn,.scene .skills{z-index:3}
+.scene::after{background:radial-gradient(ellipse at 50% 50%,transparent 60%,rgba(0,0,0,.6) 100%)}
+.top{position:fixed;left:0;right:0;top:0;z-index:5;background:linear-gradient(180deg,rgba(5,3,3,.92) 0%,rgba(5,3,3,.75) 70%,transparent 100%);border:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:10px}
+.top .wrap{padding-block:6px}
+.logo{font-size:17px}
+.stat b{font-size:15px}
+.stripband{background:transparent}
+.strip{padding-block:2px}
+.schip{background:rgba(10,7,6,.6)}
+.hudline{display:flex;align-items:center;gap:10px;font:500 12px var(--mono);color:#CDBEA6;padding-block:4px 0!important}
+.hudline .bar{flex:1;height:6px;margin:0;background:rgba(255,255,255,.08)}
+.hudline b.ok{color:#7FD6A0}.hudline b.no{color:#FF8A7A}
+.scene .hud{top:calc(env(safe-area-inset-top,0px) + 118px);left:12px}
+.scene .modebtn{top:calc(env(safe-area-inset-top,0px) + 114px);right:12px}
+:root{--menuH:62px}
+.scene .skills{left:10px;bottom:calc(var(--menuH) + env(safe-area-inset-bottom,0px) + 12px)}
+.scene .ult{right:12px;bottom:calc(var(--menuH) + env(safe-area-inset-bottom,0px) + 16px)}
+.menu{position:fixed;left:0;right:0;bottom:0;z-index:12;display:flex;justify-content:center;gap:2px;padding:6px max(6px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,rgba(5,3,3,.96),rgba(5,3,3,.85));border-top:1px solid #3A2A20}
+.menu button{flex:1;max-width:96px;min-width:0;height:50px;border:1px solid transparent;border-radius:10px;background:none;color:#B9A68C;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:600 11.5px var(--body);position:relative;padding:0}
+.menu button i{font-style:normal;font-size:19px;line-height:1;filter:grayscale(.4)}
+.menu button span{position:absolute;top:2px;right:4px;font:500 9.5px var(--mono);color:#8C7A64}
+.menu button[aria-selected="true"]{color:#F2D49A;border-color:#7E1712;background:radial-gradient(circle at 50% 0%,rgba(179,38,30,.35),rgba(30,14,10,.6))}
+.menu button[aria-selected="true"] i{filter:none}
+.menu button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.drawer{position:fixed;left:0;right:0;bottom:calc(var(--menuH) + env(safe-area-inset-bottom,0px));top:30vh;top:30dvh;z-index:10;display:flex;flex-direction:column;
+  background:rgba(12,9,8,.97);border-top:1px solid #5A1A14;border-radius:16px 16px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.7);animation:drawerin .22s ease-out}
+.drawer[hidden]{display:none}
+@keyframes drawerin{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.drawer{animation:none}}
+.dhead{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;border-bottom:1px solid var(--line)}
+.dhead b{font-family:var(--display);font-weight:800;font-size:18px;color:#E7C27A}
+.dclose{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#1F1714;color:var(--ink);font-size:16px;cursor:pointer}
+.dclose:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#dbody{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#dbody .wrap{padding-block:12px 24px}
+body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .scene .modebtn{visibility:hidden}
+.overlay{z-index:30}
+.toast{bottom:calc(var(--menuH) + env(safe-area-inset-bottom,0px) + 84px);z-index:35}
+.pop{top:calc(env(safe-area-inset-top,0px) + 112px)}
 </style>
 
+<div class="scene" id="sceneBox">
+          <div class="dark" id="dark" aria-hidden="true"></div>
+          <canvas id="scene" aria-label="자동 사냥 장면" role="img"></canvas>
+          <div class="hud"><span id="hudKills">처치 0</span><span id="hudLoot"></span><span id="hudMode"></span></div>
+          <button class="modebtn" id="modeBtn" aria-pressed="false">직접 조작</button>
+          <div class="skills" id="skills"></div>
+          <button class="ult" id="ultBtn" disabled>필살기</button>
+        </div>
 <header class="top">
   <div class="wrap">
     <div class="logo">솔로몬의 인장</div>
@@ -228,47 +287,24 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
     <div class="stat"><small>진행</small><b id="stageTop">1</b></div>
   </div>
   <div class="stripband"><div class="wrap strip" id="strip" aria-live="off"></div></div>
-  <div class="wrap"><nav class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-tab="explore">탐험</button>
-    <button role="tab" aria-selected="false" data-tab="mons">악마 <span id="monCount"></span></button>
-    <button role="tab" aria-selected="false" data-tab="fuse">합성</button>
-    <button role="tab" aria-selected="false" data-tab="gear">장비 <span id="gearCount"></span></button>
-    <button role="tab" aria-selected="false" data-tab="dex">도감 <span id="dexCount"></span></button>
-  </nav></div>
+  <div class="wrap hudline"><div class="bar" aria-label="탐험 진행도"><i id="hudProg"></i></div><span id="hudPow"></span></div>
 </header>
 
-<main>
+<nav class="menu" id="menu" role="tablist" aria-label="메뉴">
+  <button data-tab="team" aria-selected="false"><i>⚔</i>팀</button>
+  <button data-tab="mons" aria-selected="false"><i>☠</i>악마<span id="monCount"></span></button>
+  <button data-tab="fuse" aria-selected="false"><i>⛧</i>합성</button>
+  <button data-tab="gear" aria-selected="false"><i>🗡</i>장비<span id="gearCount"></span></button>
+  <button data-tab="dex" aria-selected="false"><i>📜</i>도감<span id="dexCount"></span></button>
+  <button data-tab="map" aria-selected="false"><i>🗺</i>지역</button>
+  <button data-tab="set" aria-selected="false"><i>☰</i>설정</button>
+</nav>
+<div class="drawer" id="drawer" hidden>
+<div class="dhead"><b id="dTitle"></b><button class="dclose" id="dClose" aria-label="닫기">✕</button></div>
+<main id="dbody">
   <div class="wrap">
-    <section id="view-explore">
-      <div style="display:flex;flex-direction:column;gap:16px">
-        <div class="scene" id="sceneBox">
-          <canvas id="scene" aria-label="자동 사냥 장면" role="img"></canvas>
-          <div class="hud"><span id="hudKills">처치 0</span><span id="hudLoot"></span><span id="hudMode"></span></div>
-          <button class="modebtn" id="modeBtn" aria-pressed="false">직접 조작</button>
-          <div class="skills" id="skills"></div>
-          <button class="ult" id="ultBtn" disabled>필살기</button>
-        </div>
-        <details class="panel" id="autoSet">
-          <summary><b>자동 사냥 설정</b> <span class="muted" id="autoSum"></span></summary>
-          <div class="setrow"><label for="fltItem">장비 · 이 등급 미만은 자동 분해</label><select id="fltItem"></select></div>
-          <div class="setrow"><label for="fltMon">악마 · 이 등급 미만은 자동으로 퇴마</label><select id="fltMon"></select></div>
-          <div class="note">분해하거나 퇴마한 만큼 골드를 받아요. SS 이상 악마는 설정과 상관없이 항상 보관해요.</div>
-        </details>
-        <div class="panel">
-          <div class="stepper">
-            <button class="arrow" id="diffPrev" aria-label="이전 난이도">‹</button>
-            <div class="slabel"><span class="sub">난이도</span><b id="diffName"></b><small id="diffInfo"></small></div>
-            <button class="arrow" id="diffNext" aria-label="다음 난이도">›</button>
-          </div>
-          <div class="stepper">
-            <button class="arrow" id="mapPrev" aria-label="이전 지역">‹</button>
-            <div class="slabel"><span class="sub">지역</span><b id="mapName"></b><small id="mapInfo"></small></div>
-            <button class="arrow" id="mapNext" aria-label="다음 지역">›</button>
-          </div>
-          <div class="note">이 지역에서 만날 수 있는 악마 · <span id="dexNote"></span></div>
-          <div class="dex" id="dex"></div>
-          <div class="row"><button class="btn" id="storyBtn">지금까지의 이야기</button></div>
-        </div>
+    <section id="view-team" hidden>
+      <div style="display:flex;flex-direction:column;gap:12px">
         <div class="panel">
           <div class="row"><h2 id="stageTitle">스테이지 1</h2><span class="muted" style="margin-left:auto" id="gps"></span></div>
           <div class="bar" aria-label="탐험 진행도"><i id="prog"></i></div>
@@ -287,7 +323,35 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
             <span class="muted">소환사와 팀 악마는 사냥하며 경험치를 얻어요 · 누르면 정보, 멤버 교체로 팀 편성</span>
           </div>
         </div>
-
+      </div>
+    </section>
+    <section id="view-map" hidden>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="panel">
+          <div class="stepper">
+            <button class="arrow" id="diffPrev" aria-label="이전 난이도">‹</button>
+            <div class="slabel"><span class="sub">난이도</span><b id="diffName"></b><small id="diffInfo"></small></div>
+            <button class="arrow" id="diffNext" aria-label="다음 난이도">›</button>
+          </div>
+          <div class="stepper">
+            <button class="arrow" id="mapPrev" aria-label="이전 지역">‹</button>
+            <div class="slabel"><span class="sub">지역</span><b id="mapName"></b><small id="mapInfo"></small></div>
+            <button class="arrow" id="mapNext" aria-label="다음 지역">›</button>
+          </div>
+          <div class="note">이 지역에서 만날 수 있는 악마 · <span id="dexNote"></span></div>
+          <div class="dex" id="dex"></div>
+          <div class="row"><button class="btn" id="storyBtn">지금까지의 이야기</button></div>
+        </div>
+      </div>
+    </section>
+    <section id="view-set" hidden>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="panel" id="autoSet">
+          <div class="row"><h2>자동 사냥 설정</h2><span class="muted" id="autoSum"></span></div>
+          <div class="setrow"><label for="fltItem">장비 · 이 등급 미만은 자동 분해</label><select id="fltItem"></select></div>
+          <div class="setrow"><label for="fltMon">악마 · 이 등급 미만은 자동으로 퇴마</label><select id="fltMon"></select></div>
+          <div class="note">분해하거나 퇴마한 만큼 골드를 받아요. SS 이상 악마는 설정과 상관없이 항상 보관해요.</div>
+        </div>
         <div class="panel">
           <div class="row"><h2>탐험 기록</h2>
             <label class="speed" style="margin-left:auto"><input type="checkbox" id="fast"> 테스트용 5배속</label></div>
@@ -374,6 +438,7 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
     </section>
   </div>
 </main>
+</div>
 
 <div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -836,7 +901,8 @@ function renderExplore(){
     :d+1<DIFFS.length?`모든 지역에서 ${UNLOCK_AT}단계를 넘으면 ${DIFFS[d+1].n} 난이도가 개방돼요.`:'최고 난이도예요.';
   $('stageNote').textContent=(conquered()?'정복한 지역이에요. 머물면서 전용 악마를 계속 모을 수 있어요. ':tp>=req?'다음 탐험에서 이 단계를 돌파해요. 봉인 등급 확률은 모든 지역과 난이도에서 같아요. ':'전투력이 부족해요. 악마 레벨업, 합성, 소환사 강화, 장비로 팀을 키우세요. ')
     +(conquered()?'':` 다음 단계에서는 사냥 1회 경험치가 ${fmt(expPerTick())} → ${fmt(expAt(Math.min(eff()+1,MAPS[S.map].off+MAXSTAGE),S.diff))}로 늘어나요.`)+' '+rule+` 악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 1시간에 1개 발견돼요.`;
-  $('prog').style.width=(S.prog*100)+'%';
+  $('prog').style.width=(S.prog*100)+'%';$('hudProg').style.width=(conquered()?100:S.prog*100)+'%';
+  $('hudPow').innerHTML=`전투력 <b class="${conquered()||tp>=req?'ok':'no'}">${fmt(tp)}</b> / ${conquered()?'정복':fmt(req)}`;
   let h=`<div class="teamcol"><button class="slot filled" data-char="1"><span class="em">🧑‍🌾</span><span class="nm">소환사 Lv${S.charLv}</span><span class="pw">${fmt(charPower()+gearPower())}</span><span class="xpbar"><i style="width:${Math.min(100,(S.charExp||0)/expNeed(S.charLv)*100)}%"></i></span></button>
     <button class="mini" data-gearbtn="1">장비</button></div>`;
   S.team.forEach((id,i)=>{const m=id!=null&&byId(id);
@@ -1193,9 +1259,15 @@ $('fuseGrid').addEventListener('click',e=>{
 $('fslots').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(!b)return;fuseSel=fuseSel.filter(x=>x!==+b.dataset.id);renderFuse()});
 
 /* ---------- misc events ---------- */
-function goTab(t){tab=t;document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===t));
-  ['explore','mons','fuse','gear','dex'].forEach(v=>$('view-'+v).hidden=v!==t);if(t==='explore')SC.W=0;renderAll()}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.tab));
+/* 메뉴: 전투 화면은 항상 뒤에서 돌아가고, 기능은 아래에서 올라오는 서랍에 열려요. 같은 버튼을 다시 누르면 닫혀요. */
+const VIEWS={team:'팀 편성',mons:'악마 보관함',fuse:'합성 · 환생',gear:'장비',dex:'도감',map:'지역 · 난이도',set:'설정 · 기록'};
+function goTab(t,toggle){if(toggle&&t===tab)t='explore';tab=t;const open=t!=='explore';
+  document.querySelectorAll('#menu button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===t));
+  Object.keys(VIEWS).forEach(v=>$('view-'+v).hidden=v!==t);$('drawer').hidden=!open;document.body.classList.toggle('drawer-open',open);
+  if(open){$('dTitle').textContent=VIEWS[t];$('dbody').scrollTop=0}renderAll()}
+document.querySelectorAll('#menu button').forEach(b=>b.onclick=()=>goTab(b.dataset.tab,true));
+$('dClose').onclick=()=>goTab('explore');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tab!=='explore'&&$('overlay').hidden)goTab('explore')});
 $('monGrid').addEventListener('click',e=>{const b=e.target.closest('.card');if(b)openDetail(+b.dataset.id)});
 $('gearGrid').addEventListener('click',e=>{const b=e.target.closest('[data-item]');if(b)openItem(+b.dataset.item)});
 $('gearEq').addEventListener('click',e=>{const b=e.target.closest('[data-item]');if(b)openItem(+b.dataset.item)});
@@ -1244,8 +1316,10 @@ const sceneQ=[];
 function scenePush(text,color,big){sceneQ.push({text,color,big});if(sceneQ.length>8)sceneQ.shift()}
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function sceneSize(){const c=$('scene'),b=c.getBoundingClientRect();SC.dpr=Math.min(2,window.devicePixelRatio||1);
-  SC.W=b.width;SC.H=b.height;c.width=Math.round(b.width*SC.dpr);c.height=Math.round(b.height*SC.dpr)}
-window.addEventListener('resize',()=>{if(!$('view-explore').hidden){sceneSize();size3D()}});
+  /* 화면 전체에 그리되, 전투 마당은 가운데 띠(세로 240~320px)예요. 위아래는 어둠 속 땅 */
+  SC.VW=b.width;SC.VH=b.height;SC.W=b.width;SC.H=Math.round(Math.max(240,Math.min(320,b.height*0.4,b.width*0.85)));SC.oy=Math.round((b.height-SC.H)/2);
+  c.width=Math.round(b.width*SC.dpr);c.height=Math.round(b.height*SC.dpr)}
+window.addEventListener('resize',()=>{sceneSize();size3D()});
 const SLOTS_F=[[0,0],[34,-38],[40,34],[70,0]];
 function syncTeam(){
   const want=[{key:'char',e:'🧑‍🌾',pw:charPower()+gearPower(),kind:'ranged',size:30}];
@@ -1293,7 +1367,7 @@ function setManual(on){SC.manual=on;SC.trail=[{x:SC.lead?SC.lead.x:0,y:SC.lead?S
 $('modeBtn').onclick=()=>setManual(!SC.manual);
 $('storyBtn').onclick=()=>openStoryLog();
 function scenePt(e){const b=$('scene').getBoundingClientRect();return {x:e.clientX-b.left,y:e.clientY-b.top}}
-function pickMob(px,py){let best=null,bd=40;SC.mobs.forEach(m=>{const p=R3.on?proj3(m.x,m.y,0.6):{x:m.x,y:m.y};const d=Math.hypot(p.x-px,p.y-py);if(d<bd){bd=d;best=m}});return best}
+function pickMob(px,py){let best=null,bd=40;SC.mobs.forEach(m=>{const p=R3.on?proj3(m.x,m.y,0.6):{x:m.x,y:m.y+SC.oy};const d=Math.hypot(p.x-px,p.y-py);if(d<bd){bd=d;best=m}});return best}
 $('sceneBox').addEventListener('pointerdown',e=>{if(!SC.manual||e.target.closest('button'))return;const p=scenePt(e);SC.joy={ox:p.x,oy:p.y,dx:0,dy:0,id:e.pointerId,moved:false};
   try{$('sceneBox').setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
 $('sceneBox').addEventListener('pointermove',e=>{const j=SC.joy;if(!j||j.id!==e.pointerId)return;const p=scenePt(e);let dx=p.x-j.ox,dy=p.y-j.oy;const d=Math.hypot(dx,dy);
@@ -1303,7 +1377,7 @@ $('sceneBox').addEventListener('pointerup',joyEnd);$('sceneBox').addEventListene
 const KEYMAP={ArrowUp:[0,-1],KeyW:[0,-1],ArrowDown:[0,1],KeyS:[0,1],ArrowLeft:[-1,0],KeyA:[-1,0],ArrowRight:[1,0],KeyD:[1,0]};
 const anyKey=()=>Object.keys(SC.keys).some(k=>SC.keys[k]);
 function keyVec(){let x=0,y=0;for(const k in SC.keys)if(SC.keys[k]&&KEYMAP[k]){x+=KEYMAP[k][0];y+=KEYMAP[k][1]}SC.inp={x,y}}
-document.addEventListener('keydown',e=>{if(!SC.manual||tab!=='explore'||!KEYMAP[e.code]||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;SC.keys[e.code]=1;keyVec();e.preventDefault()});
+document.addEventListener('keydown',e=>{if(!SC.manual||tab!=='explore'&&false||!KEYMAP[e.code]||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;SC.keys[e.code]=1;keyVec();e.preventDefault()});
 document.addEventListener('keyup',e=>{if(!KEYMAP[e.code])return;SC.keys[e.code]=0;if(!SC.joy)keyVec()});
 /* skills & story */
 /* ===== 스킬: 소환사 1개 + 팀 악마마다 1개. 자동 사냥 때는 알아서 쓰고, 직접 조작 때는 내가 눌러요 ===== */
@@ -1346,7 +1420,7 @@ function renderSkillBar(){const key=SC.ms.map(a=>a.key).join(',');if(key===skBar
     return `<button data-sk="${a.key}" aria-label="${sk.n}" title="${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${sk.n}</small><em>${i+1}</em></button>`}).join('')}
 $('skills').addEventListener('click',e=>{const b=e.target.closest('button[data-sk]');if(!b)return;const a=SC.ms.find(x=>x.key===b.dataset.sk);
   if(!a)return;if(!castSkill(a,true))toast((SC.skcd[a.key]||0)>0?'아직 재사용 대기 중이에요':'대상이 없어요')});
-document.addEventListener('keydown',e=>{if(tab!=='explore'||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;
+document.addEventListener('keydown',e=>{if(!$('overlay').hidden||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;
   const n='1234'.indexOf(e.key);if(n>=0&&SC.ms[n]){castSkill(SC.ms[n],true);e.preventDefault()}});
 function tickSkills(dt){for(const k in SC.skcd)SC.skcd[k]=Math.max(0,SC.skcd[k]-dt);autoSkills();renderSkillBar();
   $('skills').querySelectorAll('button').forEach(b=>{const a=SC.ms.find(x=>x.key===b.dataset.sk);if(!a)return;const cd=SC.skcd[a.key]||0,mx=skillOf(a).cd;b.firstChild.style.setProperty('--cd',(cd/mx).toFixed(3));b.classList.toggle('ready',cd<=0)})}
@@ -1381,7 +1455,7 @@ function openStoryLog(){const keys=(S.story&&S.story.seen)||[];
   $('sheet').innerHTML=`<div class="story"><div class="sub">지금까지의 이야기</div>${keys.map(k=>{const e=storyEntry(k);return `<h3>${e.t}</h3>${e.x.split('\n').map(l=>l?`<p>${l}</p>`:'').join('')}`}).join('<hr>')||'<p>아직 펼쳐진 이야기가 없어요.</p>'}</div>
     <div class="row"><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;$('sheet').dataset.kind='story';$('sheet').scrollTop=0;$('overlay').hidden=false}
 
-const manualMul=()=>SC.manual&&tab==='explore'&&!document.hidden?MANUAL_BONUS:1;
+const manualMul=()=>SC.manual&&!document.hidden?MANUAL_BONUS:1;
 let lastT=performance.now(), syncT=0;
 /* ===== 직접 조작 때 소환수 악마의 따라오기 =====
    소환사가 지나간 발자국(trail)을 따라 각자 다른 거리만큼 뒤에서 걷고, 멈추면 소환사 주변에 느슨하게 모여요.
@@ -1475,7 +1549,7 @@ function sceneStep(dt){
 }
 function sceneDraw(){
   const c=$('scene'),g=c.getContext('2d');g.setTransform(SC.dpr,0,0,SC.dpr,0,0);
-  g.fillStyle='#15100D';g.fillRect(0,0,SC.W,SC.H);
+  g.fillStyle='#0E0A08';g.fillRect(0,0,SC.VW,SC.VH);g.translate(0,SC.oy);if(SC.ms[0])lightAt(SC.ms[0].x,SC.ms[0].y+SC.oy);if(!SC.flat){SC.flat=1;$('sceneBox').classList.add('flat')}
   const sx=SC.shake?rand(-SC.shake,SC.shake):0, sy=SC.shake?rand(-SC.shake,SC.shake):0;g.translate(sx,sy);
   /* 흘러가는 바닥 */
   for(let i=0;i<34;i++){const span=SC.W+60, x=((i*97-SC.scroll*(i%3===0?1.0:0.85))%span+span)%span-30, y=(i*53+17)%SC.H;
@@ -1514,7 +1588,7 @@ function sceneDraw(){
 }
 function sceneLoop(now){
   const dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
-  if(!document.hidden&&tab==='explore'){
+  if(!document.hidden){
     if(!SC.W){sceneSize();syncTeam();init3D();size3D()}
     if(SC.W){sceneStep(dt);if(R3.on)render3D(dt);else sceneDraw()}
     tickSkills(dt*(S.fast?3:1));
@@ -1873,13 +1947,13 @@ function init3D(){
     const r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
     r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;r.domElement.className='gl';
     $('sceneBox').insertBefore(r.domElement,$('scene'));
-    const sc=new THREE.Scene();sc.background=new THREE.Color(0x0b0908);sc.fog=new THREE.FogExp2(0x0b0908,0.07);
+    const sc=new THREE.Scene();sc.background=new THREE.Color(0x0b0908);sc.fog=new THREE.FogExp2(0x0b0908,0.085);
     const cam=new THREE.PerspectiveCamera(30,1,0.1,80);
-    sc.add(new THREE.HemisphereLight(0x6a7488,0x1a0a06,0.6));
-    const moon=new THREE.DirectionalLight(0x9aa8c8,0.75);moon.position.set(-4,10,6);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);
+    sc.add(new THREE.HemisphereLight(0x6a7488,0x1a0a06,0.26));
+    const moon=new THREE.DirectionalLight(0x9aa8c8,0.3);moon.position.set(-4,10,6);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);
     Object.assign(moon.shadow.camera,{left:-9,right:9,top:7,bottom:-7,near:1,far:30});sc.add(moon);sc.add(moon.target);
-    const torch=new THREE.PointLight(0xff8a3a,2.8,9,1.6);sc.add(torch);
-    const rim=new THREE.DirectionalLight(0xff2a10,1.1);rim.position.set(3,4,-8);sc.add(rim);
+    const torch=new THREE.PointLight(0xff8a3a,3.6,12,1.4);sc.add(torch);
+    const rim=new THREE.DirectionalLight(0xff2a10,0.7);rim.position.set(3,4,-8);sc.add(rim);
     /* 떠오르는 불씨 */
     const EN=140,ep=new Float32Array(EN*3);for(let i=0;i<EN;i++){ep[i*3]=(Math.random()-0.5)*18;ep[i*3+1]=Math.random()*3.5;ep[i*3+2]=(Math.random()-0.5)*9}
     const eg=new THREE.BufferGeometry();eg.setAttribute('position',new THREE.BufferAttribute(ep,3));
@@ -1916,11 +1990,13 @@ function decoMesh(kind){
 function buildEnv(i){
   const E=ENV[i];R3.map=i;R3.ground.material.color.set(E.ground);R3.sc.fog.color.setHex(E.fog);R3.sc.background.setHex(E.fog);
   while(R3.deco.children.length)R3.deco.remove(R3.deco.children[0]);R3.items=[];
-  for(let n=0;n<46;n++){const d=decoMesh(E.deco);let z=(Math.random()-0.5)*9;if(Math.abs(z)<2.6)z+=z<0?-2.6:2.6;
+  /* 소품은 적게, 전투 마당 바깥쪽에만 (어지럽지 않게) */
+  for(let n=0;n<16;n++){const d=decoMesh(E.deco);const z=rand(-9,-4.4);
     d.position.set((Math.random()-0.5)*20,0,z);d.rotation.y=Math.random()*6;R3.deco.add(d);R3.items.push(d)}}
-function proj3(x,y,h){const v=new THREE.Vector3(wx(x),h||0,wz(y)).project(R3.cam);return {x:(v.x+1)/2*SC.W,y:(1-v.y)/2*SC.H}}
-function size3D(){if(!R3.on)return;R3.r.setSize(SC.W,SC.H,false);R3.cam.aspect=SC.W/SC.H;
-  R3.cam.fov=Math.max(24,Math.min(50,2*Math.atan(SC.H*U3*1.05/2/9.2)*180/Math.PI));R3.cam.updateProjectionMatrix()}
+function proj3(x,y,h){const v=new THREE.Vector3(wx(x),h||0,wz(y)).project(R3.cam);return {x:(v.x+1)/2*SC.VW,y:(1-v.y)/2*SC.VH}}
+function size3D(){if(!R3.on)return;R3.r.setSize(SC.VW,SC.VH,false);R3.cam.aspect=SC.VW/SC.VH;
+  const f=Math.max(24,Math.min(50,2*Math.atan(SC.H*U3*1.05/2/9.2)*180/Math.PI))*Math.PI/180;
+  R3.cam.fov=2*Math.atan(Math.tan(f/2)*SC.VH/SC.H/1.3)*180/Math.PI;/* 1.3배 확대: 세로 화면에서 캐릭터가 작아 보이지 않게 */R3.cam.updateProjectionMatrix()}
 function burst3D(mob){if(!R3.on)return;
   /* 바닥에 남는 핏자국 */
   const dc=new THREE.Mesh(new THREE.CircleGeometry(rand(0.28,0.55)*(mob.elite?1.8:1),14),new THREE.MeshBasicMaterial({color:0x2a0204,transparent:true,opacity:0.85,depthWrite:false}));
@@ -1971,15 +2047,22 @@ function render3D(dt){
   const lead=SC.ms[0], cx=lead?wx(lead.x)+1.6:0;
   const sh=SC.shake?rand(-SC.shake,SC.shake)*U3:0, sv=SC.shake?rand(-SC.shake,SC.shake)*U3:0;
   R3.cam.position.set(cx+sh,6.6,7.0+sv);R3.cam.lookAt(cx,0.3,0.3);
-  if(lead)R3.torch.position.set(wx(lead.x)+0.3,1.6,wz(lead.y)+0.4);R3.torch.intensity=2.3+Math.sin(performance.now()/90)*0.12+Math.random()*0.1;
+  if(lead)R3.torch.position.set(wx(lead.x)+0.3,1.6,wz(lead.y)+0.4);R3.torch.intensity=3.4+Math.sin(performance.now()/90)*0.15+Math.random()*0.12;
   R3.r.render(R3.sc,R3.cam);
   overlay3D();
 }
+/* 시야: 소환사 주변만 밝고 나머지는 어둠. 반지름은 화면 크기에 맞춰요 */
+const LR={r0:0,r1:0};
+function lightAt(x,y){const m=Math.min(SC.VW,SC.H*1.15);LR.r0=m*0.36;LR.r1=m*0.88;
+  const d=$('dark');d.style.setProperty('--lx',x.toFixed(0)+'px');d.style.setProperty('--ly',y.toFixed(0)+'px');
+  d.style.setProperty('--r0',LR.r0.toFixed(0)+'px');d.style.setProperty('--r1',LR.r1.toFixed(0)+'px')}
 function overlay3D(){
-  const c=$('scene'),g=c.getContext('2d');g.setTransform(SC.dpr,0,0,SC.dpr,0,0);g.clearRect(0,0,SC.W,SC.H);g.textAlign='center';g.textBaseline='middle';
+  const c=$('scene'),g=c.getContext('2d');g.setTransform(SC.dpr,0,0,SC.dpr,0,0);g.clearRect(0,0,SC.VW,SC.VH);g.textAlign='center';g.textBaseline='middle';
+  const L=SC.ms[0], LP=L?proj3(L.x,L.y,0.8):{x:SC.VW/2,y:SC.VH/2};lightAt(LP.x,LP.y);
+  const seen=p=>Math.max(0,Math.min(1,1-(Math.hypot(p.x-LP.x,p.y-LP.y)-LR.r0)/(LR.r1-LR.r0)));
   if(SC.focus){const p=proj3(SC.focus.x,SC.focus.y,0.05);g.strokeStyle='#FFD166';g.lineWidth=2;g.setLineDash([5,4]);g.beginPath();g.ellipse(p.x,p.y,26,12,0,0,Math.PI*2);g.stroke();g.setLineDash([])}
   if(SC.manual&&SC.joy){const j=SC.joy;g.globalAlpha=0.5;g.strokeStyle='#ffffff';g.lineWidth=2;g.beginPath();g.arc(j.ox,j.oy,38,0,Math.PI*2);g.stroke();g.fillStyle='#ffffff';g.beginPath();g.arc(j.ox+j.dx,j.oy+j.dy,16,0,Math.PI*2);g.fill();g.globalAlpha=1}
-  SC.mobs.forEach(m=>{const p=proj3(m.x,m.y,m.elite?2.5:1.6),w=m.elite?46:26;g.fillStyle='rgba(20,12,8,.8)';g.fillRect(p.x-w/2,p.y,w,4);g.fillStyle=m.elite?'#FF8A4C':'#D23A2A';g.fillRect(p.x-w/2,p.y,w*Math.max(0,m.hp/m.max),4)});
+  SC.mobs.forEach(m=>{const p=proj3(m.x,m.y,m.elite?2.5:1.6),w=m.elite?46:26;g.globalAlpha=m.elite?Math.max(0.5,seen(p)):seen(p);g.fillStyle='rgba(20,12,8,.8)';g.fillRect(p.x-w/2,p.y,w,4);g.fillStyle=m.elite?'#FF8A4C':'#D23A2A';g.fillRect(p.x-w/2,p.y,w*Math.max(0,m.hp/m.max),4)});g.globalAlpha=1;
   SC.ms.forEach(a=>{const p=proj3(a.x,a.y,1.85),w=30;g.fillStyle='rgba(20,12,8,.8)';g.fillRect(p.x-w/2,p.y,w,4);g.fillStyle=a.hp/a.max<0.35?'#FF6B6B':'#4FB6A4';g.fillRect(p.x-w/2,p.y,w*Math.max(0,a.hp/a.max),4);
     if(a.down>0){g.font='600 11px "IBM Plex Sans KR",sans-serif';g.fillStyle='#FF6B6B';g.fillText('쓰러짐',p.x,p.y-10)}});
   SC.fx.forEach(f=>{if(f.k==='slash'){const p=proj3(f.x,f.y,0.6),k=f.t/f.life;g.save();g.translate(p.x,p.y);g.rotate(f.a);g.strokeStyle='#ffffff';g.globalAlpha=1-k;g.lineWidth=3;g.beginPath();g.arc(0,0,15,-1.1+k*1.2,0.3+k*1.2);g.stroke();g.restore()}
@@ -1990,7 +2073,7 @@ function overlay3D(){
     g.font=`600 ${d.big?13:11}px "IBM Plex Sans KR",sans-serif`;const w=g.measureText(d.txt).width+12,h=d.big?20:17;
     g.fillStyle='rgba(12,10,9,.88)';g.fillRect(p.x-w/2,p.y-h/2,w,h);g.strokeStyle=d.col;g.lineWidth=1;g.strokeRect(p.x-w/2+0.5,p.y-h/2+0.5,w-1,h-1);g.fillStyle=d.col;g.fillText(d.txt,p.x,p.y+1);g.globalAlpha=1});
   if(SC.comboShow>0&&SC.combo>=5){const k=Math.min(1,SC.comboShow/0.3);g.globalAlpha=k;g.font=`${22+Math.min(10,SC.combo/5)}px "Black Han Sans",sans-serif`;
-    g.fillStyle='#000';g.fillText(`${SC.combo} 연속 처치!`,SC.W/2+1,26);g.fillStyle=SC.combo>=20?'#FF8A4C':'#FFD166';g.fillText(`${SC.combo} 연속 처치!`,SC.W/2,25);g.globalAlpha=1}
+    g.fillStyle='#000';g.fillText(`${SC.combo} 연속 처치!`,SC.W/2+1,SC.oy+16);g.fillStyle=SC.combo>=20?'#FF8A4C':'#FFD166';g.fillText(`${SC.combo} 연속 처치!`,SC.W/2,SC.oy+15);g.globalAlpha=1}
 }
 /* 카드·도감용 3D 초상화 */
 const PORT={};let PR=null;
