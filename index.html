@@ -76,7 +76,9 @@ h2{font-family:var(--display);font-weight:800;font-size:19px;margin:0;text-wrap:
 .mini:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .grade.awk{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--g9);letter-spacing:0}
 .slot.picked{outline:3px solid var(--accent);outline-offset:-1px}
-.lvbox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.lvbox{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;display:block;line-height:1.7}
+.lvbox>div{margin-top:2px}
+.lvbox .grade{display:inline-block;vertical-align:1px}
 .upc{color:var(--accent);font-weight:600}.downc{color:var(--warn);font-weight:600}
 .card.sel{outline:3px solid var(--hot);outline-offset:-1px}
 .card.inteam{opacity:.45;cursor:not-allowed}
@@ -93,6 +95,10 @@ select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--lin
 .overlay{position:fixed;inset:0;background:rgba(10,16,20,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--surface);width:100%;max-width:560px;border-radius:16px 16px 0 0;max-height:88%;overflow:auto;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px}
 .sheet .head{display:flex;gap:14px;align-items:center}
+.ilvbar>.muted{font-size:12px}
+.ilvbar{position:sticky;top:-18px;z-index:2;margin:-18px -4px 4px;padding:10px 4px 8px;background:linear-gradient(180deg,var(--surface) 80%,rgba(23,17,15,0));display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ilvbtns{display:flex;gap:6px;margin-left:auto}
+.btn.small{padding:6px 10px;font-size:12.5px;min-height:0}
 .sheet .head .em{font-size:56px;line-height:1}
 .sheet h3{margin:0;font-family:var(--display);font-weight:800;font-size:22px}
 table{width:100%;border-collapse:collapse;font-size:14px}
@@ -1327,6 +1333,7 @@ function openItem(id){
   const lvBox=L?`<div class="lvbox"><b>${L.from?`Lv ${L.from} → `:''}Lv ${L.lv} 달성</b>${L.gain!=null?` · 전투력 <b class="upc">+${ifmt(L.gain)}</b>`:''}${L.before!==L.after?` · 등급 ${badge(L.before)} → ${badge(L.after)} <b class="${L.after>L.before?'upc':'downc'}">${L.after>L.before?'상승!':'하락'}</b>`:''}
     <div>${L.sum&&L.sum.length>1?`성장률 변화 ${L.sum.map(x=>`<span class="${x>=3?'upc':x<=-3?'downc':''}">${x>=0?'+':''}${x}%</span>`).join(' · ')}`:L.ch?`<span class="${L.ch.kind==='up'?'upc':L.ch.kind==='down'?'downc':''}">성장률 ${L.ch.pct>=0?'+':''}${L.ch.pct}%${L.ch.kind==='up'?' 급성장':L.ch.kind==='down'?' 정체':''}</span>`:'최대 레벨이라 더 이상 성장하지 않아요'}</div></div>`:'';
   $('sheet').innerHTML=`
+    <div class="ilvbar"><span class="muted">Lv <b class="num">${it.lv}</b>/${ILV} · 보유 <b class="num">${fmt(S.gold)}</b>G</span><span class="ilvbtns"><button class="btn small" data-act="ilv" ${it.lv>=ILV||S.gold<cost?'disabled':''}>${it.lv>=ILV?'최대 레벨':`레벨업 · ${fmt(cost)}G`}</button>${it.lv<ILV?`<button class="btn small" data-act="ilv5" ${S.gold<cost?'disabled':''}>+${Math.min(5,ILV-it.lv)} 레벨업 · ${fmt(cost5)}G</button>`:''}</span></div>
     <div class="head"><span class="em">${SLOTS[it.slot].e}</span><div><h3>${it.name} ${mb(it)}</h3>
       <div class="muted">${SLOTS[it.slot].n} · ${it.fl?it.fl+'층':MAPS[it.map].n}에서 획득 · Lv <span class="num">${it.lv}/${ILV}</span></div></div></div>
     ${lvBox}
@@ -1339,7 +1346,7 @@ function openItem(id){
       <div class="row" style="margin-top:6px"><button class="btn ${it.ident?'':'primary'}" data-act="ident" ${S.gold<identCost(it)*(it.ident?5:1)?'disabled':''}>${it.ident?`재감정 · ${fmt(identCost(it)*5)}G`:`감정하기 · ${fmt(identCost(it))}G`}</button></div></div>
     <div><div class="gauge"><i style="width:${pct}%;background:${gc(it.grade)}"></i></div>
       <div class="note">${it.grade<MAXG?`${gname(it.grade+1)}까지 만렙 예상 전투력 ${fmt(need)} 부족`:'최대 각성(★3)'}${starsOf(it)?` · 각성 ★${starsOf(it)} 전투력 +${Math.round((STAR_BONUS[starsOf(it)]-1)*100)}%`:''} · 탄생 등급 ${gname(it.g0)} · 100레벨까지 평균 ${EXPECT[it.g0]?`+${EXPECT[it.g0]}등급`:'유지'} 기대</div></div>
-    <div class="row"><button class="btn" data-act="ilv" ${it.lv>=ILV||S.gold<cost?'disabled':''}>${it.lv>=ILV?'최대 레벨':`레벨업 · ${fmt(cost)}G`}</button>${it.lv<ILV?`<button class="btn" data-act="ilv5" ${S.gold<cost?'disabled':''}>+${Math.min(5,ILV-it.lv)} 레벨업 · ${fmt(cost5)}G</button>`:''}</div>
+
     <div class="row"><span class="muted">전투력</span><b class="num" style="font-size:22px">+${ifmt(ipw(it))}</b>
       ${diff!=null?`<span class="num" style="color:${diff>=0?'var(--accent)':'var(--warn)'}">${diff>=0?'▲':'▼'} ${ifmt(Math.abs(diff))}</span><span class="muted">장착 중인 ${cur.name} 대비</span>`:''}</div>
     <div class="row"><button class="btn primary" data-act="${eq?'unequip':'equip'}">${eq?'장착 해제':'장착하기'}</button></div>
