@@ -219,6 +219,13 @@ h2{color:#E7C27A}
 .skills button .sig{position:absolute;inset:0 0 10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#F2C24A;text-shadow:0 0 8px #F2C24A}
 .skills button small{position:absolute;left:0;right:0;bottom:1px;font:600 8.5px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1;text-shadow:0 1px 2px #000}
 .skills button em{position:absolute;left:4px;top:1px;font:600 9px var(--mono);font-style:normal;color:#A39079;z-index:3}
+.bsp{flex-basis:100%;display:flex;flex-direction:column;gap:6px}
+.bspl{display:flex;flex-wrap:wrap;gap:5px;max-height:168px;overflow-y:auto}
+.bchip{display:flex;align-items:center;gap:4px;padding:3px 8px 3px 4px;border:1px solid var(--line);border-radius:999px;background:#17110F;color:var(--muted);font-size:12px;cursor:pointer}
+.bchip img.art{width:22px;height:22px}.bchip em{font:600 10px var(--mono);font-style:normal;color:var(--muted)}
+.bchip.on{border-color:var(--hot);color:var(--ink);background:rgba(231,163,62,.12)}.bchip.on em{color:var(--hot)}
+#bulkAll.on{border-color:var(--hot);color:var(--hot)}
+.bchip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .bulk{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:13px}.bulk label{display:flex;align-items:center;gap:6px;color:var(--muted)}
 .affbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:rgba(231,163,62,.05);display:flex;flex-direction:column;gap:3px;font-size:13.5px}
 .affbox b{color:#E7C27A}.affbox div{color:#D8CBB4}.unid{color:#C9A0FF;font-weight:600}
@@ -453,7 +460,8 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
           <div class="preview" id="fprev"></div>
           <div class="row"><button class="btn primary" id="fuseBtn">합성하기</button><button class="btn" id="fuseAuto">자동 선택</button><button class="btn" id="fuseClear">선택 해제</button></div>
           <div class="bulk"><b>일괄 합성</b><label>재료 등급 <select id="bulkCap" aria-label="일괄 합성할 최고 등급"></select> 이하</label><button class="btn" id="fuseBulk">일괄 합성</button>
-            <div class="note" id="bulkNote">같은 등급끼리 4마리씩 묶어 낮은 등급부터 골드가 허락하는 만큼 한 번에 합성해요. 팀에 있는 악마와 S 이상은 쓰지 않아요.</div></div>
+            <div class="bsp"><div class="row"><span class="muted">넣을 악마 종류</span><button class="mini" id="bulkAll">전체</button><span class="muted" id="bulkSpNote"></span></div><div class="bspl" id="bulkSp"></div></div>
+            <div class="note" id="bulkNote">같은 등급끼리 4마리씩 묶어 낮은 등급부터 골드가 허락하는 만큼 한 번에 합성해요. 종류를 고르면 그 종류만 넣어요(자동 선택도 같아요). 팀에 있는 악마와 S 이상은 쓰지 않아요.</div></div>
         </div>
         <div id="fresult"></div>
         <div class="panel">
@@ -1170,6 +1178,7 @@ function doRebirth(){
   save();renderAll();
 }
 function renderFuse(){
+  if($('bulkSp'))renderBulkSp();
   document.querySelectorAll('#fuseMode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===fuseMode));
   $('rebWrap').hidden=fuseMode!=='reb';$('fuseWrap').hidden=fuseMode!=='fuse';
   if(fuseMode==='reb')return renderReb();
@@ -1470,7 +1479,15 @@ $('recipes').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');
   fuseSel=pr.map(m=>m.id);doFuse();
   $('fresult').scrollIntoView({behavior:'smooth',block:'center'})});
 /* 합성 편의: 자동 선택 · 일괄 합성 */
-const fuseable=()=>S.mons.filter(m=>!S.team.includes(m.id)&&m.grade<6);
+/* 일괄 합성·자동 선택에 넣을 종류(비어 있으면 전체) */
+let bulkSel=new Set();
+const fuseable=()=>S.mons.filter(m=>!S.team.includes(m.id)&&m.grade<6&&(!bulkSel.size||bulkSel.has(m.sp)));
+function renderBulkSp(){const cap=+($('bulkCap').value||2),cnt={};S.mons.forEach(m=>{if(!S.team.includes(m.id)&&m.grade<6)cnt[m.sp]=(cnt[m.sp]||0)+1});
+  [...bulkSel].forEach(k=>{if(!cnt[k])bulkSel.delete(k)});
+  const ks=Object.keys(cnt).map(Number).sort((a,b)=>floorOf(a)-floorOf(b));
+  $('bulkSp').innerHTML=ks.length?ks.map(k=>`<button class="bchip ${bulkSel.has(k)?'on':''}" data-bsp="${k}" aria-pressed="${bulkSel.has(k)}">${artHTML(k)}<span>${SPECIES[k][1]}</span><em>${cnt[k]}</em></button>`).join(''):'<span class="muted">합성에 쓸 수 있는 악마가 없어요</span>';
+  $('bulkAll').classList.toggle('on',!bulkSel.size);
+  $('bulkSpNote').textContent=bulkSel.size?`${bulkSel.size}종 선택 · 이 종류만 넣어요`:'모든 종류를 넣어요 · 눌러서 고르기'}
 function autoGroup(cap){const by={};fuseable().forEach(m=>{if(m.grade<=cap)(by[m.grade]=by[m.grade]||[]).push(m)});
   for(let g=0;g<=cap;g++){const L=(by[g]||[]).sort((a,b)=>a.pot-b.pot);if(L.length>=2)return L.slice(0,4)}return null}
 let bulkArm=false;
@@ -1488,6 +1505,8 @@ $('fuseBulk').onclick=()=>{const cap=+$('bulkCap').value;const plan=bulkPlan(cap
   $('bulkNote').innerHTML=done?`<b>${done}번 합성</b> · ${fmt(spent)}G 사용 · 결과 ${sum}${rares.length?` · 희귀 ${rares.join(', ')}`:''}`:'골드가 부족해서 합성하지 못했어요.';
   toast(done?`일괄 합성 ${done}번 완료`:'골드가 부족해요');$('fuseBulk').textContent='일괄 합성';$('fuseBulk').classList.remove('primary')};
 $('bulkCap').innerHTML=[0,1,2,3,4,5].map(g=>`<option value="${g}" ${g===2?'selected':''}>${GRADES[g]}</option>`).join('');
+$('bulkSp').addEventListener('click',e=>{const b=e.target.closest('[data-bsp]');if(!b)return;const k=+b.dataset.bsp;bulkSel.has(k)?bulkSel.delete(k):bulkSel.add(k);bulkArm=false;$('fuseBulk').textContent='일괄 합성';$('fuseBulk').classList.remove('primary');renderBulkSp()});
+$('bulkAll').onclick=()=>{bulkSel.clear();bulkArm=false;renderBulkSp()};
 $('bulkCap').onchange=()=>{bulkArm=false;$('fuseBulk').textContent='일괄 합성';$('fuseBulk').classList.remove('primary')};
 $('fuseClear').onclick=()=>{fuseSel=[];lastResult=null;renderFuse()};
 $('fuseGrid').addEventListener('click',e=>{
