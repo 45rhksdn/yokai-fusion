@@ -221,6 +221,12 @@ h2{color:#E7C27A}
 .skills button .sig{position:absolute;inset:0 0 10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#F2C24A;text-shadow:0 0 8px #F2C24A}
 .skills button small{position:absolute;left:0;right:0;bottom:1px;font:600 8.5px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1;text-shadow:0 1px 2px #000}
 .skills button em{position:absolute;left:4px;top:1px;font:600 9px var(--mono);font-style:normal;color:#A39079;z-index:3}
+.bulk[hidden]{display:none}
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;max-height:52vh;overflow-y:auto;padding:2px}
+.pick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:1px solid var(--line);border-radius:10px;background:#17110F;color:var(--ink);cursor:pointer;font-size:12px}
+.pick img.art{width:48px;height:48px;object-fit:contain}.pick small{font-size:10.5px;color:var(--muted)}
+.pick.on{border-color:var(--hot);background:rgba(231,163,62,.12);box-shadow:0 0 0 1px var(--hot) inset}
+.pick:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .bsp{flex-basis:100%;display:flex;flex-direction:column;gap:6px}
 .bspl{display:flex;flex-wrap:wrap;gap:5px;max-height:168px;overflow-y:auto}
 .bchip{display:flex;align-items:center;gap:4px;padding:3px 8px 3px 4px;border:1px solid var(--line);border-radius:999px;background:#17110F;color:var(--muted);font-size:12px;cursor:pointer}
@@ -460,8 +466,8 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
           <div class="muted">재료 2~4마리와 골드를 넣으면 평균 등급의 새 악마가 태어나요. 비용은 재료 등급이 높을수록 커요. 재료가 많을수록 대성공 확률이 오르고, 능력치 하나에 랜덤 보너스가 붙어요. 새 악마의 종류는 재료로 넣은 종류를 뺀 일반 악마 전체에서 랜덤으로 정해지고, 공개 조합법에 맞으면 희귀 악마가 나올 수 있어요. 팀에 있는 악마는 재료로 쓸 수 없어요.</div>
           <div class="fslots" id="fslots"></div>
           <div class="preview" id="fprev"></div>
-          <div class="row"><button class="btn primary" id="fuseBtn">합성하기</button><button class="btn" id="fuseAuto">자동 선택</button><button class="btn" id="fuseClear">선택 해제</button></div>
-          <div class="bulk"><b>일괄 합성</b><label>재료 등급 <select id="bulkCap" aria-label="일괄 합성할 최고 등급"></select> 이하</label><button class="btn" id="fuseBulk">일괄 합성</button>
+          <div class="row"><button class="btn primary" id="fuseBtn">합성하기</button><button class="btn" id="fusePick">일괄 합성</button><button class="btn" id="fuseAuto">자동 선택</button><button class="btn" id="fuseClear">선택 해제</button></div>
+          <div class="bulk" hidden><b>일괄 합성</b><label>재료 등급 <select id="bulkCap" aria-label="일괄 합성할 최고 등급"></select> 이하</label><button class="btn" id="fuseBulk">일괄 합성</button>
             <div class="bsp"><div class="row"><span class="muted">넣을 악마 종류</span><button class="mini" id="bulkAll">전체</button><span class="muted" id="bulkSpNote"></span></div><div class="bspl" id="bulkSp"></div></div>
             <div class="note" id="bulkNote">같은 등급끼리 4마리씩 묶어 낮은 등급부터 골드가 허락하는 만큼 한 번에 합성해요. 종류를 고르면 그 종류만 넣어요(자동 선택도 같아요). 팀에 있는 악마와 S 이상은 쓰지 않아요.</div></div>
         </div>
@@ -1389,6 +1395,8 @@ $('sheet').addEventListener('click',e=>{
   const id=+$('sheet').dataset.id, act=b.dataset.act;
   if(act==='close')return closeSheet();
   if($('sheet').dataset.kind==='story')return closeSheet();
+  if($('sheet').dataset.kind==='pick'){if(b.dataset.pk!=null){const k=+b.dataset.pk;pickSel.has(k)?pickSel.delete(k):pickSel.add(k);return openPick()}
+    if(act==='pickclear'){pickSel.clear();return openPick()}if(act==='pickok')return applyPick();return}
   if($('sheet').dataset.kind==='char'&&act==='promote'){doPromote();return}
   if($('sheet').dataset.kind==='char'){
     if(act==='gear'){$('overlay').hidden=true;return goTab('gear')}
@@ -1482,7 +1490,7 @@ $('recipes').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');
   $('fresult').scrollIntoView({behavior:'smooth',block:'center'})});
 /* 합성 편의: 자동 선택 · 일괄 합성 */
 /* 일괄 합성·자동 선택에 넣을 종류(비어 있으면 전체) */
-let bulkSel=new Set();
+let bulkSel=new Set();  /* (이전 방식, 지금은 쓰지 않음) */
 const fuseable=()=>S.mons.filter(m=>!S.team.includes(m.id)&&m.grade<6&&(!bulkSel.size||bulkSel.has(m.sp)));
 function renderBulkSp(){const cap=+($('bulkCap').value||2),cnt={};S.mons.forEach(m=>{if(!S.team.includes(m.id)&&m.grade<6)cnt[m.sp]=(cnt[m.sp]||0)+1});
   [...bulkSel].forEach(k=>{if(!cnt[k])bulkSel.delete(k)});
@@ -1511,6 +1519,21 @@ $('bulkSp').addEventListener('click',e=>{const b=e.target.closest('[data-bsp]');
 $('bulkAll').onclick=()=>{bulkSel.clear();bulkArm=false;renderBulkSp()};
 $('bulkCap').onchange=()=>{bulkArm=false;$('fuseBulk').textContent='일괄 합성';$('fuseBulk').classList.remove('primary')};
 $('fuseClear').onclick=()=>{fuseSel=[];lastResult=null;renderFuse()};
+/* 일괄 합성(종류로 넣기): 보유한 악마 종류를 보여주고, 고른 뒤 확인하면 그 종류 악마들이 재료 칸(최대 4)에 들어가요.
+   낮은 등급·낮은 잠재력부터 넣고, 팀에 있는 악마는 빼요. */
+let pickSel=new Set();
+function pickPool(){return S.mons.filter(m=>!S.team.includes(m.id))}
+function openPick(){const cnt={},best={};pickPool().forEach(m=>{cnt[m.sp]=(cnt[m.sp]||0)+1;best[m.sp]=Math.max(best[m.sp]??-1,m.grade)});
+  const ks=Object.keys(cnt).map(Number).sort((a,b)=>floorOf(a)-floorOf(b));[...pickSel].forEach(k=>{if(!cnt[k])pickSel.delete(k)});
+  const n=Math.min(4,pickPool().filter(m=>pickSel.has(m.sp)).length);
+  $('sheet').innerHTML=`<div class="row"><h3 style="margin:0">일괄 합성 · 종류 고르기</h3></div>
+    <div class="muted">넣을 악마 종류를 누르고 확인하면, 그 종류에서 낮은 등급부터 최대 4마리가 재료 칸에 들어가요. 여러 종류를 고르면 섞어서 넣어요. 팀에 있는 악마는 빼요.</div>
+    <div class="pickgrid">${ks.length?ks.map(k=>`<button class="pick ${pickSel.has(k)?'on':''}" data-pk="${k}" aria-pressed="${pickSel.has(k)}">${artHTML(k)}<b>${SPECIES[k][1]}</b><small>${cnt[k]}마리 · 최고 ${gname(best[k])}</small></button>`).join(''):'<div class="muted">넣을 수 있는 악마가 없어요</div>'}</div>
+    <div class="row"><button class="btn primary" data-act="pickok" ${n?'':'disabled'}>확인 · ${n}마리 넣기</button><button class="btn" data-act="pickclear">선택 해제</button><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;
+  $('sheet').dataset.kind='pick';$('sheet').scrollTop=0;$('overlay').hidden=false}
+function applyPick(){const ms=pickPool().filter(m=>pickSel.has(m.sp)).sort((a,b)=>a.grade-b.grade||a.pot-b.pot).slice(0,4);
+  fuseSel=ms.map(m=>m.id);lastResult=null;$('overlay').hidden=true;renderAll();toast(`${ms.length}마리를 재료 칸에 넣었어요`)}
+$('fusePick').onclick=openPick;
 $('fuseGrid').addEventListener('click',e=>{
   const b=e.target.closest('.card');if(!b)return;const id=+b.dataset.id;
   if(S.team.includes(id))return toast('팀에 있는 악마는 재료로 쓸 수 없어요');
