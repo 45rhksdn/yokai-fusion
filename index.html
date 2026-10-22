@@ -221,6 +221,9 @@ h2{color:#E7C27A}
 .sklv b{display:block;height:3px;border-radius:2px;background:rgba(0,0,0,.6);box-shadow:0 0 0 1px rgba(255,255,255,.08);overflow:hidden}
 .sklv i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4FB6A4,#9AE0C8)}
 .sklv.max i{background:#E7A33E}.sklv.max span{color:#E7A33E}
+.skills button.elup::after{content:'약점▲';position:absolute;left:0;right:0;bottom:12px;font:700 8px var(--body);color:#7FE0FF;text-shadow:0 0 4px #000;z-index:3}
+.skills button.eldown::after{content:'내성▼';position:absolute;left:0;right:0;bottom:12px;font:700 8px var(--body);color:#A39079;text-shadow:0 0 4px #000;z-index:3}
+.skills button.eldown{filter:saturate(.5) brightness(.8)}
 .skcell{display:flex;flex-direction:column;align-items:center;gap:3px}
 .skills .skmini{width:54px;height:22px;border-radius:7px;border:1px solid #5A3A20;background:rgba(14,9,7,.85);color:#E7C27A;font:600 11px var(--body);padding:0;overflow:visible}
 .skills .skmini:hover{border-color:#E7A33E}
@@ -233,6 +236,14 @@ h2{color:#E7C27A}
 .skills button small{position:absolute;left:0;right:0;bottom:1px;font:600 8.5px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1;text-shadow:0 1px 2px #000}
 .skills button em{position:absolute;left:4px;top:1px;font:600 9px var(--mono);font-style:normal;color:#A39079;z-index:3}
 .bulk[hidden]{display:none}
+.abyss{border:1px solid #3a2a4a;border-radius:10px;padding:10px 12px;background:radial-gradient(ellipse at 50% 0,rgba(90,40,140,.18),transparent);display:flex;flex-direction:column;gap:6px}
+.abyss[hidden]{display:none}.abyss b{color:#C9A0FF;font-family:var(--display)}
+.dexcard[data-grim]{cursor:pointer}.dexcard[data-grim]:hover{border-color:var(--hot)}
+.grim{display:flex;flex-direction:column;gap:8px}.grim .gsub{font-size:12px;color:var(--hot);letter-spacing:.15em}
+.grim .gtop{display:flex;gap:12px;align-items:center}.grim .gtop img.art{width:110px;height:130px;object-fit:contain}
+.grim h3{font-family:var(--display);font-weight:800;font-size:24px;color:#E7C27A;margin:0}
+.grim p{margin:0;line-height:1.7;color:#D8CBB4}.grim p b{color:#E7A33E;margin-right:4px}.grim hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.ginfo{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#CDBEA6}.ginfo span{display:inline-block;min-width:52px;color:var(--muted)}
 .pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;max-height:52vh;overflow-y:auto;padding:2px}
 .pick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:1px solid var(--line);border-radius:10px;background:#17110F;color:var(--ink);cursor:pointer;font-size:12px}
 .pick img.art{width:48px;height:48px;object-fit:contain}.pick small{font-size:10.5px;color:var(--muted)}
@@ -294,6 +305,7 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
 .bossbar .bh{height:9px;margin:4px 0 3px;border:1px solid #7E1712;background:rgba(10,4,3,.8);border-radius:2px;overflow:hidden}
 .bossbar .bh i{display:block;height:100%;background:linear-gradient(180deg,#E0402F,#8E1A12);transition:width .15s}
 .bossbar .bt{font-size:11px;color:#CDBEA6}
+.bossbar .bel{font-size:11px;color:#CDBEA6}.bossbar .bel b{color:#7FE0FF;font-weight:600}.bossbar .bel b.gmk{color:#C9A0FF}
 .bossbar .btm{font:600 11px var(--mono);color:#CDBEA6;letter-spacing:.04em}.bossbar .btm.low{color:#FF6B6B}
 .bossbar .bs{font-size:11px;color:#E7A33E;margin-top:1px}
 .bossbar.casting .bs{color:#FF7A5A;font-weight:600}
@@ -358,7 +370,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
 <div class="scene" id="sceneBox">
           <div class="dark" id="dark" aria-hidden="true"></div>
           <canvas id="scene" aria-label="자동 사냥 장면" role="img"></canvas>
-          <div class="bossbar" id="bossBar" hidden><div class="btm"></div><div class="bn"></div><div class="bh"><i></i></div><div class="bt"></div><div class="bs"></div></div>
+          <div class="bossbar" id="bossBar" hidden><div class="btm"></div><div class="bn"></div><div class="bh"><i></i></div><div class="bt"></div><div class="bel"></div><div class="bs"></div></div>
           <div class="hud"><span id="hudKills">처치 0</span><span id="hudLoot"></span><span id="hudMode"></span></div>
           <button class="modebtn" id="modeBtn" aria-pressed="false">직접 조작</button>
           <div class="skills" id="skills"></div>
@@ -418,6 +430,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
             <button class="arrow" id="floorNext" aria-label="위층">›</button>
           </div>
           <label class="speed"><input type="checkbox" id="autoClimb"> 보스를 격파하면 자동으로 다음 층으로</label>
+          <div class="abyss" id="abyss" hidden></div>
           <div class="floors" id="floors"></div>
           <div class="row"><button class="btn" id="storyBtn">지금까지의 이야기</button></div>
         </div>
@@ -503,6 +516,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
         </div>
         <div class="panel"><h2>수집 보상</h2><ul class="miles" id="dexMiles"></ul></div>
         <div class="panel"><h2>세트 보상</h2><div class="note">한 묶음을 모두 모으면 받는 보너스예요.</div><ul class="miles" id="dexSets"></ul></div>
+        <div class="row"><b>그리모어</b><span class="muted">봉인한 악마의 카드를 누르면 『고에티아』 원문 해설이 열려요</span><button class="btn" id="grimLast" hidden>마지막 장</button></div>
         <div class="grid" id="dexGrid"></div>
       </div>
     </section>
@@ -750,7 +764,7 @@ function finish(m){m.pot=Math.round(potential(m));let g=gradeOf(m.pot);
 function makeMonster(P,sp,origin){
   const r=rand(.35,.55), b=split(P*r), g=split(P*(1-r)/(MAXLV-1));
   if(S&&S.seen&&!S.seen.includes(sp)){const before=S.seen.length;S.seen.push(sp);
-    if(S.log&&before>0){addLog(`도감 등록 · ${SPECIES[sp][1]} (${S.seen.length}/${SPECIES.length})`,true);
+    if(S.log&&before>0){addLog(`도감 등록 · ${SPECIES[sp][1]} (${S.seen.length}/${SPECIES.length}) · 그리모어 새 페이지`,true);if(S.seen.length===SPECIES.length)setTimeout(()=>toast('그리모어 마지막 장이 열렸어요 (도감)'),0);
       const mi=DEX_MILES.find(x=>x.n===S.seen.length);if(mi){addLog(`도감 ${mi.n}종 달성! ${mi.t}`,true);setTimeout(()=>toast(`도감 ${mi.n}종 보상: ${mi.t}`),0)}
       dexSets().forEach(st=>{if(st.ks.includes(sp)&&st.ks.every(k=>S.seen.includes(k))){addLog(`세트 완성! ${st.n} · ${st.t}`,true);setTimeout(()=>toast(`세트 완성: ${st.t}`),0)}})}}
   const m={id:S.nextId++,sp,lv:1,origin,born:Date.now(),
@@ -777,7 +791,7 @@ const zoneOf=f=>Math.min(MAPS.length-1,Math.floor((f-1)*MAPS.length/NFLOOR));
 const floorE=f=>Math.round(1+(f-1)*1.66);
 const floorD=f=>Math.min(4,Math.floor((f-1)/15));
 const curFloor=()=>S.floor||1;
-const bossSp=f=>FLOORS[(f||curFloor())-1];
+const bossSp=f=>{f=f||curFloor();return f<=NFLOOR?FLOORS[f-1]:FLOORS[(f*37+11)%NFLOOR]};  /* 73층부터 심연: 72악마가 섞여 나와요 */
 const effOf=(d,i)=>floorE(curFloor());
 const eff=()=>floorE(curFloor());
 const cleared=f=>f<(S.top||1);
@@ -822,14 +836,14 @@ const invMax=()=>MAXINV+dexBonus().inv;
 const rebirthCostBase=g=>Math.round(5000*Math.pow(1+g,2.2)/100)*100;
 const rebirthCost=g=>Math.round(rebirthCostBase(g)*(1-dexBonus().reb)/100)*100;
 const fuseCost=ms=>Math.round(ms.reduce((a,m)=>a+30*Math.pow(1+Math.min(m.grade,MAXG),1.6),0));
-const teamPower=()=>(charPower()+gearPower()+S.team.reduce((a,id)=>{const m=id!=null&&byId(id);return a+(m?power(m):0)},0))*(1+affixBonus().atk);
+const teamPower=()=>(charPower()+gearPower()+S.team.reduce((a,id)=>{const m=id!=null&&byId(id);return a+(m?power(m):0)},0))*(1+affixBonus().atk)*awPower();
 const stageReq=(E,d)=>Math.round(40*Math.pow(1+(E-1)*0.25,1.3)*(1+Math.max(0,E-60)*0.012));
 /* 층별 요구 전투력: 기준점 사이를 지수(로그 선형)로 이어요.
    목표 팀(악마 3 + 소환사, 장비 보너스 포함 대략): 10층 D등급 30레벨 · 20층 C~B · 30층 A 100레벨 · 40층 S · 50층 SS · 56층 SR · 64층 SSR · 72층 SSR 각성 + 조합 악마 */
 const REQ_PTS=[[1,60],[5,250],[10,600],[20,1300],[30,2200],[40,3300],[50,4800],[56,6000],[64,9000],[72,15000]];
-const floorReq=f=>{for(let i=1;i<REQ_PTS.length;i++){const [f0,r0]=REQ_PTS[i-1],[f1,r1]=REQ_PTS[i];if(f<=f1){const t=(f-f0)/(f1-f0);return Math.round(r0*Math.pow(r1/r0,t))}}return REQ_PTS[REQ_PTS.length-1][1]};
+const floorReq=f=>{if(f>72)return Math.round(15000*Math.pow(1.07,f-72));for(let i=1;i<REQ_PTS.length;i++){const [f0,r0]=REQ_PTS[i-1],[f1,r1]=REQ_PTS[i];if(f<=f1){const t=(f-f0)/(f1-f0);return Math.round(r0*Math.pow(r1/r0,t))}}return REQ_PTS[REQ_PTS.length-1][1]};
 const reqNow=()=>floorReq(curFloor());
-const gps=()=>teamPower()/20*(1+(eff()-1)*0.08)*(1+dexBonus().gold+affixBonus().gold)*mapBonus();
+const gps=()=>teamPower()/20*(1+(eff()-1)*0.08)*(1+dexBonus().gold+affixBonus().gold)*mapBonus()*awGain();
 const lvCost=m=>Math.round(8*Math.pow(m.lv,1.35)*(1+m.grade*0.15));
 const releaseGold=m=>5*(1+m.grade)**2;
 const itemSell=it=>Math.round(20*(1+it.grade)**2*(1+it.d));
@@ -1022,7 +1036,7 @@ function levelUpItem(it){
    난이도마다 30%씩 더해져 마스터 화산 20단계는 약 347 (약 35배) */
 const expNeed=lv=>Math.round(10*(100+24*Math.pow(lv,1.62)));
 const expAt=(E,d)=>10*(1+0.25*(E-1))*(1+0.004*Math.max(0,E-1)*0.6);
-const expPerTick=()=>expAt(eff(),S.diff)*(1+dexBonus().exp+affixBonus().exp)*mapBonus();
+const expPerTick=()=>expAt(eff(),S.diff)*(1+dexBonus().exp+affixBonus().exp)*mapBonus()*awGain();
 function gainExp(m,x,quiet){
   if(m.lv>=MAXLV)return 0;
   m.exp=(m.exp||0)+x;let ups=0;
@@ -1267,9 +1281,10 @@ function renderDex(){
   $('dexMiles').innerHTML=DEX_MILES.map(m=>`<li class="${n>=m.n?'done':''}"><span class="req">${m.n}종</span><span>${m.t}</span><span class="st">${n>=m.n?'받음':`${m.n-n}종 남음`}</span></li>`).join('');
   $('dexSets').innerHTML=dexSets().map(st=>{const got=st.ks.filter(k=>S.seen.includes(k)).length, done=got===st.ks.length;
     return `<li class="${done?'done':''}"><span class="req">${got}/${st.ks.length}</span><span>${st.n}<br><span class="muted">${st.t}</span></span><span class="st">${done?'완성':''}</span></li>`}).join('');
+  $('grimLast').hidden=S.seen.length<SPECIES.length;
   $('dexGrid').innerHTML=FLOORS.map(k=>{const sp=SPECIES[k],seen=S.seen.includes(k);
     const where=sp[2]===-2?`조합 전용 · ${floorOf(k)}층 보스`:`${floorOf(k)}층 보스`;
-    return seen?`<div class="dexcard"><span class="em">${artHTML(k)}</span><span class="nm">${sp[1]}</span><span class="meta">제${sp[5]}위 ${sp[4]}</span><span class="meta">${where}</span></div>`
+    return seen?`<div class="dexcard" data-grim="${k}" role="button" tabindex="0"><span class="em">${artHTML(k)}</span><span class="nm">${sp[1]}</span><span class="meta">제${sp[5]}위 ${sp[4]}</span><span class="meta">${where}</span></div>`
       :`<div class="dexcard unseen"><span class="em">？</span><span class="nm">미발견</span><span class="meta">${where}</span></div>`}).join('');
 }
 function renderAll(){renderTop();renderStrip();renderAutoSet();renderExplore();if(tab==='mons')renderMons();if(tab==='fuse')renderFuse();if(tab==='gear')renderGear();if(tab==='dex')renderDex();$('dexCount').textContent=`(${S.seen.length})`}
@@ -1406,7 +1421,7 @@ $('sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const id=+$('sheet').dataset.id, act=b.dataset.act;
   if(act==='close')return closeSheet();
-  if($('sheet').dataset.kind==='story')return closeSheet();
+  if($('sheet').dataset.kind==='story'||$('sheet').dataset.kind==='grim')return closeSheet();
   if($('sheet').dataset.kind==='pick'){if(b.dataset.pk!=null){const k=+b.dataset.pk;pickSel.has(k)?pickSel.delete(k):pickSel.add(k);return openPick()}
     if(act==='pickclear'){pickSel.clear();return openPick()}if(act==='pickok')return applyPick();return}
   if($('sheet').dataset.kind==='char'&&act==='promote'){doPromote();return}
@@ -1565,6 +1580,9 @@ function goTab(t,toggle){if(toggle&&t===tab)t='explore';tab=t;const open=t!=='ex
 document.querySelectorAll('#menu button').forEach(b=>b.onclick=()=>goTab(b.dataset.tab,true));
 $('dClose').onclick=()=>goTab('explore');
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tab!=='explore'&&$('overlay').hidden)goTab('explore')});
+$('dexGrid').addEventListener('click',e=>{const c=e.target.closest('[data-grim]');if(c)openGrim(+c.dataset.grim)});
+$('dexGrid').addEventListener('keydown',e=>{if(e.key==='Enter'){const c=e.target.closest('[data-grim]');if(c)openGrim(+c.dataset.grim)}});
+$('grimLast').onclick=()=>openGrimLast();
 $('monGrid').addEventListener('click',e=>{const b=e.target.closest('.card');if(b)openDetail(+b.dataset.id)});
 $('gearGrid').addEventListener('click',e=>{const b=e.target.closest('[data-item]');if(b)openItem(+b.dataset.item)});
 $('gearEq').addEventListener('click',e=>{const b=e.target.closest('[data-item]');if(b)openItem(+b.dataset.item)});
@@ -1577,17 +1595,23 @@ $('team').addEventListener('click',e=>{
   if(b.dataset.empty!=null)return openTeam(+b.dataset.empty);
 });
 $('sort').onchange=renderMons;
-function setFloor(f){if(f<1||f>Math.min(S.top||1,NFLOOR)||f===curFloor())return;
+function setFloor(f){if(f<1||f>(S.top||1)||f===curFloor())return;
   S.floor=f;S.map=zoneOf(f);S.prog=0;S.blocked=false;if(SC.boss){SC.mobs=SC.mobs.filter(m=>m!==SC.boss);SC.boss=null;SC.bossT=0.6;SC.tele=[]}
   addLog(`${f}층으로 이동했어요 · 보스 ${SPECIES[bossSp(f)][1]}`);save();renderAll()}
 $('floorPrev').onclick=()=>setFloor(curFloor()-1);
 $('floorNext').onclick=()=>setFloor(curFloor()+1);
 $('autoClimb').onchange=e=>{S.autoClimb=e.target.checked;save()};
 $('floors').addEventListener('click',e=>{const b=e.target.closest('[data-fl]');if(b)setFloor(+b.dataset.fl)});
-function renderFloors(){const f=curFloor(),top=Math.min(S.top||1,NFLOOR);
-  $('floorName').textContent=`${f}층 · ${SPECIES[bossSp(f)][1]}`;
-  $('floorInfo').textContent=`${MAPS[zoneOf(f)].e} ${MAPS[zoneOf(f)].n} · 도달 ${top}/${NFLOOR}층${(S.top||1)>NFLOOR?' · 전층 정복':''}`;
-  $('floorPrev').disabled=f<=1;$('floorNext').disabled=f>=top;$('autoClimb').checked=S.autoClimb!==false;
+let awArm=false;
+$('abyss').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.abyss){setFloor(S.top);return}if(b.id==='awBtn'){if(!awArm){awArm=true;$('floors').dataset.k='';renderFloors();return}awArm=false;doAwaken()}});
+function renderFloors(){const f=curFloor(),top=Math.min(S.top||1,NFLOOR),T=S.top||1;
+  $('floorName').textContent=`${f>NFLOOR?'심연 ':''}${f}층 · ${SPECIES[bossSp(f)][1]}`;
+  $('floorInfo').textContent=`${f>NFLOOR?'🕳 심연':`${MAPS[zoneOf(f)].e} ${MAPS[zoneOf(f)].n}`} · 도달 ${Math.min(T,9999)}층${T>NFLOOR?' · 72층 정복':''}`;
+  $('floorPrev').disabled=f<=1;$('floorNext').disabled=f>=T;
+  $('abyss').hidden=T<=NFLOOR&&!awPts();
+  $('abyss').innerHTML=`<div class="row"><b>🕳 심연과 인장 각성</b><span class="muted">각성 인장 ${awPts()}개 · 팀 전투력 ×${awPower().toFixed(2)} · 경험치·골드 ×${awGain().toFixed(1)}</span></div>
+    ${T>NFLOOR?`<div class="row"><button class="btn" data-abyss="1">심연 최고층(${T}층)으로</button><button class="btn ${awArm?'primary':''}" id="awBtn">${awArm?'한 번 더 누르면 1층부터 다시':`인장 각성 · 인장 +${awReward()}`}</button></div>
+    <div class="note">인장 각성: 1층부터 다시 오르는 대신 각성 인장을 얻어요(1 + 72층 이후 10층마다 1). 악마·장비·골드·승급은 그대로예요.</div>`:'<div class="note">72층을 다시 정복하면 심연과 인장 각성이 열려요.</div>'}`;$('autoClimb').checked=S.autoClimb!==false;
   const key=f+'/'+S.top+'/'+S.seen.length;if($('floors').dataset.k===key)return;$('floors').dataset.k=key;
   $('floors').innerHTML=FLOORS.map((k,n)=>{const fl=n+1,open=fl<=top,seen=S.seen.includes(k);
     return `<button class="fl ${fl===f?'cur':''} ${cleared(fl)?'done':''} ${open?'':'locked'} ${SPECIES[k][2]===-2?'rare':''}" data-fl="${fl}" ${open?'':'disabled'} aria-label="${fl}층 ${open?SPECIES[k][1]:'잠김'}">
@@ -1641,19 +1665,23 @@ function spawnMob(elite){
   SC.mobs.push({x,y,hp,max:hp,sp:rand(26,46)*(elite?0.55:1),k:spFor(S.map,S.diff),elite,hit:0,cd:rand(0.5,1.2),slam:elite?3:0,wind:0,kx:0,ky:0})}
 function nearestMob(x,y,maxd){let best=null,bd=maxd;SC.mobs.forEach(m=>{if(m.hp<=0)return;const d=Math.hypot(m.x-x,m.y-y);if(d<bd){bd=d;best=m}});return best}
 function dmgMob(mob,d,crit,fromX,fromY){if(mob.vuln>0)d=Math.round(d*1.3);if(mob.boss)d=Math.round(d*(1+SC.ab.boss));
+  const em=elemMul(SC.lastEl,mob);
+  if(mob.boss&&mob.invis>0){if(SC.lastEl==='light'){mob.invis=0;SC.fx.push({k:'num',x:mob.x,y:mob.y-90,t:0,life:1.2,txt:'드러남!',col:'#FFF2B0',sz:15})}else d=Math.round(d*0.15)}
+  if(mob.boss&&SC.mobs.some(x=>x.minion))d=Math.round(d*0.4);
   mob.hp-=d;mob.hit=0.12;
   const a=Math.atan2(mob.y-fromY,mob.x-fromX), k=(crit?16:7)*(mob.boss?0.08:mob.elite?0.3:1);mob.kx+=Math.cos(a)*k;mob.ky+=Math.sin(a)*k;
   if(crit&&!RM)SC.shake=Math.max(SC.shake,crit===2?9:4);
-  SC.fx.push({k:'num',x:mob.x+rand(-8,8),y:mob.y-16,t:0,life:0.85,txt:fmt(d)+(crit?'!':''),col:crit?'#FFD166':'#F1E6D6',sz:crit?18:12})}
+  SC.fx.push({k:'num',x:mob.x+rand(-8,8),y:mob.y-16,t:0,life:0.85,txt:fmt(d)+(crit?'!':'')+(em>1?'▲':em<1?'▼':''),col:em>1?'#7FE0FF':em<1?'#9A8A7A':crit?'#FFD166':'#F1E6D6',sz:crit||em>1?17:12})}
 /* 층 보스를 쓰러뜨리면 그 층 클리어 → 다음 층이 열리고, 자동 등반이면 바로 올라가요 */
 function clearFloor(f){if(cleared(f))return false;const rw=Math.round(floorReq(f)*0.5);S.gold+=rw;S.top=f+1;
   addLog(`${f}층 클리어! 보스 ${SPECIES[bossSp(f)][1]} 격파 · +${fmt(rw)}G`,true);toast(`${f}층 클리어!`);
   if(f===NFLOOR){addLog('72층 정복! 솔로몬의 인장이 모든 악마를 굴복시켰어요',true);queueStory('clear'+zoneOf(f))}
   else if(zoneOf(f+1)!==zoneOf(f)){queueStory('clear'+zoneOf(f));queueStory('ch'+zoneOf(f+1))}
-  if(S.autoClimb!==false&&f<NFLOOR){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0}
+  if(f===NFLOOR){addLog('심연이 열렸어요! 73층부터 끝없이 이어지고, 언제든 인장 각성을 할 수 있어요',true)}
+  if(S.autoClimb!==false){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0}
   save();renderTop();renderExplore();return true}
 function killMob(mob){S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor)clearFloor(mob.floor);if(mob.boss)trySealBoss(mob);
-  if(mob.boss){S.bossKills=(S.bossKills||0)+1;checkPromo();SC.boss=null;SC.bossT=2.2;SC.tele=[];if(!RM)SC.shake=12;burst3D(mob);burst3D(mob);
+  if(mob.boss){SC.mobs.forEach(x=>{if(x.minion)x.hp=0});SC.ms.forEach(a=>{a.charm=0;a.psn=0});S.bossKills=(S.bossKills||0)+1;checkPromo();SC.boss=null;SC.bossT=2.2;SC.tele=[];if(!RM)SC.shake=12;burst3D(mob);burst3D(mob);
     SC.fx.push({k:'ring',x:mob.x,y:mob.y,t:0,life:0.8,r:120,col:'#FFD166',w:6},{k:'num',x:mob.x,y:mob.y-70,t:0,life:1.6,txt:`${SPECIES[mob.k][1]} 퇴치!`,col:'#FFD166',sz:18});
     const qs=sceneQ.splice(0,5);if(!qs.length)qs.push({text:`+${fmt(Math.round(gps()*3))}G`,color:'#E9C46A'});
     qs.forEach((q,i)=>SC.drops.push({x:mob.x+(i-(qs.length-1)/2)*34,y:mob.y+(i%2?14:-6),vy:-120,t:-i*0.12,txt:q.text,col:q.color,big:q.big}));
@@ -1713,14 +1741,16 @@ SC.skcd={};
 function skillOf(a){return a.key==='char'?SUMMONER_SKILL:Object.assign({},SKILLS[a.k],{cd:SK_INFO[SKILLS[a.k].t].cd,col:SK_INFO[SKILLS[a.k].t].col})}
 function hexMob(m,sec){m.slow=Math.max(m.slow||0,sec);m.vuln=Math.max(m.vuln||0,sec);if(m.boss)tryBreak(m)}
 /* 파훼: 대기술 예고(준비 동작) 중에 속박·저주 스킬(소환사 '솔로몬의 인장', 저주형 악마 스킬)을 맞히면 대기술이 취소되고 보스가 2초 휘청여요 */
-function tryBreak(m){const A=m.act;if(!A)return;const lead=A.T&&A.T.length?A.T[0].dur:0.6;if(A.t>=lead||A.done)return;
+function tryBreak(m){if(m.invis>0){m.invis=0;SC.fx.push({k:'num',x:m.x,y:m.y-90,t:0,life:1.2,txt:'드러남!',col:'#FFF2B0',sz:15})}
+  if(SC.ms.some(a=>a.charm>0)){SC.ms.forEach(a=>a.charm=0);SC.fx.push({k:'num',x:m.x,y:m.y-70,t:0,life:1.2,txt:'매혹 해제',col:'#FF7AB8',sz:14})}
+  const A=m.act;if(!A)return;const lead=A.T&&A.T.length?A.T[0].dur:0.6;if(A.t>=lead||A.done)return;
   SC.tele=SC.tele.filter(T=>!(A.T||[]).includes(T));m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.stagger=2;m.sk=rand(5,7);
   SC.fx.push({k:'num',x:m.x,y:m.y-80,t:0,life:1.6,txt:'파훼!',col:'#F2C24A',sz:20},{k:'ring',x:m.x,y:m.y,t:0,life:0.6,r:90,col:'#F2C24A',w:6});if(!RM)SC.shake=8;addLog(`${SPECIES[m.k][1]}의 대기술을 파훼했어요!`,true)}
 function castSkill(a,manual){
   if(!a||a.down>0)return false;const sk=skillOf(a);if((SC.skcd[a.key]||0)>0)return false;
   const pw=a.pw||10, t=(SC.focus&&SC.mobs.includes(SC.focus))?SC.focus:nearestMob(a.x,a.y,manual?420:260);
-  const R=(x,y,r,mul,stun)=>{SC.mobs.forEach(m=>{if(Math.hypot(m.x-x,m.y-y)<r){dmgMob(m,Math.round(pw*mul*rand(0.9,1.1)),1,x,y);if(stun)hexMob(m,stun)}})};
-  if(sk.t==='mend'){if(SC.ms.every(b=>b.hp>=b.max*0.98)&&!manual)return false;SC.ms.forEach(b=>{if(b.down<=0)b.hp=Math.min(b.max,b.hp+b.max*0.45)});SC.fx.push({k:'ring',x:a.x,y:a.y,t:0,life:0.6,r:110,col:sk.col,w:5})}
+  const R=(x,y,r,mul,stun)=>{SC.mobs.forEach(m=>{if(Math.hypot(m.x-x,m.y-y)<r){SC.lastEl=elOf(a);dmgMob(m,Math.round(pw*mul*rand(0.9,1.1)*elemMul(SC.lastEl,m)),1,x,y);SC.lastEl=null;if(stun)hexMob(m,stun)}})};
+  if(sk.t==='mend'){if(SC.ms.every(b=>b.hp>=b.max*0.98&&!b.psn)&&!manual)return false;SC.ms.forEach(b=>{if(b.down<=0)b.hp=Math.min(b.max,b.hp+b.max*0.45);if(b.psn){b.psn=0;SC.fx.push({k:'num',x:b.x,y:b.y-40,t:0,life:1,txt:'정화',col:'#6AE88A',sz:12})}});SC.fx.push({k:'ring',x:a.x,y:a.y,t:0,life:0.6,r:110,col:sk.col,w:5})}
   else{if(!t)return false;
     if(sk.t==='seal'){R(t.x,t.y,95,3.0,1.6);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.7,r:95,col:sk.col,w:7});SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.45,r:60,col:'#FFF2C8',w:3});if(!RM)SC.shake=7}
     else if(sk.t==='flame'){R(t.x,t.y,60,2.6);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.5,r:60,col:sk.col,w:6})}
@@ -1733,7 +1763,7 @@ function castSkill(a,manual){
   SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:1.1,txt:sk.n,col:sk.col,sz:12});
   return true}
 function autoSkills(){if(SC.manual)return;SC.ms.forEach(a=>{if((SC.skcd[a.key]||0)<=0&&SC.mobs.some(m=>Math.hypot(m.x-a.x,m.y-a.y)<240)){
-  const sk=skillOf(a);if(sk.t==='mend'&&!SC.ms.some(b=>b.hp<b.max*0.6))return;castSkill(a,false)}})}
+  const sk=skillOf(a);if(sk.t==='mend'&&!SC.ms.some(b=>b.hp<b.max*0.6||b.psn>=2))return;castSkill(a,false)}})}
 let skBarKey='';
 /* 스킬 칸 아래 작은 버튼: 소환사는 '정보'(소환사 정보 창), 악마는 '교체'(그 자리 팀 교체 창). 빈 자리는 '추가' */
 const skGrade=a=>{if(a.key==='char')return `<b class="skg skr" title="승급 ${rankOf()}단계 · ${SOL_STAGES[rankOf()].n}">승급${rankOf()}</b>`;const m=byId(+a.key.slice(1));return m?`<b class="skg" style="--gc:${gc(m.grade)}" title="${gname(m.grade)}등급">${gname(m.grade)}</b>`:''};
@@ -1752,7 +1782,8 @@ document.addEventListener('keydown',e=>{if(!$('overlay').hidden||/INPUT|SELECT|T
 /* 스킬 칸 위: 레벨과 다음 레벨까지 경험치 막대 */
 function skLvInfo(key){if(key==='char')return {lv:S.charLv,p:Math.min(1,(S.charExp||0)/expNeed(S.charLv)),max:false};const m=byId(+key.slice(1));if(!m)return null;
   return {lv:m.lv,p:m.lv>=MAXLV?1:Math.min(1,(m.exp||0)/expNeed(m.lv)),max:m.lv>=MAXLV}}
-function updSkLv(){document.querySelectorAll('#skills .sklv[data-lv]').forEach(el=>{const I=skLvInfo(el.dataset.lv);if(!I)return;
+function updSkLv(){const B=SC.boss;document.querySelectorAll('#skills button[data-sk]').forEach(b=>{const a=SC.ms.find(x=>x.key===b.dataset.sk);if(!a)return;const mul=B?elemMul(elOf(a),B):1,c=mul>1?'up':mul<1?'down':'';if(b.dataset.el!==c){b.dataset.el=c;b.classList.toggle('elup',c==='up');b.classList.toggle('eldown',c==='down')}});
+  document.querySelectorAll('#skills .sklv[data-lv]').forEach(el=>{const I=skLvInfo(el.dataset.lv);if(!I)return;
   const t=I.max?'MAX':`Lv${I.lv}`;const sp=el.firstChild;if(sp.textContent!==t)sp.textContent=t;el.querySelector('i').style.width=(I.p*100).toFixed(1)+'%';el.classList.toggle('max',I.max)})}
 function tickSkills(dt){updSkLv();for(const k in SC.skcd)SC.skcd[k]=Math.max(0,SC.skcd[k]-dt);autoSkills();renderSkillBar();
   $('skills').querySelectorAll('button[data-sk]').forEach(b=>{const a=SC.ms.find(x=>x.key===b.dataset.sk);if(!a)return;const cd=SC.skcd[a.key]||0,mx=skillOf(a).cd;b.firstChild.style.setProperty('--cd',(cd/mx).toFixed(3));b.classList.toggle('ready',cd<=0)})}
@@ -1840,11 +1871,13 @@ function sceneStep(dt){
   SC.ms.forEach((a,i)=>{
     a.flash=Math.max(0,a.flash-dt);a.lunge=Math.max(0,a.lunge-dt);a.bob+=dt*(SC.manual&&a.key!=='char'?(Math.hypot(a.vx||0,a.vy||0)>15?9:2):(walk?9:4));
     if(a.down>0){a.down-=dt;if(a.down<=0)a.hp=a.max;return}
+    if(a.psn>0){a.hp-=a.max*0.015*a.psn*dt;a.psnT-=dt;if(a.psnT<=0){a.psn--;a.psnT=4}if(Math.random()<dt*3*a.psn)spk(a.x+rand(-10,10),a.y-rand(10,40),0.5,0,0,0.8,'#7FE04A',0.6,2.5);if(a.hp<=0){a.down=2;a.psn=0}}
+    if(a.charm>0){a.charm-=dt;const B=SC.boss;if(B){const dx=B.x-a.x,dy=B.y-a.y,d=Math.hypot(dx,dy)||1;if(d>40){a.x+=dx/d*50*dt;a.y+=dy/d*50*dt}}if(Math.random()<dt*4)spk(a.x+rand(-8,8),a.y-50,1.6,0,0,0.6,'#FF7AB8',0.8,3);a.inR=false;return}
     {const es=SC.tele.length&&!(SC.manual&&a.key==='char')?escapeDir(a):null;if(es){a.x+=es.x*135*dt;a.y+=es.y*135*dt;a.y=Math.max(16,Math.min(SC.H-16,a.y));a.bob+=dt*9;a.inR=false;a.cd=Math.max(a.cd,0.1);return}}
     a.hp=Math.min(a.max,a.hp+a.max*0.05*dt*(1+SC.ab.regen));
     a.cd-=dt;
     if(SC.focus)a.tgt=SC.focus;
-    else if(!a.tgt||a.tgt.hp<=0||!SC.mobs.includes(a.tgt))a.tgt=(SC.boss&&SC.mobs.includes(SC.boss)&&SC.boss.x<SC.W*0.95?SC.boss:null)||nearestMob(a.x,a.y,a.kind==='melee'?190:230);
+    else if(!a.tgt||a.tgt.hp<=0||!SC.mobs.includes(a.tgt))a.tgt=(SC.boss&&SC.mobs.includes(SC.boss)&&SC.boss.x<SC.W*0.95&&!SC.mobs.some(x=>x.minion)?SC.boss:null)||nearestMob(a.x,a.y,a.kind==='melee'?190:230);
     /* 수동 조작: 소환사는 직접 움직이고, 근접 악마는 소환사 곁을 너무 멀리 벗어나지 않아요 */
     if(SC.manual&&a.tgt&&a.kind==='melee'&&!SC.focus&&Math.hypot(a.tgt.x-SC.lead.x,a.tgt.y-SC.lead.y)>170)a.tgt=null;
     if(SC.manual&&a.key==='char'){a.x=SC.lead.x;a.y=SC.lead.y;a.bob+=walk?dt*6:0}
@@ -1856,7 +1889,7 @@ function sceneStep(dt){
       else if(a.cd<=0){a.cd=rand(0.4,0.55);a.lunge=0.12;a.lx=(t.x-a.x)/d;a.ly=(t.y-a.y)/d;a.atkT=0;a.atkA=0.75;atkFx(a,t,false);
         const crit=Math.random()<0.15+SC.ab.crit?1:0, dmg=Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1)));
         if(0)SC.fx.push({k:'slash',x:(a.x+t.x)/2,y:(a.y+t.y)/2,a:Math.atan2(t.y-a.y,t.x-a.x),t:0,life:0.16});
-        dmgMob(t,dmg,crit,a.x,a.y);
+        SC.lastEl=elOf(a);dmgMob(t,Math.round(dmg*elemMul(SC.lastEl,t)),crit,a.x,a.y);SC.lastEl=null;
         if(Math.random()<0.2){SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.35,r:50,col:'#4FB6A4',w:3});
           SC.mobs.forEach(m=>{if(m!==t&&Math.hypot(m.x-t.x,m.y-t.y)<50)dmgMob(m,Math.round(dmg*0.6),0,t.x,t.y)})}}
     }else{
@@ -1873,7 +1906,7 @@ function sceneStep(dt){
   });
   /* 투사체 */
   SC.shots.forEach(s=>{const gone=s.en?(s.t.down>0||!SC.ms.includes(s.t)):s.t.hp<=0;const d=Math.hypot(s.t.x-s.x,s.t.y-s.y);
-    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=2;SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else dmgMob(s.t,s.dmg,s.crit,s.fx,s.fy);if(s.pt)shotHit(s)}s.done=1;return}
+    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=2;SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else{SC.lastEl=s.el||null;dmgMob(s.t,Math.round(s.dmg*elemMul(s.el,s.t)),s.crit,s.fx,s.fy);SC.lastEl=null}if(s.pt)shotHit(s)}s.done=1;return}
     s.x+=(s.t.x-s.x)/d*s.sp*dt;s.y+=(s.t.y-s.y)/d*s.sp*dt;if(s.pt)shotTrail(s,dt)});
   SC.shots=SC.shots.filter(s=>!s.done);
   /* 적 */
@@ -2016,11 +2049,14 @@ function drawActor(g,e,baseH,dir,dt){const im=sprImg(e);if(!im.complete||!im.nat
   g.globalAlpha=e.down>0?0.2:0.45;g.fillStyle='#000';g.beginPath();g.ellipse(e.x+lx,e.y+ly+2,w*0.36,w*0.1,0,0,Math.PI*2);g.fill();g.globalAlpha=1;
   drawAura(g,e,x,y,w,h,dt);rareFx(e,w,h,dt);
   g.save();g.translate(x,y);
+  if(e.invis>0)g.globalAlpha=0.14+0.08*Math.sin(performance.now()/90);
   if(e.down>0){g.rotate(dir*1.2);g.globalAlpha=0.45}else g.rotate((P.sw*0.3+P.rx*0.45)*dir+wob);
   const flip=Math.cos(P.ry||0),sq=P.sq,sc=P.sc*(e.boss?Math.max(0.02,1-(e.vanish||0)):1);
   g.scale(sc*Math.sqrt(2-sq)*(1-Math.abs(P.tw)*0.18)*(Math.abs(flip)<0.08?0.08:flip),sc*sq*breathe);
   g.drawImage(im,-w/2,-h,w,h);
   if(P.hit>0.05){g.globalCompositeOperation='lighter';g.globalAlpha=0.55*P.hit;g.drawImage(im,-w/2,-h,w,h);g.globalCompositeOperation='source-over'}
+  if(e.enr&&!(e.invis>0)){g.globalCompositeOperation='lighter';g.globalAlpha=0.25+0.15*Math.sin(performance.now()/120);g.filter='sepia(1) saturate(6) hue-rotate(-40deg)';g.drawImage(im,-w/2,-h,w,h);g.filter='none';g.globalCompositeOperation='source-over'}
+  if(e.minion){g.globalAlpha=1}
   g.restore();g.globalAlpha=1;return {top:y-h*sc*sq,h}}
 /* 투사체 */
 function drawShot(g,s){const h=(s.pt?shotH(s):0.55)*26,x=s.x,y=s.y-h,dx=s.t.x-s.x,dy=s.t.y-s.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,a=Math.atan2(uy,ux);
@@ -2046,8 +2082,9 @@ function sceneDraw(){
   SC.fx.filter(f=>f.k==='ring').forEach(f=>{const k=f.t/f.life;g.strokeStyle=f.col;g.globalAlpha=1-k;g.lineWidth=f.w||3;g.beginPath();g.ellipse(f.x,f.y,8+f.r*k,(8+f.r*k)*0.55,0,0,Math.PI*2);g.stroke();g.globalAlpha=1});
   /* 악마들: 아래(앞)에 있는 것을 나중에 */
   const list=[];SC.ms.forEach(a=>list.push({e:a,y:a.y,H:a.key==='char'?88:80,dir:1}));
-  SC.mobs.forEach(m=>list.push({e:m,y:m.y,H:m.boss?170:m.elite?104:74,dir:-1}));
+  SC.mobs.forEach(m=>list.push({e:m,y:m.y,H:m.boss?170:m.minion?58:m.elite?104:74,dir:-1}));
   list.sort((a,b)=>a.y-b.y);const tops=new Map();list.forEach(o=>{const r=drawActor(g,o.e,o.H,o.dir,dt);if(r)tops.set(o.e,r)});
+  if(SC.boss)SC.mobs.forEach(x=>{if(!x.minion)return;g.strokeStyle='rgba(201,160,255,.35)';g.lineWidth=2;g.setLineDash([4,4]);g.beginPath();g.moveTo(SC.boss.x,SC.boss.y-40);g.lineTo(x.x,x.y-20);g.stroke();g.setLineDash([])});
   /* 검은 연기(일반 합성으로 어둡게) */
   SC.fx.forEach(f=>{if(f.k!=='smoke')return;const k=f.t/f.life;g.globalAlpha=0.55*(1-k);g.fillStyle=k<0.3?'#1a0a10':'#0a0608';g.beginPath();g.arc(f.x+Math.sin(f.t*3+f.r)*6,f.y-f.h*26,f.r*(1+k*1.5),0,Math.PI*2);g.fill()});g.globalAlpha=1;
   drawSealWorld(g,dt);
@@ -2702,8 +2739,132 @@ const BOSS_SKILL={
 const BREAK_HINT={chop:'보스 뒤·옆으로',thrust:'옆으로 비켜서기',charge:'옆으로 비켜서기',pounce:'표적이 원 밖으로',swoop:'표적이 원 밖으로',blink:'표적이 원 밖으로',
   rear:'정면을 피해 옆으로',stomp:'멀리 떨어지기',roar:'멀리 떨어지기',spin:'거리 벌리며 달아나기',cast:'발밑 마법진 밖으로',strike:'물리는 아군이 계속 움직이기',
   breath:'보스 옆·뒤로',shoot:'표시된 원 밖으로 흩어지기',swim:'물결과 나란히 옆으로',dash:'선 밖으로 비켜서기'};
+/* ===== 그리모어: 『고에티아』(레메게톤 1부, 17세기) 원문 요약. [군단 수, 모습, 능력] (서열 번호 순) ===== */
+const GRIM=[null,
+[66,'두꺼비·사람·고양이 세 머리로, 또는 그중 하나의 모습으로 나타나며 쉰 목소리로 말한다.','동방을 다스리는 첫째 왕. 사람을 보이지 않게 만든다.'],
+[31,'매를 주먹에 얹은 온화한 노인이 악어를 타고 나타난다.','달아난 자를 돌아오게 하고 모든 언어를 가르치며, 땅을 흔들고 높은 지위를 무너뜨린다.'],
+[26,'아가레스와 같은 성품을 지닌 선한 군주.','과거와 미래를 말하고 잃어버리거나 숨겨진 것을 찾아낸다.'],
+[30,'작은 말이나 나귀의 모습으로 나타났다가 사람이 되며 쉰 목소리로 말한다.','학문을 가르치고, 죄 속에 죽은 영혼, 특히 바다에 빠져 죽은 자들의 사정을 알려준다.'],
+[36,'거대한 사자로 나타났다가 명령을 받으면 사람이 된다.','숨겨진 것에 참되게 답하며 병을 일으키고 고치고, 기계 기술의 지혜를 주며 사람의 모습을 바꾼다.'],
+[10,'나귀 머리를 한 사자의 모습으로 울부짖으며 나타난다.','좋은 사역마가 되지만 부리는 자를 도둑질로 꾀어낸다.'],
+[40,'뱀 꼬리를 단 늑대가 입에서 불을 토하며 나타나고, 명령하면 까마귀 머리의 사람이 된다.','과거와 미래를 알고 친구와 원수 사이를 화해시킨다.'],
+[30,'해가 사수자리에 있을 때 네 왕과 큰 군대를 거느리고 나타난다.','새의 노래와 개 짖는 소리를 알아듣게 하고, 마법으로 숨긴 보물을 연다.'],
+[200,'왕관을 쓴 사람이 단봉낙타를 타고, 나팔과 심벌즈를 울리는 정령의 무리를 앞세워 나타난다.','모든 학문과 비밀을 가르치고 지위를 주며 사람을 부리는 자의 뜻에 묶는다.'],
+[50,'해가 사수자리에 있을 때 나타난다(후대 그림에서는 염소 다리가 바퀴처럼 둘러선 사자 머리).','철학과 논리, 약초의 효능을 가르치고 모든 병을 고친다.'],
+[40,'개 머리를 한 사람(크세노필루스)처럼 나타난다.','과거·현재·미래를 말하고 질문에 답하며, 우정을 회복시키고 명예를 준다.'],
+[60,'표범 머리에 그리핀 날개를 단 모습이었다가 아름다운 사람이 된다.','남녀가 서로를 향한 사랑에 불타게 한다.'],
+[85,'창백한 말을 타고, 온갖 악기 소리를 앞세워 무섭게 나타난다.','몹시 사납지만 사랑을 일으킨다. 술사는 은반지를 끼고 정중히 맞아야 한다.'],
+[30,'초록 옷을 입고 활과 화살통을 든 궁수로 나타난다.','큰 전쟁을 일으키고, 그의 화살에 난 상처는 썩어 들어간다.'],
+[60,'창과 깃발, 뱀을 든 훌륭한 기사로 나타난다.','숨겨진 것을 찾아내고 다가올 전쟁을 알며, 군주들의 총애를 얻게 한다.'],
+[26,'붉은 옷과 갑옷을 입은 병사의 모습.','여인이 남자를 사랑하게 하고, 또 아이를 갖지 못하게 한다.'],
+[60,'흉한 독사로 나타났다가 큰 이빨과 두 뿔, 칼을 든 사람이 된다.','과거와 미래를 말하고 친구와 원수를 화해시킨다.'],
+[30,'뱀 꼬리를 단 건장한 사람이 창백한 말을 타고 나타난다.','약초와 보석의 힘을 알고, 사람을 순식간에 이 나라에서 저 나라로 옮긴다.'],
+[30,'공작의 관을 쓴 당당한 병사가 악어를 타고 평화롭게 나타난다.','남녀 사이에 사랑을 일으킨다.'],
+[22,'사자 얼굴을 한 사람이 독사를 들고 곰을 타며, 나팔 소리를 앞세운다.','숨겨진 것과 보물, 과거와 미래를 알고 좋은 사역마를 준다.'],
+[30,'사람 얼굴을 한 큰 황소의 모습.','천문학과 학문, 약초와 보석의 힘을 가르친다.'],
+[36,'사자 머리에 거위 발, 토끼 꼬리를 단 천사의 모습.','과거와 미래를 알고 사람을 재치 있고 대담하게 만든다.'],
+[26,'뱀·이마에 별 둘을 단 사람·송아지의 세 머리를 한 사내가 독사를 타고 횃불을 든다.','횃불로 도시와 성과 큰 건물을 불태우고 사람을 재치 있게 만든다.'],
+[19,'원 둘레를 퍼덕이는 검은 학으로 나타나 쉰 목소리로 말한다.','기예와 수사에 능하게 하고 잃어버린 지위와 명예를 되찾게 한다.'],
+[36,'그리핀 날개를 단 개의 모습.','모든 기예를 순식간에 가르치지만 피 흘림과 살인을 부추기며 사람을 보이지 않게 한다.'],
+[30,'개·그리핀·사람의 세 머리를 단 용으로 나타나 높고 고운 목소리로 말한다.','죽은 자들의 자리를 옮기고, 사람을 부유하고 지혜롭고 말 잘하게 만든다.'],
+[19,'괴물의 모습으로 나타난다.','수사학과 언어를 가르치고 친구와 원수 모두의 호의를 얻게 한다.'],
+[26,'금관을 쓰고 붉은 옷을 입은 병사가 붉은 말을 타고 나타난다.','모든 금속을 금으로 바꾸고 지위를 준다. 그러나 대단한 거짓말쟁이다.'],
+[40,'해로운 천사가 지옥의 용을 타고 오른손에 독사를 든 모습. 숨결의 악취가 지독하다.','과거·현재·미래를 말하고 학문을 가르친다. 술사는 반지를 얼굴 가까이 대어 악취를 막아야 한다.'],
+[29,'거대한 바다 괴물의 모습.','수사학과 언어를 가르치고 좋은 이름을 얻게 하며 원수에게도 사랑받게 한다.'],
+[29,'건장한 사람의 모습.','약초와 보석의 힘, 논리와 윤리를 가르치며, 사람을 보이지 않게 하고 수명을 늘리며 보물을 찾는다.'],
+[72,'황소·사람·숫양의 세 머리에 뱀 꼬리, 거위 발로 지옥의 용을 타고 깃발 단 창을 들며 입에서 불을 토한다.','덕의 반지를 주고 산술과 기하를 가르치며, 사람을 보이지 않게 하고 보물을 보여준다.'],
+[66,'해가 남쪽 별자리에 있을 때 사람의 모습으로 네 왕을 앞서 나타난다.','사람을 무감각하게도 무지하게도 만들고, 사랑과 미움을 일으키며 사람을 빠르게 옮긴다.'],
+[26,'불꽃 꼬리를 단 수사슴. 삼각형 안에 들기 전에는 거짓만 말한다.','사랑을 일으키고 번개와 천둥, 폭풍을 부른다.'],
+[30,'그리핀 날개와 뱀 꼬리를 단 늑대가 입에서 불을 뱉는다.','강한 전사. 천이백 년 뒤 일곱째 왕좌로 돌아가기를 바란다.'],
+[26,'큰 까마귀(후대에는 부엉이)로 나타났다가 사람이 된다.','천문학과 약초, 보석의 힘을 가르친다.'],
+[20,'아이 목소리를 가진 불사조. 달콤한 노래를 부른다.','뛰어난 시인. 천이백 년 뒤 일곱째 왕좌로 돌아가기를 바란다.'],
+[26,'쉰 목소리를 가진 산비둘기.','탑을 쌓고 무기와 탄약을 채우며 병사들을 정해진 곳으로 보낸다.'],
+[40,'까마귀로 나타났다가 쉰 목소리의 사람이 된다.','집과 높은 탑을 짓고 원수의 욕망과 성벽을 무너뜨린다.'],
+[30,'까마귀로 나타났다가 사람이 된다.','왕의 집에서 보물을 훔치고 도시와 지위를 무너뜨리며 사랑을 일으킨다.'],
+[30,'그리핀 날개를 단 사람.','사람을 물에 빠뜨리고 군함을 뒤집으며 바람과 바다를 다스린다.'],
+[29,'인어의 모습.','물을 다스리고 무기 실은 배를 이끌며 바다를 거칠게 하고, 벌레 끓는 썩은 상처로 사흘 만에 죽게 한다.'],
+[50,'사자 머리를 한 무장한 병사가 창백한 말을 탄다.','높은 탑과 성과 도시를 짓고, 벌레가 끓는 썩은 상처를 입힌다.'],
+[30,'쉰 목소리의 황새. 삼각형 안에 들기 전에는 거짓을 말한다.','시력과 청력과 분별을 빼앗고 왕의 집에서 돈을 훔치며 말을 데려온다.'],
+[36,'사자가 독사를 들고 검은 말을 타고 나타난다.','숨겨진 것과 마녀를 찾아내고, 탑을 세우고 성벽을 허물며 폭풍으로 물을 거칠게 한다.'],
+[6,'괴물로 나타났다가 사람이 된다.','점성술과 기하, 약초와 보석을 가르치고 시체를 옮기며 무덤에 촛불을 밝힌다.'],
+[37,'거대한 단봉낙타로 나타났다가 이집트 말을 하는 사람이 된다.','여인의 사랑을 얻게 하고 과거와 미래를 말하며 우정을 맺어준다.'],
+[33,'그리핀 날개를 단 거대한 황소.','사람을 지혜롭게 하고 금속을 금으로, 포도주를 물로, 물을 포도주로 바꾼다.'],
+[48,'천사의 모습.','숨겨진 것을 신비롭게 말하고 기하를 가르치며, 흐르는 물소리 같은 큰 소리를 내고 물을 데운다.'],
+[20,'긴 수염과 흰 머리의 잔혹한 노인이 날카로운 무기를 들고 창백한 말을 탄다.','철학, 점성술, 수사, 논리, 손금과 불점을 가르친다.'],
+[40,'황소·사람·숫양의 세 머리에 뱀 꼬리, 불타는 눈을 하고 사나운 곰을 타며 매를 든다.','과거와 미래를 말하고 사람을 보이지 않게 하며 재치 있게 만든다.'],
+[36,'얼굴이 붉은 사자 같은 병사가 큰 말을 타고 불타는 눈으로 나타난다.','큰 목소리로 천문학과 학문을 가르치고 좋은 사역마를 준다.'],
+[30,'지빠귀로 나타났다가 날카로운 칼을 든 사람이 되며, 불타는 재나 숯 속에서 답한다.','새와 소와 개의 소리, 물소리를 알아듣게 하고 미래를 말한다.'],
+[30,'공작의 관을 쓴 전사가 그리핀을 타고, 나팔 소리를 앞세운다.','철학을 가르치고 죽은 자의 영혼을 불러내 질문에 답하게 한다.'],
+[20,'말로 나타났다가 사람이 된다.','과거·현재·미래를 말하고 지위와 호의를 준다. 거짓이 없고 술사를 유혹에서 지켜준다.'],
+[26,'공작부인의 관을 쓴 아름다운 여인이 큰 낙타를 탄다.','과거·현재·미래와 숨겨진 보물을 말하고, 늙은이와 젊은이 모두의 사랑을 얻게 한다.'],
+[3,'표범으로 나타났다가 사람이 된다.','학문과 신성한 것에 참되게 답하며, 사람이 스스로를 다른 존재라 믿게 만든다.'],
+[36,'타오르는 불꽃으로 나타났다가 사람이 된다.','점성술과 학문을 가르치고 좋은 사역마를 주며, 정령이 지키는 보물을 알려준다.'],
+[30,'뱀 꼬리를 단 사자가 힘센 말을 타고, 오른손에 쉭쉭대는 두 뱀을 든다.','별과 행성의 힘을 가르치고 사람을 변신시키며 지위와 호의를 준다.'],
+[36,'그리핀 날개를 단 사자.','손재주와 직업, 철학과 학문에 능하게 한다.'],
+[33,'그리핀 날개를 단 황소로 나타났다가 사람이 된다.','사람을 재치 있게 하고 물을 포도주로, 피를 기름으로, 금속을 그 나라 돈으로 바꾸며 어리석은 자를 지혜롭게 한다.'],
+[38,'천사의 날개를 단 아이가 두 머리 용을 탄다.','숨겨진 보물과 뱀이 있는 곳을 참되게 알려주고 그 뱀을 술사에게 넘긴다.'],
+[30,'밤까마귀 머리를 한 천사가 검은 늑대를 타고 날카로운 칼을 든다.','불화를 뿌린다. 조심하지 않으면 술사와 그 동료를 죽인다.'],
+[36,'표범으로 나타났다가 불타는 눈의 사람이 된다.','삼각형 안에서는 참되게 답하고, 원수를 불태워 없애며 세상의 창조와 정령의 타락을 말한다.'],
+[30,'큰 소리를 내는 공작새로 나타났다가 사람이 된다.','기하와 측량, 천문을 가르치고 사람을 새로 바꾼다.'],
+[20,'훌륭한 검은 말을 탄 용맹한 전사.','아프리카의 정령들을 다스리고 문법과 논리, 수사를 가르치며 잃어버린 것을 찾는다.'],
+[29,'일각수로 나타났다가 사람이 된다.','악기 소리가 들리되 보이지 않게 하고, 나무를 술사 뜻대로 휘게 하며 좋은 사역마를 준다.'],
+[80,'불의 전차에 앉은 아름다운 두 천사. 고운 목소리로 말한다.','루시퍼 다음으로 창조되었고 더 귀한 자들 가운데 먼저 떨어졌다 말한다. 지위와 원로의 자리, 호의를 나눠준다.'],
+[30,'오각형 속의 별로 나타난다.','새와 보석의 힘을 알고, 노래하는 새들의 모습을 술사 앞에 날아다니게 한다.'],
+[26,'날개 달린 말을 탄 아름다운 사람.','눈 깜짝할 새 온 세상을 오가며 일을 순식간에 이루어지게 한다. 선한 성품이다.'],
+[36,'모든 남녀의 얼굴을 가진 사람이 오른손에 책을 든다.','모든 학문을 가르치고 사람의 생각을 알고 바꾸며, 사랑을 일으키고 누구의 모습이든 환영으로 보여준다.'],
+[36,'큰 뱀을 손에 든 사람.','도둑과 훔친 물건을 되찾고 모든 악행과 속임수를 밝히며 숨겨진 보물을 찾는다.']];
+const GRIM_LAST={t:'마지막 장 · 황동 그릇의 비밀',x:`일흔두 장을 모두 채우자 그리모어의 마지막 장이 스스로 펼쳐졌다.\n\n솔로몬은 악마들을 부려 성전을 세웠지만, 그 힘이 언젠가 자신의 후손을 삼킬 것을 알았다. 그래서 그는 일흔두 악마를 황동 그릇에 가두며 한 가지를 남겼다. 그릇을 깨뜨릴 수 있는 것은 오직 그의 피를 이은 자뿐이라고.\n\n그릇은 저절로 깨진 것이 아니었다. 삼천 년 전 왕이 남긴 마지막 봉인이, 후계자가 준비되었을 때 열리도록 짜여 있었던 것이다.\n\n당신은 일흔두 악마의 이름을 모두 알게 되었다. 이름을 아는 자는 그 악마를 부린다. 이제 당신이 새로운 솔로몬이다.`};
+/* ===== 1. 속성 상성: 보스는 자기 속성에 내성, 약점 속성에 큰 피해 =====
+   약점 공격 ×1.6(파란 ▲), 같은 속성 공격 ×0.6(회색 ▼). 팀을 보스에 맞춰 짜는 것이 공략의 시작이에요. */
+const EL_WEAK={fire:'water',water:'bolt',bolt:'quake',quake:'feather',feather:'fire',shadow:'light',light:'shadow',poison:'light',blood:'water',gold:'wave',wave:'shadow'};
+const EL_ICON={fire:'🔥',water:'💧',bolt:'⚡',quake:'⛰️',feather:'🪶',shadow:'🌑',light:'☀️',poison:'☠️',blood:'🩸',gold:'🪙',wave:'🎺'};
+const elOfSp=k=>(STYLE[SPECIES[k][1]]||{}).f||'blood';
+const elOf=a=>a.key==='char'?'gold':elOfSp(a.k);
+const elemMul=(el,mob)=>{if(!mob||!mob.boss||!el)return 1;const be=elOfSp(mob.k);return el===EL_WEAK[be]?1.6:el===be?0.6:1};
+const elTag=el=>`${EL_ICON[el]||''}${FNAME[el]||el}`;
+/* ===== 2. 보스 기믹: 원전 능력을 살린 고유 패턴과 파훼법 ===== */
+const GIMMICK={'바알':'invis','발람':'invis','시트리':'charm','제파르':'charm','그레모리':'charm','안드라스':'charm','레라지에':'poison','아스타로트':'poison','사브낙':'poison','베파르':'poison',
+  '포칼로르':'flood','포르네우스':'flood','크로셀':'flood','푸르푸르':'bolt','비네':'bolt','파이몬':'summon','할파스':'summon','무르무르':'summon','바르바토스':'summon',
+  '글라샤라볼라스':'enrage','마르코시아스':'enrage','아몬':'enrage','벨리알':'enrage'};
+const GM_INFO={invis:['투명','빛 속성 공격이나 인장·저주로 드러내기 (투명 중 피해 85% 감소)'],charm:['매혹','인장·저주를 보스에게 맞혀 홀린 아군 해제'],poison:['부패 독','회복 스킬로 정화 (독은 최대 5중첩)'],
+  flood:['범람','물이 차오르는 쪽 반대편으로'],bolt:['낙뢰','표시된 원에서 계속 움직이기'],summon:['권속 소환','권속을 먼저 처치 (권속이 있으면 보스 피해 60% 감소)'],enrage:['광폭화','체력 30% 아래에서 필살기로 몰아치기']};
+const gmOf=k=>GIMMICK[SPECIES[k][1]]||null;
+function gimmickStep(m,dt){const g=m.gm;if(!g)return;m.gt=(m.gt==null?6:m.gt)-dt;const C=FXCOL[m.st.f]||FXCOL.blood;
+  const say=(t,c)=>SC.fx.push({k:'num',x:m.x,y:m.y-90,t:0,life:1.4,txt:t,col:c||C[0],sz:16});
+  if(g==='invis'){if(m.invis>0){m.invis-=dt;if(m.invis<=0)say('모습을 드러냈다')}else if(m.gt<=0){m.invis=5;m.gt=10;say('투명!','#9A8AFF')}}
+  else if(g==='charm'){if(m.gt<=0){m.gt=11;const c=alive().filter(a=>a.key!=='char');if(c.length){const a=anyOf(c);a.charm=4.5;SC.fx.push({k:'num',x:a.x,y:a.y-50,t:0,life:1.4,txt:'매혹!',col:'#FF7AB8',sz:14})}}}
+  else if(g==='flood'){if(m.gt<=0){m.gt=12;const top=Math.random()<0.5,yc=top?SC.H*0.25:SC.H*0.75;m.xt=m.xt||[];m.xt.push(tele({s:'line',x:-40,y:yc,x1:SC.W+40,y1:yc,w:SC.H*0.52,dur:1.7,dmg:0.3,surge:1}));say('범람!','#5AB8FF')}}
+  else if(g==='bolt'){if(m.gt<=0){m.gt=9;m.bw=2;m.bwt=0}if(m.bw>0){m.bwt-=dt;if(m.bwt<=0){m.bw--;m.bwt=1;m.xt=m.xt||[];alive().forEach(p=>m.xt.push(tele({s:'circle',x:p.x,y:p.y,r:28,dur:0.9,dmg:0.25})))}}}
+  else if(g==='summon'){if(m.gt<=0){m.gt=14;const n=SC.mobs.filter(x=>x.minion).length;if(n<3){const pool=FLOORS.slice(0,Math.max(5,Math.min(56,m.floor||10)));
+      for(let i=0;i<2;i++){const hp=Math.round(m.max*0.035);SC.mobs.push({x:m.x+rand(-60,60),y:Math.max(20,Math.min(SC.H-20,m.y+rand(-50,50))),hp,max:hp,sp:46,k:anyOf(pool),minion:1,hit:0,cd:rand(0.6,1.2),slam:0,wind:0,kx:0,ky:0})}say('권속 소환!','#C9A0FF')}}}
+  else if(g==='enrage'){if(!m.enr&&m.hp<m.max*0.3){m.enr=1;m.dm*=1.5;say('광폭화!','#FF3A2A');if(!RM)SC.shake=10}}
+  if(m.xt){m.xt=m.xt.filter(T=>{T.t+=dt;if(T.t>=T.dur){teleHit(T,m);SC.tele=SC.tele.filter(x=>x!==T);return false}return true})}}
+/* ===== 4. 심연과 인장 각성 =====
+   72층을 깨면 73층부터 '심연': 72악마가 섞여 끝없이 이어지고, 권장 전투력은 층마다 7%씩 올라가요.
+   인장 각성: 1층부터 다시 시작하는 대신 각성 인장을 얻어요(1 + 72층 이후 10층마다 1). 인장 1개당 팀 전투력 +5%, 경험치·골드 +10% (영구). */
+const awPts=()=>S.awPts||0;
+const awPower=()=>1+0.05*awPts(), awGain=()=>1+0.10*awPts();
+const awReward=()=>1+Math.max(0,Math.floor(((S.top||1)-73)/10));
+function doAwaken(){if((S.top||1)<=NFLOOR)return;const n=awReward();S.awPts=awPts()+n;S.awaken=(S.awaken||0)+1;S.floor=1;S.top=1;S.map=0;
+  SC.mobs=[];SC.boss=null;SC.bossT=1;SC.tele=[];addLog(`인장 각성! 각성 인장 +${n} (총 ${S.awPts}) · 1층부터 다시`,true);toast(`인장 각성 · 영구 보너스 상승`);save();renderAll()}
+/* ===== 7. 그리모어 ===== */
+function openGrim(k){const sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{},el=elOfSp(k),f=floorOf(k),gm=gmOf(k),bs=BOSS_SKILL[st.m],rcs=RECIPES.filter(r=>r.r===k);
+  $('sheet').innerHTML=`<div class="grim"><div class="gsub">그리모어 · 제${no}장</div>
+    <div class="gtop">${artHTML(k)}<div><h3>${sp[1]}</h3><div class="muted">제${no}위 ${sp[4]} · ${G?G[0]+' 군단':''}</div></div></div>
+    ${G?`<p><b>모습</b> ${G[1]}</p><p><b>능력</b> ${G[2]}</p>`:''}
+    <hr><div class="ginfo">
+      <div><span>층</span>${f<=56?`${f}층 보스`:`${f}층 보스 · 조합 전용`}</div>
+      <div><span>속성</span>${elTag(el)} · 약점 ${elTag(EL_WEAK[el])} · 내성 ${elTag(el)}</div>
+      <div><span>공격</span>${MNAME[st.m]||''} — ${st.d||''}</div>
+      ${bs?`<div><span>대기술</span>「${bs.n}」 ${bs.d} · 파훼: ${BREAK_HINT[st.m]||''}</div>`:''}
+      ${gm?`<div><span>기믹</span>${GM_INFO[gm][0]} · 파훼: ${GM_INFO[gm][1]}</div>`:''}
+      ${rcs.length?`<div><span>조합법</span>${rcs.map(r=>`${SPECIES[r.a][1]} + ${SPECIES[r.b][1]}`).join(' / ')}</div>`:''}
+    </div><div class="row"><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div></div>`;
+  $('sheet').dataset.kind='grim';$('sheet').scrollTop=0;$('overlay').hidden=false}
+function openGrimLast(){$('sheet').innerHTML=`<div class="story"><div class="sub">그리모어</div><h3>${GRIM_LAST.t}</h3>${GRIM_LAST.x.split('\n\n').map(p=>`<p>${p}</p>`).join('')}<div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">닫기</button></div></div>`;
+  $('sheet').dataset.kind='grim';$('overlay').hidden=false}
 const alive=()=>SC.ms.filter(a=>a.down<=0);
-function hurt(a,frac,col,raw){if(!a||a.down>0)return;if(!raw)frac*=(SC.boss&&SC.boss.dm)||1;a.hp-=a.max*frac;a.flash=0.2;
+function hurt(a,frac,col,raw){if(!a||a.down>0)return;if(SC.boss&&SC.boss.gm==='poison'){a.psn=Math.min(5,(a.psn||0)+1);a.psnT=4}if(!raw)frac*=(SC.boss&&SC.boss.dm)||1;a.hp-=a.max*frac;a.flash=0.2;
   SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:0.8,txt:'-'+Math.round(frac*100)+'%',col:col||'#FF6B6B',sz:12});
   if(a.hp<=0){a.down=2;SC.fx.push({k:'num',x:a.x,y:a.y-36,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}
 /* 예고 도형: 원·부채꼴·띠. inShape로 판정하고, 피할 방향을 돌려줘요 */
@@ -2721,7 +2882,7 @@ function spawnBoss(){
   const sp=bossSp();
   const st=STYLE[SPECIES[sp][1]]||{m:'chop',f:'blood',d:''};
   const per=Math.max(5,teamPower()/4),ratio=Math.max(0.4,Math.min(8,reqNow()/Math.max(1,teamPower()))),hp=Math.round(per*rand(140,175)*Math.pow(ratio,3));  /* 권장 전투력이면 약 20초, 대기술 2~3번 */
-  const b={floor:curFloor(),dm:Math.max(0.5,Math.min(4,ratio)),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
+  const b={gm:gmOf(sp),floor:curFloor(),dm:Math.max(0.5,Math.min(4,ratio)),dm0:Math.max(0.5,Math.min(4,ratio)),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
   SC.mobs.push(b);SC.boss=b;SC.bossIntro=2.4;SC.tele=[];renderBossBar(true)}
 /* 대기술 시작: 예고를 그리고 act에 진행 상태를 저장해요 */
 function bossSpecial(m,tg){const st=m.st,C=FXCOL[st.f]||FXCOL.blood,dx=tg.x-m.x,dy=tg.y-m.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,a=Math.atan2(dy,dx);
@@ -2764,10 +2925,11 @@ function teleHit(T,m){const st=m.st,C=FXCOL[st.f]||FXCOL.blood;
   if(st.f==='bolt')SC.fx.push({k:'bolt',x:cx,y:cy,t:0,life:0.25,col:C[0],seed:Math.random()*1000});
   if(st.m==='stomp'||st.m==='rear')SC.fx.push({k:'crack',x:T.x,y:T.y,t:0,life:0.7,seed:Math.random()*1000,r:T.r*0.8,col:C[0]});
   elemBits(st.f,cx,cy,Math.cos(T.a||0),Math.sin(T.a||0),1.2,true);if(!RM)SC.shake=Math.max(SC.shake,T.dmg>=0.3?7:4)}
-function bossFail(m,why){m.hp=m.max;m.tl=BOSS_TIME;m.act=null;m.fly=0;m.vanish=0;m.wind=0;SC.tele=[];
+function bossFail(m,why){m.hp=m.max;m.tl=BOSS_TIME;m.enr=0;m.invis=0;m.xt=null;SC.mobs.forEach(x=>{if(x.minion)x.hp=0});m.dm=m.dm0||m.dm;SC.ms.forEach(a=>{a.charm=0;a.psn=0});m.act=null;m.fly=0;m.vanish=0;m.wind=0;SC.tele=[];
   SC.fx.push({k:'num',x:m.x,y:m.y-70,t:0,life:2,txt:`도전 실패 · ${why}`,col:'#FF6B6B',sz:16});addLog(`${curFloor()}층 보스에게 ${why} · 다시 도전해요`);
   SC.ms.forEach(a=>{a.down=0;a.hp=a.max})}
 function bossStep(m,dt){
+  gimmickStep(m,dt);
   if(m.stagger>0){m.stagger-=dt;m.wind=0;m.inR=false;return}
   if(!SC.bossIntro){m.tl-=dt;if(m.tl<=0)return bossFail(m,'시간 초과')}
   if(SC.ms.length&&SC.ms.every(a=>a.down>0))return bossFail(m,'아군 전멸');
@@ -2789,13 +2951,13 @@ function bossStep(m,dt){
       if(A.tick<=0){A.tick=0.4;SC.fx.push({k:'whirl',x:m.x,y:m.y,t:0,life:0.4,r:46,col:C[0],c2:C[1],ux:1,uy:0});alive().forEach(p=>{if(Math.hypot(p.x-m.x,p.y-m.y)<70)hurt(p,0.07)})}}
     if(A.bites){A.bites=A.bites.filter(bt=>{if(A.t<bt)return true;m.atkT=0;m.atkA=1;const p=m.tg;m.x+=(p.x-m.x)*0.5;m.y+=(p.y-m.y)*0.5;atkFx(m,p,false);if(Math.hypot(p.x-m.x,p.y-m.y)<75)hurt(p,0.1);return false})}
     if(A.T)A.T.forEach(T=>{T.t+=dt;if(!T.hit&&T.t>=T.dur){T.hit=1;teleHit(T,m);if(!A.done){A.done=1;m.atkT=0;m.atkA=1.1;m.vanish=0}}});
-    if(A.t>=A.dur){m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.sk=rand(5,7.5);m.cd=1;SC.tele=SC.tele.filter(T=>!A.T.includes(T))}
+    if(A.t>=A.dur){m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.sk=rand(5,7.5)*(m.enr?0.6:1);m.cd=1;SC.tele=SC.tele.filter(T=>!A.T.includes(T))}
     m.y=Math.max(20,Math.min(SC.H-20,m.y));return}
   /* 평소: 다가가거나(근접) 거리를 두고(원거리) 기본 공격, 쿨이 차면 대기술 */
   m.sk-=dt;if(m.sk<=0&&bd<260&&!SC.bossIntro){bossSpecial(m,tg);return}
   const want=m.rng||62,sl=m.slow>0?0.4:1;m.inR=bd<=want+8;
   if(bd>want){m.x+=(tg.x-m.x)/bd*m.sp*sl*dt;m.y+=(tg.y-m.y)/bd*m.sp*sl*dt}else if(m.rng&&bd<want-40){m.x-=(tg.x-m.x)/bd*m.sp*0.6*dt;m.y-=(tg.y-m.y)/bd*m.sp*0.6*dt}
-  m.cd-=dt;if(m.cd<=0&&m.inR){m.cd=rand(1.1,1.5);m.atkT=0;m.atkA=0.9;atkFx(m,tg,false);
+  m.cd-=dt;if(m.cd<=0&&m.inR){m.cd=rand(1.1,1.5)*(m.enr?0.55:1);m.atkT=0;m.atkA=0.9;atkFx(m,tg,false);
     if(m.rng){const vol=m.st.m==='shoot'?ps.slice(0,3):[tg];vol.forEach(p=>fireShot(m,p,0.07,0,true))}
     else{m.lunge=0.12;m.lx=(tg.x-m.x)/bd;m.ly=(tg.y-m.y)/bd;hurt(tg,0.08)}}
   m.y=Math.max(20,Math.min(SC.H-20,m.y))}
@@ -2815,7 +2977,7 @@ function renderBossBar(force){const b=SC.boss,el=$('bossBar');if(!el)return;
   if(!b||b.hp<=0){el.hidden=true;return}el.hidden=false;
   const sp=SPECIES[b.k],no=sp[5],bs=BOSS_SKILL[b.st.m];
   if(force||el.dataset.k!=String(b.k)){el.dataset.k=b.k;el.querySelector('.bn').innerHTML=`${artHTML(b.k)} ${sp[1]}`;
-    el.querySelector('.bt').textContent=`고에티아 ${no}번 · ${sp[4]} · ${b.st.d}`;el.querySelector('.bs').textContent=bs?`대기술 「${bs.n}」 ${bs.d} · 파훼: ${BREAK_HINT[b.st.m]||''}`:''}
+    el.querySelector('.bt').textContent=`고에티아 ${no}번 · ${sp[4]} · ${b.st.d}`;const be=elOfSp(b.k);el.querySelector('.bel').innerHTML=`속성 ${elTag(be)} · <b>약점 ${elTag(EL_WEAK[be])}</b> · 내성 ${elTag(be)}${b.gm?` · <b class="gmk">기믹 ${GM_INFO[b.gm][0]}</b>: ${GM_INFO[b.gm][1]}`:''}`;el.querySelector('.bs').textContent=bs?`대기술 「${bs.n}」 ${bs.d} · 파훼: ${BREAK_HINT[b.st.m]||''}`:''}
   el.querySelector('.bh i').style.width=Math.max(0,b.hp/b.max*100)+'%';el.classList.toggle('casting',!!b.act);
   const tm=el.querySelector('.btm');if(tm){const t=Math.max(0,Math.ceil(b.tl||0));tm.textContent=`${b.floor}층 보스 · 남은 시간 ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;tm.classList.toggle('low',t<=10)}}
 
