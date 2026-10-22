@@ -460,7 +460,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
       <div style="display:flex;flex-direction:column;gap:12px">
         <div class="row">
           <h2>보관함</h2>
-          <details style="flex-basis:100%;order:9"><summary class="muted">봉인 등급 확률 보기</summary><div class="dex" id="odds" style="margin-top:8px"></div></details>
+          <details style="flex-basis:100%;order:9"><summary class="muted">귀속 등급 확률 보기</summary><div class="dex" id="odds" style="margin-top:8px"></div></details>
           <span class="muted" id="invNote"></span>
           <select id="sort" style="margin-left:auto" aria-label="정렬">
             <option value="grade">등급순</option><option value="power">전투력순</option><option value="new">최신순</option>
@@ -516,7 +516,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
         </div>
         <div class="panel"><h2>수집 보상</h2><ul class="miles" id="dexMiles"></ul></div>
         <div class="panel"><h2>세트 보상</h2><div class="note">한 묶음을 모두 모으면 받는 보너스예요.</div><ul class="miles" id="dexSets"></ul></div>
-        <div class="row"><b>그리모어</b><span class="muted">봉인한 악마의 카드를 누르면 『고에티아』 원문 해설이 열려요</span><button class="btn" id="grimLast" hidden>마지막 장</button></div>
+        <div class="row"><b>그리모어</b><span class="muted">귀속한 악마의 카드를 누르면 『고에티아』 원문 해설이 열려요</span><button class="btn" id="grimLast" hidden>마지막 장</button></div>
         <div class="grid" id="dexGrid"></div>
       </div>
     </section>
@@ -547,7 +547,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
 const SPR_DATA={1:'art/demons/01-bael.webp',2:'art/demons/02-agares.webp',3:'art/demons/03-vassago.webp',4:'art/demons/04-samigina.webp',5:'art/demons/05-marbas.webp',6:'art/demons/06-valefor.webp',7:'art/demons/07-amon.webp',8:'art/demons/08-barbatos.webp',9:'art/demons/09-paimon.webp',10:'art/demons/10-buer.webp',11:'art/demons/11-gusion.webp',12:'art/demons/12-sitri.webp',13:'art/demons/13-beleth.webp',14:'art/demons/14-leraje.webp',15:'art/demons/15-eligos.webp',16:'art/demons/16-zepar.webp',17:'art/demons/17-botis.webp',18:'art/demons/18-bathin.webp',19:'art/demons/19-sallos.webp',20:'art/demons/20-purson.webp',21:'art/demons/21-marax.webp',22:'art/demons/22-ipos.webp',23:'art/demons/23-aim.webp',24:'art/demons/24-naberius.webp',25:'art/demons/25-glasya-labolas.webp',26:'art/demons/26-bune.webp',27:'art/demons/27-ronove.webp',28:'art/demons/28-berith.webp',29:'art/demons/29-astaroth.webp',30:'art/demons/30-forneus.webp',31:'art/demons/31-foras.webp',32:'art/demons/32-asmoday.webp',33:'art/demons/33-gaap.webp',34:'art/demons/34-furfur.webp',35:'art/demons/35-marchosias.webp',36:'art/demons/36-stolas.webp',37:'art/demons/37-phenex.webp',38:'art/demons/38-halphas.webp',39:'art/demons/39-malphas.webp',40:'art/demons/40-raum.webp',41:'art/demons/41-focalor.webp',42:'art/demons/42-vepar.webp',43:'art/demons/43-sabnock.webp',44:'art/demons/44-shax.webp',45:'art/demons/45-vine.webp',46:'art/demons/46-bifrons.webp',47:'art/demons/47-uvall.webp',48:'art/demons/48-haagenti.webp',49:'art/demons/49-crocell.webp',50:'art/demons/50-furcas.webp',51:'art/demons/51-balam.webp',52:'art/demons/52-alloces.webp',53:'art/demons/53-caim.webp',54:'art/demons/54-murmur.webp',55:'art/demons/55-orobas.webp',56:'art/demons/56-gremory.webp',57:'art/demons/57-ose.webp',58:'art/demons/58-amy.webp',59:'art/demons/59-orias.webp',60:'art/demons/60-vapula.webp',61:'art/demons/61-zagan.webp',62:'art/demons/62-valac.webp',63:'art/demons/63-andras.webp',64:'art/demons/64-haures.webp',65:'art/demons/65-andrealphus.webp',66:'art/demons/66-cimejes.webp',67:'art/demons/67-amdusias.webp',68:'art/demons/68-belial.webp',69:'art/demons/69-decarabia.webp',70:'art/demons/70-seere.webp',71:'art/demons/71-dantalion.webp',72:'art/demons/72-andromalius.webp',0:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNDAgMjQwIj4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iciIgeDE9IjAiIHgyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMzYTJlMjIiLz48c3RvcCBvZmZzZXQ9Ii40NSIgc3RvcC1jb2xvcj0iIzhhNzY1NiIvPjxzdG9wIG9mZnNldD0iLjciIHN0b3AtY29sb3I9IiM2YjVhNDIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMyZTI0MWEiLz48L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9ImMiIHgxPSIwIiB4Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjM2ExNDE0Ii8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzZhMjYyNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzJhMGUwZSIvPjwvbGluZWFyR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iaCIgY3g9Ii41IiBjeT0iLjU1IiByPSIuNTUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzBkMDkwNyIvPjxzdG9wIG9mZnNldD0iLjciIHN0b3AtY29sb3I9IiMxYTEzMGUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM1YTRhMzYiLz48L3JhZGlhbEdyYWRpZW50Pgo8cmFkaWFsR3JhZGllbnQgaWQ9ImdsIiByPSIuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZmMmMwIi8+PHN0b3Agb2Zmc2V0PSIuMzUiIHN0b3AtY29sb3I9IiNmMmMyNGEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmMmMyNGEiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+CjxwYXR0ZXJuIGlkPSJoYXRjaCIgd2lkdGg9IjQiIGhlaWdodD0iNCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgcGF0dGVyblRyYW5zZm9ybT0icm90YXRlKDM1KSI+PGxpbmUgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjQiIHN0cm9rZT0iIzFjMTQwZSIgc3Ryb2tlLXdpZHRoPSIxLjEiIG9wYWNpdHk9Ii41NSIvPjwvcGF0dGVybj4KPC9kZWZzPgo8ZWxsaXBzZSBjeD0iNzAiIGN5PSIyMzQiIHJ4PSI0NCIgcnk9IjUiIGZpbGw9IiMwMDAiIG9wYWNpdHk9Ii4zNSIvPgo8IS0tIGNhcGUgLS0+CjxwYXRoIGQ9Ik00NCA3MCBRMjAgMTUwIDE4IDIzMiBMMTIyIDIzMiBRMTE4IDE1MCA5NiA3MCBaIiBmaWxsPSJ1cmwoI2MpIiBzdHJva2U9IiMxYTBjMDgiIHN0cm9rZS13aWR0aD0iMiIvPgo8cGF0aCBkPSJNNDQgNzAgUTIwIDE1MCAxOCAyMzIgTDYwIDIzMiBRNDggMTUwIDU0IDgwIFoiIGZpbGw9InVybCgjaGF0Y2gpIi8+CjwhLS0gcm9iZSAtLT4KPHBhdGggZD0iTTUwIDY2IFEzNiAxNDAgMzAgMjM0IEwxMTAgMjM0IFExMDQgMTQwIDkwIDY2IFE3MCA1OCA1MCA2NiBaIiBmaWxsPSJ1cmwoI3IpIiBzdHJva2U9IiMxYzE0MGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8cGF0aCBkPSJNNTAgNjYgUTM2IDE0MCAzMCAyMzQgTDUyIDIzNCBRNTAgMTUwIDU4IDcyIFoiIGZpbGw9InVybCgjaGF0Y2gpIi8+CjxwYXRoIGQ9Ik05MCA2NiBRMTA0IDE0MCAxMTAgMjM0IEw5NiAyMzQgUTkyIDE1MCA4NCA3MiBaIiBmaWxsPSJ1cmwoI2hhdGNoKSIvPgo8cGF0aCBkPSJNNjIgOTAgUTYwIDE2MCA1NiAyMzIgTTc4IDkwIFE4MiAxNjAgODYgMjMyIE03MCA5NiBMNzAgMjMyIiBzdHJva2U9IiMyYTIwMTYiIHN0cm9rZS13aWR0aD0iMS4zIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuOCIvPgo8IS0tIGJlbHQgLS0+CjxwYXRoIGQ9Ik00NCAxMjggUTcwIDEzNiA5NiAxMjggTDk3IDEzNiBRNzAgMTQ0IDQzIDEzNiBaIiBmaWxsPSIjYjA4YTNhIiBzdHJva2U9IiMzYTJhMTAiIHN0cm9rZS13aWR0aD0iMS4yIi8+CjxjaXJjbGUgY3g9IjcwIiBjeT0iMTM3IiByPSI0LjUiIGZpbGw9IiNkOGIwNTAiIHN0cm9rZT0iIzNhMmExMCIvPgo8IS0tIHNsZWV2ZXMvYXJtcyAtLT4KPHBhdGggZD0iTTUwIDcyIFEzMiAxMDAgMzQgMTI4IFE0MCAxMzQgNDggMTMwIFE1MCAxMDQgNjAgODYgWiIgZmlsbD0idXJsKCNyKSIgc3Ryb2tlPSIjMWMxNDBlIiBzdHJva2Utd2lkdGg9IjEuNiIvPgo8cGF0aCBkPSJNOTAgNzIgUTEwOCA5NiAxMDggMTE4IFExMDIgMTI2IDk0IDEyMiBROTIgMTAwIDgyIDg2IFoiIGZpbGw9InVybCgjcikiIHN0cm9rZT0iIzFjMTQwZSIgc3Ryb2tlLXdpZHRoPSIxLjYiLz4KPCEtLSBoYW5kcyAtLT4KPGVsbGlwc2UgY3g9IjQxIiBjeT0iMTMxIiByeD0iNiIgcnk9IjUiIGZpbGw9IiNjOGE4ODIiIHN0cm9rZT0iIzNhMmExYSIvPgo8ZWxsaXBzZSBjeD0iMTAyIiBjeT0iMTIyIiByeD0iNiIgcnk9IjUiIGZpbGw9IiNjOGE4ODIiIHN0cm9rZT0iIzNhMmExYSIvPgo8IS0tIFNvbG9tb24gcmluZyAtLT4KPGNpcmNsZSBjeD0iNDMiIGN5PSIxMzQiIHI9IjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2YyYzI0YSIgc3Ryb2tlLXdpZHRoPSIxLjgiLz4KPGNpcmNsZSBjeD0iNDMiIGN5PSIxMzQiIHI9IjciIGZpbGw9InVybCgjZ2wpIiBvcGFjaXR5PSIuNyIvPgo8IS0tIHN0YWZmIC0tPgo8bGluZSB4MT0iMTA0IiB5MT0iMjAiIHgyPSIxMDgiIHkyPSIyMzQiIHN0cm9rZT0iIzJhMWEwZSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPGxpbmUgeDE9IjEwNCIgeTE9IjIwIiB4Mj0iMTA4IiB5Mj0iMjM0IiBzdHJva2U9IiM2YTRhMmEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxjaXJjbGUgY3g9IjEwNCIgY3k9IjE4IiByPSIxMSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzg5YTNhIiBzdHJva2Utd2lkdGg9IjIuNSIvPgo8cGF0aCBkPSJNMTA0IDkgTDExMS44IDIyLjUgTDk2LjIgMjIuNSBaIE0xMDQgMjcgTDk2LjIgMTMuNSBMMTExLjggMTMuNSBaIiBmaWxsPSJub25lIiBzdHJva2U9IiNlOGMwNjAiIHN0cm9rZS13aWR0aD0iMS4zIi8+CjxjaXJjbGUgY3g9IjEwNCIgY3k9IjE4IiByPSIxOCIgZmlsbD0idXJsKCNnbCkiIG9wYWNpdHk9Ii43NSIvPgo8Y2lyY2xlIGN4PSIxMDQiIGN5PSIxOCIgcj0iMyIgZmlsbD0iI2ZmZjRkMCIvPgo8IS0tIGhvb2QgLS0+CjxwYXRoIGQ9Ik00NCA3NCBRNDAgMzQgNzAgMjIgUTEwMCAzNCA5NiA3NCBRODQgNjQgNzAgNjQgUTU2IDY0IDQ0IDc0IFoiIGZpbGw9InVybCgjcikiIHN0cm9rZT0iIzFjMTQwZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxwYXRoIGQ9Ik00NCA3NCBRNDAgMzQgNzAgMjIgUTU2IDQwIDU0IDcwIFoiIGZpbGw9InVybCgjaGF0Y2gpIi8+CjxwYXRoIGQ9Ik01MiA3MCBRNTIgNDIgNzAgMzYgUTg4IDQyIDg4IDcwIFE4MCA2MiA3MCA2MiBRNjAgNjIgNTIgNzAgWiIgZmlsbD0idXJsKCNoKSIvPgo8IS0tIGZhY2UgaW4gc2hhZG93IC0tPgo8cGF0aCBkPSJNNTggNjIgUTcwIDcwIDgyIDYyIFE4MCA1MCA3MCA0NiBRNjAgNTAgNTggNjIgWiIgZmlsbD0iIzJhMWUxNiIgb3BhY2l0eT0iLjkiLz4KPHBhdGggZD0iTTYzIDU0IGw1IDEuNSBNNzcgNTQgbC01IDEuNSIgc3Ryb2tlPSIjZjJjMjRhIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8Y2lyY2xlIGN4PSI2NiIgY3k9IjU1IiByPSI0IiBmaWxsPSJ1cmwoI2dsKSIgb3BhY2l0eT0iLjYiLz48Y2lyY2xlIGN4PSI3NCIgY3k9IjU1IiByPSI0IiBmaWxsPSJ1cmwoI2dsKSIgb3BhY2l0eT0iLjYiLz4KPHBhdGggZD0iTTYyIDY0IFE3MCA3MiA3OCA2NCBMNzYgNzAgUTcwIDc2IDY0IDcwIFoiIGZpbGw9IiM0YTNhMmEiLz4KPCEtLSBzZWFsIG1lZGFsbGlvbiAtLT4KPGNpcmNsZSBjeD0iNzAiIGN5PSI5MiIgcj0iNyIgZmlsbD0iIzJhMWExMCIgc3Ryb2tlPSIjYzg5YTNhIiBzdHJva2Utd2lkdGg9IjEuNSIvPgo8cGF0aCBkPSJNNzAgODYuNSBMNzQuOCA5NC44IEw2NS4yIDk0LjggWiBNNzAgOTcuNSBMNjUuMiA4OS4yIEw3NC44IDg5LjIgWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZThjMDYwIiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+Cg=='};
 /* 소환사(솔로몬의 후계자) 그림: 승급 단계마다 옷·관·수염·지팡이가 바뀌어 마지막엔 우리가 아는 솔로몬 왕의 모습이 돼요. 판화풍 SVG */
 const SOL_STAGES=[
-  {n:'봉인의 견습생',d:'두건을 쓴 젊은 견습생. 반지가 막 깨어났어요.'},
+  {n:'반지의 견습생',d:'두건을 쓴 젊은 견습생. 반지가 막 깨어났어요.'},
   {n:'인장의 계승자',d:'두건을 벗고 인장 반지의 힘을 다루기 시작한 청년.'},
   {n:'현자의 제자',d:'수염이 자라고, 지혜의 두루마리를 든 학자.'},
   {n:'이스라엘의 왕자',d:'금관 띠를 두른 왕자. 육망성 지팡이를 들었어요.'},
@@ -663,7 +663,7 @@ const STAR_BONUS=[1,1.1,1.3,1.5];
 const gname=g=>g<=TOP?GRADES[g]:'SSR'+'★'.repeat(g-TOP);
 const starsOf=x=>Math.max(0,x.grade-TOP);
 const P_MIN=60;
-/* 봉인 등급 확률(%). 봉인은 하루 1,600마리 → SSR 0.0089%면 24시간 풀가동 시 약 1주일에 1마리 */
+/* 귀속 등급 확률(%). 봉인은 하루 1,600마리 → SSR 0.0089%면 24시간 풀가동 시 약 1주일에 1마리 */
 const CAPTURE=[null,27,13,6,2.6,0.9,0.3,0.08,0.02,0.0089];
 CAPTURE[0]=100-CAPTURE.slice(1).reduce((a,b)=>a+b,0);
 const MAXLV=100, MAXINV=200, MAXITEMS=60, TICK_MS=3000, KEY='solomon-72-v1';
@@ -696,7 +696,7 @@ const SPECIES=[
   ["⚔️","베리트",5,1,"공작",28],["🦁","알로케스",5,2,"공작",52],["🐊","살로스",5,3,"공작",19],["🐆","시트리",5,4,"군주",12],
   ["🏹","레라지에",6,0,"후작",14],["🐦‍⬛","안드라스",-2,0,"후작",63],["🐴","사미기나",6,0,"후작",4],["🗡️","엘리고스",6,0,"공작",15],["🛡️","제파르",6,0,"공작",16],
   ["🏹","바르바토스",-2,0,"공작",8],["🐉","부네",6,2,"공작",26],["🐉","아스타로트",-2,0,"공작",29],["🐎","오로바스",6,4,"군주",55],
-  /* 왕 9체: 야생에서 나오지 않고 조합으로만 봉인해요 */
+  /* 왕 9체: 야생에서 나오지 않고 조합으로만 귀속해요 */
   ["🦁","비네",-2,0,"왕",45],["🐂","자간",-2,0,"왕",61],["🐻","푸르손",-2,0,"왕",20],["🐎","벨레트",-2,0,"왕",13],["🐂","발람",-2,0,"왕",51],
   ["🐪","파이몬",-2,0,"왕",9],["🐉","아스모데우스",-2,0,"왕",32],["🕷️","바알",-2,0,"왕",1],["🔥","벨리알",-2,0,"왕",68]];
 const RECIPE_LIST=[
@@ -796,10 +796,10 @@ const effOf=(d,i)=>floorE(curFloor());
 const eff=()=>floorE(curFloor());
 const cleared=f=>f<(S.top||1);
 const conquered=()=>cleared(curFloor());
-const spForFloor=f=>{f=f||curFloor();const b=bossSp(f);return SPECIES[b][2]===-2?null:b};  /* 그 층에서는 그 층 보스 악마만 봉인돼요. 조합 전용 보스 층(57~72층)에서는 악마가 봉인되지 않아요 */
+const spForFloor=f=>{f=f||curFloor();const b=bossSp(f);return SPECIES[b][2]===-2?null:b};  /* 그 층에서는 그 층 보스 악마만 귀속돼요. 조합 전용 보스 층(57~72층)에서는 악마가 귀속되지 않아요 */
 const where=m=>{const h=SPECIES[m.sp][2],t=tierOf(m.sp);return `제${SPECIES[m.sp][5]}위 ${cultOf(m.sp)} · `+(h===-2?`조합 전용 · ${floorOf(m.sp)}층 보스`:`${floorOf(m.sp)}층 보스 · ${floorOf(m.sp)}층부터 등장`)};
 function rollCapture(){let x=Math.random()*100;for(let g=TOP;g>0;g--){if(x<CAPTURE[g])return g;x-=CAPTURE[g]}return 0}
-/* 봉인 등급 확률은 모든 지역·난이도에서 같아요 */
+/* 귀속 등급 확률은 모든 지역·난이도에서 같아요 */
 const wildP=()=>{const g=rollCapture();return rand(Math.max(P_MIN,TH[g])+2,TH[g+1]-2)};
 const byId=id=>S.mons.find(m=>m.id===id);
 const itemById=id=>S.items.find(x=>x.id===id);
@@ -1107,7 +1107,7 @@ function explore(){
     if(S.mons.length>=invMax())addLog('보관함이 가득 찼어요. 합성하거나 퇴마하세요.');
     else{const m=makeMonster(wildP(eff()),spForFloor(),tag);
       if(!keepMon(m)){const g=releaseGold(m);S.gold+=g;scenePush(`${nm(m)} ${gname(m.grade)} → +${fmt(g)}G`,'#8C8276',false,m.sp);}
-      else{S.mons.push(m);scenePush(`봉인! ${nm(m)} ${gname(m.grade)}`,RAR(m.grade),m.grade>=6,m.sp);pushFeed(`${nm(m)} ${mb(m)}`,m.grade>=6?'hot':'');addLog(`${nm(m)} 발견 · ${gname(m.grade)}등급`,m.grade>=5);if(m.grade>=7)toast(`${gname(m.grade)}등급 ${nm(m)} 봉인!`);changed=true}}
+      else{S.mons.push(m);scenePush(`귀속! ${nm(m)} ${gname(m.grade)}`,RAR(m.grade),m.grade>=6,m.sp);pushFeed(`${nm(m)} ${mb(m)}`,m.grade>=6?'hot':'');addLog(`${nm(m)} 발견 · ${gname(m.grade)}등급`,m.grade>=5);if(m.grade>=7)toast(`${gname(m.grade)}등급 ${nm(m)} 귀속!`);changed=true}}
   }
   if(Math.random()<ITEM_RATE*(1+dexBonus().item+affixBonus().ifind)){
     if(S.items.length>=MAXITEMS)addLog('장비 가방이 가득 차서 장비를 놓쳤어요.');
@@ -1136,7 +1136,7 @@ function renderExplore(){
   $('req').textContent=conquered()?'—':fmt(req);
   $('gps').innerHTML=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;
   $('stageNote').textContent=(conquered()?'클리어한 층이에요. 머물면서 악마와 장비를 계속 모을 수 있어요. ':`전투 화면에서 이 층 보스를 ${BOSS_TIME}초 안에 쓰러뜨리면 클리어하고 다음 층으로 올라가요. 권장 전투력 ${fmt(req)}보다 약하면 보스가 단단하고 아프게 때려서, 시간 초과나 전멸로 실패하기 쉬워요. `)
-    +`${SPECIES[b][2]===-2?'조합 전용 보스 층이라 악마가 봉인되지 않아요(장비·골드·경험치는 그대로). ':`이 층에서는 보스 ${SPECIES[b][1]}만 봉인돼요. `}악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 ${Math.round(TICK_MS/1000/ITEM_RATE/60)}분에 1개 발견돼요.`;
+    +`${SPECIES[b][2]===-2?'조합 전용 보스 층이라 악마가 귀속되지 않아요(장비·골드·경험치는 그대로). ':`이 층에서는 보스 ${SPECIES[b][1]}만 귀속돼요. `}악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 ${Math.round(TICK_MS/1000/ITEM_RATE/60)}분에 1개 발견돼요.`;
   renderFloors();
   $('prog').style.width=(S.prog*100)+'%';$('hudProg').style.width=(conquered()?100:S.prog*100)+'%';
   $('hudPow').innerHTML=`전투력 <b class="${conquered()||tp>=req?'ok':'no'}">${fmt(tp)}</b> / 권장 ${fmt(req)}${conquered()?' ✓':''}`;
@@ -1790,7 +1790,7 @@ function tickSkills(dt){updSkLv();for(const k in SC.skcd)SC.skcd[k]=Math.max(0,S
 
 /* ===== 스토리: 솔로몬의 마지막 후계자, 퇴마사의 여정 ===== */
 const STORY={
-  prologue:{t:'서장 · 깨진 황동 그릇',x:`솔로몬 왕은 일흔두 악마를 황동 그릇에 봉인해 바빌론의 깊은 호수에 가라앉혔다.\n\n삼천 년이 흐른 어느 밤, 호수가 붉게 끓어오르고 그릇이 깨졌다. 풀려난 악마들은 세상 곳곳의 틈으로 흩어졌다.\n\n당신은 솔로몬의 마지막 혈통. 손가락에 낀 인장 반지가 처음으로 뜨겁게 빛난다. 반지는 악마를 다시 봉인할 수 있다. 그러나 봉인한 악마의 힘을 빌려야만, 더 강한 악마에게 맞설 수 있다.\n\n퇴마사여, 일흔두 악마를 모두 되찾아라.`},
+  prologue:{t:'서장 · 깨진 황동 그릇',x:`솔로몬 왕은 일흔두 악마를 황동 그릇에 봉인해 바빌론의 깊은 호수에 가라앉혔다.\n\n삼천 년이 흐른 어느 밤, 호수가 붉게 끓어오르고 그릇이 깨졌다. 풀려난 악마들은 세상 곳곳의 틈으로 흩어졌다.\n\n당신은 솔로몬의 마지막 혈통. 손가락에 낀 인장 반지가 처음으로 뜨겁게 빛난다. 반지는 악마를 다시 귀속시킬 수 있다. 그러나 귀속시킨 악마의 힘을 빌려야만, 더 강한 악마에게 맞설 수 있다.\n\n퇴마사여, 일흔두 악마를 모두 되찾아라.`},
   ch:[
     {t:'제1장 · 무너진 솔로몬 신전',i:`왕의 옛 신전. 촛불은 아직 꺼지지 않았고, 바닥의 인장 원은 누군가 일부러 긁어 지운 흔적이 있다.\n사자의 울음이 기둥 사이를 울린다. 첫 번째 악마, 마르바스가 이곳을 지키고 있다.`,
       c:`신전 가장 깊은 곳에서 깨진 그릇의 조각을 찾았다. 조각 안쪽에는 그릇을 깬 자의 손톱자국과 함께, 왕관 모양의 낙인이 남아 있다.\n그릇은 저절로 깨진 것이 아니다. 누군가 안에서 깨뜨렸다.`},
@@ -1804,9 +1804,9 @@ const STORY={
       c:`스톨라스가 별의 배열로 이름을 알려 주었다. 그릇을 깬 자는 '무가치한 자', 벨리알. 솔로몬에게 가장 먼저 무릎 꿇는 척했던 왕이다.`},
     {t:'제6장 · 불타는 심연',i:`땅 자체가 불타는 곳. 불사조 페넥스의 노래 위로 불의 전차 바퀴 자국이 깊게 패여 있다.\n벨리알의 기사들, 베리트와 알로케스가 길을 막는다.`,
       c:`전차 자국은 판데모니움으로 이어진다. 아홉 왕이 모두 그곳에 모였다. 벨리알은 나머지 왕들을 설득해 새로운 왕좌를 세우려 한다.`},
-    {t:'제7장 · 판데모니움',i:`흑요석 첨탑이 하늘을 찌르는 악마들의 수도. 보랏빛 화로마다 왕들의 문장이 걸려 있다.\n여기서부터는 인장 반지의 힘만으로는 부족하다. 봉인한 악마들을 엮어, 왕을 직접 불러내 봉인해야 한다.`,
-      c:`판데모니움의 성문이 열렸다. 이제 남은 것은 아홉 왕. 두 악마의 힘을 엮는 조합의 의식으로 왕들을 하나씩 봉인하라. 마지막은 벨리알이다.`}],
-  ending:{t:'종장 · 다시 닫힌 그릇',x:`불의 전차가 멈추고, 두 천사의 얼굴을 한 왕이 인장 앞에 무릎 꿇었다.\n"솔로몬의 아이야, 너도 결국 우리의 힘을 빌려 여기까지 왔구나."\n\n벨리알의 웃음과 함께 반지가 마지막으로 빛났다. 깨진 그릇의 조각들이 다시 하나로 모인다.\n\n그러나 반지 안쪽에 새로운 균열이 하나 생겼다. 봉인은 영원하지 않다. 그리고 당신은, 이제 일흔두 악마의 힘을 지닌 유일한 사람이다.\n\n— 계속해서 남은 악마를 봉인하고, 더 높은 퇴마사 계급에 도전하세요.`}};
+    {t:'제7장 · 판데모니움',i:`흑요석 첨탑이 하늘을 찌르는 악마들의 수도. 보랏빛 화로마다 왕들의 문장이 걸려 있다.\n여기서부터는 인장 반지의 힘만으로는 부족하다. 귀속시킨 악마들을 엮어, 왕을 직접 불러내 귀속시켜야 한다.`,
+      c:`판데모니움의 성문이 열렸다. 이제 남은 것은 아홉 왕. 두 악마의 힘을 엮는 조합의 의식으로 왕들을 하나씩 귀속시켜라. 마지막은 벨리알이다.`}],
+  ending:{t:'종장 · 다시 닫힌 그릇',x:`불의 전차가 멈추고, 두 천사의 얼굴을 한 왕이 인장 앞에 무릎 꿇었다.\n"솔로몬의 아이야, 너도 결국 우리의 힘을 빌려 여기까지 왔구나."\n\n벨리알의 웃음과 함께 반지가 마지막으로 빛났다. 깨진 그릇의 조각들이 다시 하나로 모인다.\n\n그러나 반지 안쪽에 새로운 균열이 하나 생겼다. 봉인은 영원하지 않다. 그리고 당신은, 이제 일흔두 악마의 힘을 지닌 유일한 사람이다.\n\n— 계속해서 남은 악마를 귀속시키고, 더 높은 퇴마사 계급에 도전하세요.`}};
 const storyQ=[];
 function queueStory(key){if(!S.story)S.story={seen:[]};if(S.story.seen.includes(key))return;S.story.seen.push(key);storyQ.push(key);save();setTimeout(showNextStory,400)}
 function storyEntry(key){if(key==='prologue'||key==='ending')return STORY[key];const m=key.match(/^(ch|clear)(\d)$/);const c=STORY.ch[+m[2]];return m[1]==='ch'?{t:c.t,x:c.i}:{t:c.t+' · 완료',x:c.c}}
@@ -1933,14 +1933,14 @@ function sceneStep(dt){
 /* ===== 보스 봉인 연출: 쓰러진 보스를 인장으로 봉인할 때의 음산한 효과 =====
    0~0.7초 바닥에 핏빛 솔로몬 인장이 새겨지고 검은 연기가 피어올라요 → 0.3~1.7초 보스가 검은 실루엣이 되어 사슬에 묶여 소용돌이 속으로 빨려들어요
    → 1.5~3.4초 어둠 속에서 봉인된 악마의 그림이 핏빛 테두리로 떠올라요. 그동안 화면 가장자리가 짙게 어두워져요. */
-const SEAL_P=0.10;  /* 야생 악마 보스를 쓰러뜨리면 10% 확률로 그 보스를 봉인(조합 전용 보스는 봉인되지 않아요) */
+const SEAL_P=0.10;  /* 야생 악마 보스를 쓰러뜨리면 10% 확률로 그 보스를 귀속(조합 전용 보스는 봉인되지 않아요) */
 function sealSil(k){const im=artImg(k);if(!im.complete||!im.naturalWidth)return null;const c=document.createElement('canvas');c.width=im.naturalWidth+40;c.height=im.naturalHeight+40;const x=c.getContext('2d');
   x.shadowColor='#8a0a12';x.shadowBlur=18;x.drawImage(im,20,20);x.shadowBlur=0;x.globalCompositeOperation='source-in';x.fillStyle='#07030a';x.fillRect(0,0,c.width,c.height);
   x.globalCompositeOperation='destination-over';x.shadowColor='#b0101a';x.shadowBlur=22;x.drawImage(im,20,20);return c}
 function trySealBoss(mob){const k=mob.k;if(SPECIES[k][2]===-2||Math.random()>=SEAL_P)return false;
-  if(S.mons.length>=invMax()){addLog(`${SPECIES[k][1]}을(를) 봉인할 수 있었지만 보관함이 가득 찼어요`);return false}
-  const m=makeMonster(wildP(eff()),k,`${mob.floor||curFloor()}층 보스 봉인`);S.mons.push(m);
-  addLog(`보스 봉인! ${nm(m)} ${gname(m.grade)}등급`,true);pushFeed(`봉인 ${nm(m)} ${mb(m)}`,'hot');
+  if(S.mons.length>=invMax()){addLog(`${SPECIES[k][1]}을(를) 귀속할 수 있었지만 보관함이 가득 찼어요`);return false}
+  const m=makeMonster(wildP(eff()),k,`${mob.floor||curFloor()}층 보스 귀속`);S.mons.push(m);
+  addLog(`보스 귀속! ${nm(m)} ${gname(m.grade)}등급`,true);pushFeed(`귀속 ${nm(m)} ${mb(m)}`,'hot');
   SC.seal={k,x:mob.x,y:mob.y,t:0,life:3.4,txt:`${nm(m)}`,g:m.grade,sil:sealSil(k)};if(!RM)SC.shake=Math.max(SC.shake,6);return true}
 function drawSealWorld(g,dt){const E=SC.seal;if(!E)return;E.t+=dt;if(E.t>E.life){SC.seal=null;return}const t=E.t,x=E.x,y=E.y;
   /* 바닥 인장 */
@@ -1967,7 +1967,7 @@ function drawSealUI(q){const E=SC.seal;if(!E)return;const t=E.t,fade=t>E.life-0.
     q.fillStyle='rgba(8,4,6,.94)';q.shadowColor='#b0101a';q.shadowBlur=24;q.fillRect(x,y,W,H);q.shadowBlur=0;
     q.strokeStyle='#6a0a10';q.lineWidth=2;q.strokeRect(x+0.5,y+0.5,W-1,H-1);q.strokeStyle='#2a0a0c';q.strokeRect(x+5,y+5,W-10,H-10);
     if(im.complete&&im.naturalWidth){const ih=88,iw=ih*im.naturalWidth/im.naturalHeight;q.filter='grayscale(.6) brightness(.55) sepia(.4) hue-rotate(-30deg)';q.drawImage(im,cxm-iw/2,y+14,iw,ih);q.filter='none'}
-    q.font='600 10px "IBM Plex Sans KR",sans-serif';q.fillStyle='#a01018';q.textAlign='center';q.fillText('— 봉 인 —',cxm,y+112);
+    q.font='600 10px "IBM Plex Sans KR",sans-serif';q.fillStyle='#a01018';q.textAlign='center';q.fillText('— 귀 속 —',cxm,y+112);
     q.font='800 14px "Nanum Myeongjo",serif';q.fillStyle='#d8c8b0';q.fillText(E.txt,cxm,y+128);
     q.font='600 11px "IBM Plex Mono",monospace';q.fillStyle=gc2(E.g);q.fillText(`${gname(E.g)} 등급`,cxm,y+143);q.restore()}}
 const gc2=g=>getComputedStyle(document.documentElement).getPropertyValue('--g'+Math.min(g,TOP)).trim()||'#E9C46A';
