@@ -1860,11 +1860,10 @@ function sceneDraw(){
   if(!SC.flat){SC.flat=1;$('sceneBox').classList.add('flat')}
   g.setTransform(SC.dpr,0,0,SC.dpr,0,0);q.setTransform(SC.dpr,0,0,SC.dpr,0,0);q.clearRect(0,0,SC.VW,SC.VH);
   const sx=SC.shake?rand(-SC.shake,SC.shake):0,sy=SC.shake?rand(-SC.shake,SC.shake):0;g.translate(sx,SC.oy+sy);q.translate(sx,SC.oy+sy);
-  if(SC.ms[0])lightAt(SC.ms[0].x+sx,SC.ms[0].y+SC.oy+sy-30);bossLight(SC.boss?{x:SC.boss.x+sx,y:SC.boss.y+SC.oy+sy-60}:null);
+  if(SC.ms[0])lightAt(SC.ms[0].x+sx,SC.ms[0].y+SC.oy+sy-30);bossLight(null);  /* 보스 주변은 밝히지 않아요: 소환사 주변만 밝게 */
   drawGround(g);g.textAlign='center';g.textBaseline='middle';q.textAlign='center';q.textBaseline='middle';
   /* 바닥 효과: 고리·마법진·갈라짐 (그림보다 아래) */
   SC.fx.filter(f=>f.k==='ring').forEach(f=>{const k=f.t/f.life;g.strokeStyle=f.col;g.globalAlpha=1-k;g.lineWidth=f.w||3;g.beginPath();g.ellipse(f.x,f.y,8+f.r*k,(8+f.r*k)*0.55,0,0,Math.PI*2);g.stroke();g.globalAlpha=1});
-  if(SC.boss){const b=SC.boss,gr=g.createRadialGradient(b.x,b.y,0,b.x,b.y,80);gr.addColorStop(0,'rgba(179,38,30,.45)');gr.addColorStop(1,'rgba(179,38,30,0)');g.fillStyle=gr;g.beginPath();g.ellipse(b.x,b.y,80,34,0,0,Math.PI*2);g.fill()}
   /* 악마들: 아래(앞)에 있는 것을 나중에 */
   const list=[];SC.ms.forEach(a=>list.push({e:a,y:a.y,H:a.key==='char'?88:80,dir:1}));
   SC.mobs.forEach(m=>list.push({e:m,y:m.y,H:m.boss?170:m.elite?104:74,dir:-1}));
