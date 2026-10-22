@@ -1500,6 +1500,7 @@ function steer(a,tx,ty,stop,maxSp,dt){
   let wx_=0,wy_=0;if(a.go){const sp=Math.min(maxSp*a.spd,d*3.2);wx_=dx/d*sp;wy_=dy/d*sp}
   SC.ms.forEach(b=>{if(b===a)return;const ex=a.x-b.x,ey=a.y-b.y,e=Math.hypot(ex,ey);if(e>0.01&&e<24){const push=(24-e)*5;wx_+=ex/e*push;wy_+=ey/e*push}});
   const k=Math.min(1,dt*(a.go?5:8));a.vx+=(wx_-a.vx)*k;a.vy+=(wy_-a.vy)*k;a.x+=a.vx*dt;a.y+=a.vy*dt;a.y=Math.max(16,Math.min(SC.H-16,a.y))}
+const RANGE_PX=220;
 function sceneStep(dt){
   dt*=S.fast?3:1;
   syncT-=dt;if(syncT<=0){syncTeam();syncT=0.5}
@@ -1519,7 +1520,11 @@ function sceneStep(dt){
     SC.lead.y=Math.max(24,Math.min(SC.H-24,SC.lead.y));if(SC.lead.x<SC.W*0.08)SC.lead.x=SC.W*0.08;
     const edge=SC.W*0.55;if(SC.lead.x>edge){SC.walkDX=SC.lead.x-edge;SC.lead.x=edge}
   }else{
-    SC.lead.x+=(SC.W*0.3-SC.lead.x)*Math.min(1,dt*2);SC.lead.y+=(SC.H/2+8-SC.lead.y)*Math.min(1,dt*2);
+    /* 자동: 보스가 화면 안에 있으면 대열 전체가 보스 쪽으로 다가가 사거리 안에 들어가요 */
+    const B=SC.boss&&SC.mobs.includes(SC.boss)&&SC.boss.x<SC.W*0.9?SC.boss:null;
+    if(B){const dx=B.x-SC.lead.x,dy=B.y-SC.lead.y,d=Math.hypot(dx,dy);if(d>150){SC.lead.x+=dx/d*95*dt;SC.lead.y+=dy/d*95*dt;walk=1}
+      SC.lead.x=Math.max(SC.W*0.1,Math.min(SC.W*0.62,SC.lead.x));SC.lead.y=Math.max(30,Math.min(SC.H-30,SC.lead.y))}
+    else{SC.lead.x+=(SC.W*0.3-SC.lead.x)*Math.min(1,dt*2);SC.lead.y+=(SC.H/2+8-SC.lead.y)*Math.min(1,dt*2)}
     const near=SC.mobs.some(m=>m.x<SC.W*0.72);walk=near?0:70;SC.walkDX=walk*dt;
   }
   if(SC.walkDX){const d=SC.walkDX;SC.scroll+=d;if(SC.trail)SC.trail.forEach(p=>p.x-=d);SC.mobs.forEach(m=>m.x-=d);SC.drops.forEach(x=>x.x-=d);SC.fx.forEach(f=>{if(f.x!=null)f.x-=d;if(f.x0!=null)f.x0-=d;if(f.tx!=null)f.tx-=d});SC.tele.forEach(T=>{T.x-=d;if(T.x1!=null)T.x1-=d});SC.shots.forEach(x=>{x.x-=d;x.fx-=d})}
@@ -1533,15 +1538,15 @@ function sceneStep(dt){
     a.hp=Math.min(a.max,a.hp+a.max*0.05*dt);
     a.cd-=dt;
     if(SC.focus)a.tgt=SC.focus;
-    else if(!a.tgt||a.tgt.hp<=0||!SC.mobs.includes(a.tgt))a.tgt=nearestMob(a.x,a.y,a.kind==='melee'?190:230);
+    else if(!a.tgt||a.tgt.hp<=0||!SC.mobs.includes(a.tgt))a.tgt=(SC.boss&&SC.mobs.includes(SC.boss)&&SC.boss.x<SC.W*0.95?SC.boss:null)||nearestMob(a.x,a.y,a.kind==='melee'?190:230);
     /* 수동 조작: 소환사는 직접 움직이고, 근접 악마는 소환사 곁을 너무 멀리 벗어나지 않아요 */
     if(SC.manual&&a.tgt&&a.kind==='melee'&&!SC.focus&&Math.hypot(a.tgt.x-SC.lead.x,a.tgt.y-SC.lead.y)>170)a.tgt=null;
     if(SC.manual&&a.key==='char'){a.x=SC.lead.x;a.y=SC.lead.y;a.bob+=walk?dt*6:0}
     const t=a.tgt;
     if(a.kind==='melee'&&t){
-      const d=Math.hypot(t.x-a.x,t.y-a.y);
-      a.inR=d<=24;
-      if(d>20){if(SC.manual)steer(a,t.x,t.y,18,175,dt);else{a.x+=(t.x-a.x)/d*150*dt;a.y+=(t.y-a.y)/d*150*dt}}
+      const d=Math.hypot(t.x-a.x,t.y-a.y),reach=t.boss?40:20;
+      a.inR=d<=reach+4;
+      if(d>reach){if(SC.manual)steer(a,t.x,t.y,reach-2,175,dt);else{a.x+=(t.x-a.x)/d*150*dt;a.y+=(t.y-a.y)/d*150*dt}}
       else if(a.cd<=0){a.cd=rand(0.4,0.55);a.lunge=0.12;a.lx=(t.x-a.x)/d;a.ly=(t.y-a.y)/d;a.atkT=0;a.atkA=0.75;atkFx(a,t,false);
         const crit=Math.random()<0.15?1:0, dmg=Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1)));
         if(0)SC.fx.push({k:'slash',x:(a.x+t.x)/2,y:(a.y+t.y)/2,a:Math.atan2(t.y-a.y,t.x-a.x),t:0,life:0.16});
@@ -1550,9 +1555,13 @@ function sceneStep(dt){
           SC.mobs.forEach(m=>{if(m!==t&&Math.hypot(m.x-t.x,m.y-t.y)<50)dmgMob(m,Math.round(dmg*0.6),0,t.x,t.y)})}}
     }else{
       if(SC.manual&&a.key!=='char'){const rank=SC.ms.filter(b=>b.key!=='char').indexOf(a);const gl=followGoal(a,rank);steer(a,gl.x,gl.y,gl.stop,165,dt)}
-      else if(!SC.manual){const dx=a.sx-a.x,dy=a.sy-a.y,d=Math.hypot(dx,dy);if(d>2){a.x+=dx/d*Math.min(d,110*dt);a.y+=dy/d*Math.min(d,110*dt)}a.vx=0;a.vy=0}
-      a.inR=!!t;
-      if(t&&a.cd<=0){a.cd=rand(0.5,0.7);const crit=Math.random()<0.12?1:0;a.atkT=0;a.atkA=0.42;atkFx(a,t,false);
+      else if(!SC.manual){const td=t?Math.hypot(t.x-a.x,t.y-a.y):0;
+        /* 원거리: 사거리(220) 밖이면 사거리 안까지 다가가고, 안이면 대열 자리로 */
+        const gx=t&&td>RANGE_PX-10?a.x+(t.x-a.x)/td*(td-(RANGE_PX-30)):a.sx,gy=t&&td>RANGE_PX-10?a.y+(t.y-a.y)/td*(td-(RANGE_PX-30)):a.sy;
+        const dx=gx-a.x,dy=gy-a.y,d=Math.hypot(dx,dy);if(d>2){a.x+=dx/d*Math.min(d,120*dt);a.y+=dy/d*Math.min(d,120*dt)}a.vx=0;a.vy=0}
+      const inRange=t&&Math.hypot(t.x-a.x,t.y-a.y)<=RANGE_PX+(SC.manual?80:10);
+      a.inR=!!inRange;
+      if(inRange&&a.cd<=0){a.cd=rand(0.5,0.7);const crit=Math.random()<0.12?1:0;a.atkT=0;a.atkA=0.42;atkFx(a,t,false);
         fireShot(a,t,Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1))),crit,false)}
     }
   });
@@ -1968,22 +1977,26 @@ function initModels(){
   M3.build=k=>{const g=new T.Group();if(k==='trainer')TRAINER(g);else{const f=D[SPECIES[k][1]];if(f)f(g);else humanoid(g,{})}
     const res=bake(g),b=new T.Box3().setFromObject(res),sz=b.getSize(new T.Vector3()),s=1.9/Math.max(sz.y,sz.x*0.85,sz.z*0.7);
     const out=new T.Group();res.scale.setScalar(s);const c=b.getCenter(new T.Vector3());res.position.set(-c.x*s,-b.min.y*s,-c.z*s);
-    res.userData.dim={pv:b.min.y+sz.y*0.4,h:sz.y,cx:c.x,cz:c.z};out.add(res);return out};
+    res.userData.dim={pv:b.min.y+sz.y*0.4,h:sz.y,cx:c.x,cz:c.z,quad:sz.z>sz.y*0.8};out.add(res);return out};
   M3.cache={};M3.get=k=>{if(!M3.cache[k])M3.cache[k]=M3.build(k);return M3.cache[k].clone()};
   /* 공격 모션: 허리 위쪽(상체·머리·무기)을 정점 셰이더로 굽히고 비틀어요.
      uSw = 앞뒤 굽힘(+면 앞으로 내리찍기), uTw = 좌우 비틀기. 허리 아래는 그대로라 발이 땅에 붙어 있어요. */
-  const BEND=`float w_=smoothstep(uPv,uPv+uH*0.32,position.y);
+  const BEND=`float lw_=1.-smoothstep(uPv-uH*0.08,uPv+uH*0.02,position.y);
+    float sx_=clamp((position.x-uC.x)/(uH*0.05),-1.,1.),sz_=clamp((position.z-uC.y)/(uH*0.08),-1.,1.);
+    float la_=uWk*sin(uPh)*sx_*mix(1.,sz_,uQd)*lw_,dyl_=position.y-uPv;
+    vec3 Lo_=vec3(0.,dyl_*(cos(la_)-1.),-dyl_*sin(la_));
+    float w_=smoothstep(uPv,uPv+uH*0.32,position.y);
     float a_=uSw*w_,c_=cos(a_),s_=sin(a_),b_=uTw*w_,cb_=cos(b_),sb_=sin(b_);
     mat3 R_=mat3(cb_,0.,-sb_, 0.,1.,0., sb_,0.,cb_)*mat3(1.,0.,0., 0.,c_,s_, 0.,-s_,c_);
     vec3 O_=vec3(uC.x,uPv,uC.y);`;
   const bendify=(mt,U)=>{const m=mt.clone();m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,U);
-      sh.vertexShader='uniform float uSw,uTw,uPv,uH;uniform vec2 uC;\n'+sh.vertexShader
+      sh.vertexShader='uniform float uSw,uTw,uPv,uH,uWk,uPh,uQd;uniform vec2 uC;\n'+sh.vertexShader
         .replace('#include <beginnormal_vertex>','#include <beginnormal_vertex>\n'+BEND+'\n objectNormal=R_*objectNormal;')
-        .replace('#include <begin_vertex>','#include <begin_vertex>\n'+(m.isMeshBasicMaterial?BEND:'')+'\n transformed=R_*(transformed-O_)+O_;');
+        .replace('#include <begin_vertex>','#include <begin_vertex>\n'+(m.isMeshBasicMaterial?BEND:'')+'\n transformed+=Lo_;transformed=R_*(transformed-O_)+O_;');
       if(m.isMeshBasicMaterial)sh.vertexShader=sh.vertexShader.replace('#include <beginnormal_vertex>','');};
     m.customProgramCacheKey=()=>'bend'+(m.isMeshBasicMaterial?'b':'s');return m};
   M3.anim=g=>{const inner=g.children[0],d=inner&&inner.userData.dim;if(!d)return g;
-    const U={uSw:{value:0},uTw:{value:0},uPv:{value:d.pv},uH:{value:d.h},uC:{value:new T.Vector2(d.cx,d.cz)}};
+    const U={uSw:{value:0},uTw:{value:0},uPv:{value:d.pv},uH:{value:d.h},uC:{value:new T.Vector2(d.cx,d.cz)},uWk:{value:0},uPh:{value:0},uQd:{value:d.quad?1:0}};
     inner.traverse(o=>{if(o.isMesh&&!o.material.transparent)o.material=bendify(o.material,U)});
     const P=new T.Group();g.remove(inner);P.add(inner);g.add(P);g.userData.U=U;g.userData.P=P;return g};
   M3.mat=mat;M3.ok=true;
@@ -2353,6 +2366,10 @@ function pose3D(o,e,dt){const U=o.userData.U,P=o.userData.P;if(!U)return;e.atkT=
   const st=styleOf(e),mv=(e.atkA<0?MOTION.cast:MOTION[st.m]||MOTION.chop)(t,n,A,now);
   const hit=Math.min(1,Math.max(e.hit||0,e.flash||0)/0.15);
   const tgt={sw:(mv.sw||0)-0.32*hit,tw:mv.tw||0,y:mv.y||0,f:mv.f||0,rx:(mv.rx||0)-0.08*hit,ry:mv.ry||0,sq:mv.sq||1,sc:mv.sc==null?1:mv.sc};
+  /* 걷기: 땅 기준 이동 속도로 다리를 앞뒤로 흔들고(사족은 대각선 짝), 걸음에 맞춰 몸이 오르내리고 상체가 살짝 반대로 돌아가요 */
+  if(e._px!=null&&dt>0){const v=Math.hypot(e.x-e._px+(SC.walkDX||0),e.y-e._py)/dt;e._v=(e._v||0)+(Math.min(v,240)-(e._v||0))*Math.min(1,dt*8)}e._px=e.x;e._py=e.y;
+  const wk=e.down>0||e.fly>0.2?0:Math.min(1,(e._v||0)/55);U.uWk.value+=(wk*0.6-U.uWk.value)*Math.min(1,dt*10);U.uPh.value+=(e._v||0)*dt*0.09;
+  const ph=U.uPh.value,wn=U.uWk.value/0.6;tgt.y+=0.06*Math.abs(Math.sin(ph))*wn;tgt.tw+=0.14*Math.sin(ph)*wn;tgt.sw+=0.08*wn;
   const k=Math.min(1,dt*28);U.uSw.value+=(tgt.sw-U.uSw.value)*k;U.uTw.value+=(tgt.tw-U.uTw.value)*k;
   if(P){P.position.y+=(tgt.y-P.position.y)*k;P.position.z+=(tgt.f-P.position.z)*k;P.rotation.x+=(tgt.rx-P.rotation.x)*k;
     P.rotation.y=tgt.ry;const sq=P.userData.sq=(P.userData.sq||1)+(tgt.sq-(P.userData.sq||1))*k,sc=P.userData.sc=(P.userData.sc||1)+(tgt.sc-(P.userData.sc||1))*Math.min(1,dt*20);
@@ -2404,7 +2421,7 @@ function render3D(dt){
   /* 파티 */
   SC.ms.forEach(a=>{const o=objFor('ms:'+a.key,()=>{const g=M3.anim(M3.get(a.key==='char'?'trainer':a.k));g.scale.setScalar(a.key==='char'?0.95:0.85);return g});
     const lx=a.lunge>0?a.lx*10*(a.lunge/0.12):0, lz=a.lunge>0?a.ly*10*(a.lunge/0.12):0;
-    o.position.set(wx(a.x+lx),Math.abs(Math.sin(a.bob))*0.06,wz(a.y+lz));
+    o.position.set(wx(a.x+lx),0,wz(a.y+lz));
     const t=a.tgt&&SC.mobs.includes(a.tgt)?a.tgt:null;const mv=Math.hypot(a.vx||0,a.vy||0);
     let fx,fy;if(a.key==='char'&&SC.manual&&SC.face&&!(t&&Math.hypot(t.x-a.x,t.y-a.y)<150&&SC.idle>0.2)){fx=SC.face.x;fy=SC.face.y}
     else if(mv>20&&!(t&&Math.hypot(t.x-a.x,t.y-a.y)<60)){fx=a.vx;fy=a.vy}else{fx=t?t.x-a.x:1;fy=t?t.y-a.y:0}
