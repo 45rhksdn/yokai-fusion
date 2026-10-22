@@ -1711,7 +1711,11 @@ const SK_INFO={flame:{cd:7,col:'#FF5A1A',d:'화염'},strike:{cd:6,col:'#E8D8C0',
 const SUMMONER_SKILL={n:'솔로몬의 인장',t:'seal',cd:7,col:'#F2C24A'};
 SC.skcd={};
 function skillOf(a){return a.key==='char'?SUMMONER_SKILL:Object.assign({},SKILLS[a.k],{cd:SK_INFO[SKILLS[a.k].t].cd,col:SK_INFO[SKILLS[a.k].t].col})}
-function hexMob(m,sec){m.slow=Math.max(m.slow||0,sec);m.vuln=Math.max(m.vuln||0,sec)}
+function hexMob(m,sec){m.slow=Math.max(m.slow||0,sec);m.vuln=Math.max(m.vuln||0,sec);if(m.boss)tryBreak(m)}
+/* 파훼: 대기술 예고(준비 동작) 중에 속박·저주 스킬(소환사 '솔로몬의 인장', 저주형 악마 스킬)을 맞히면 대기술이 취소되고 보스가 2초 휘청여요 */
+function tryBreak(m){const A=m.act;if(!A)return;const lead=A.T&&A.T.length?A.T[0].dur:0.6;if(A.t>=lead||A.done)return;
+  SC.tele=SC.tele.filter(T=>!(A.T||[]).includes(T));m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.stagger=2;m.sk=rand(5,7);
+  SC.fx.push({k:'num',x:m.x,y:m.y-80,t:0,life:1.6,txt:'파훼!',col:'#F2C24A',sz:20},{k:'ring',x:m.x,y:m.y,t:0,life:0.6,r:90,col:'#F2C24A',w:6});if(!RM)SC.shake=8;addLog(`${SPECIES[m.k][1]}의 대기술을 파훼했어요!`,true)}
 function castSkill(a,manual){
   if(!a||a.down>0)return false;const sk=skillOf(a);if((SC.skcd[a.key]||0)>0)return false;
   const pw=a.pw||10, t=(SC.focus&&SC.mobs.includes(SC.focus))?SC.focus:nearestMob(a.x,a.y,manual?420:260);
@@ -1836,7 +1840,7 @@ function sceneStep(dt){
   SC.ms.forEach((a,i)=>{
     a.flash=Math.max(0,a.flash-dt);a.lunge=Math.max(0,a.lunge-dt);a.bob+=dt*(SC.manual&&a.key!=='char'?(Math.hypot(a.vx||0,a.vy||0)>15?9:2):(walk?9:4));
     if(a.down>0){a.down-=dt;if(a.down<=0)a.hp=a.max;return}
-    {const es=SC.tele.length&&!(SC.manual&&a.key==='char')?escapeDir(a):null;if(es){a.x+=es.x*170*dt;a.y+=es.y*170*dt;a.y=Math.max(16,Math.min(SC.H-16,a.y));a.bob+=dt*9;a.inR=false;a.cd=Math.max(a.cd,0.1);return}}
+    {const es=SC.tele.length&&!(SC.manual&&a.key==='char')?escapeDir(a):null;if(es){a.x+=es.x*135*dt;a.y+=es.y*135*dt;a.y=Math.max(16,Math.min(SC.H-16,a.y));a.bob+=dt*9;a.inR=false;a.cd=Math.max(a.cd,0.1);return}}
     a.hp=Math.min(a.max,a.hp+a.max*0.05*dt*(1+SC.ab.regen));
     a.cd-=dt;
     if(SC.focus)a.tgt=SC.focus;
@@ -2677,7 +2681,7 @@ const MOTION={
    예고 안에 있으면 큰 피해(체력 20~35%). 자동 모드에서는 악마들이 예고 밖으로 피하고, 직접 조작에서는 소환사를 직접 움직여 피해요.
    대기술 이름과 내용은 BOSS_SKILL 표에 있어요. 보상 계산은 여전히 3초 탐험 틱이 하고, 봉인한 악마가 있으면 그 악마가 다음 보스로 나와요. */
 SC.tele=[];SC.bossT=1.2;SC.boss=null;
-const BOSS_TIME=60;  /* 제한 시간 안에 못 쓰러뜨리거나 아군이 전멸하면 도전 실패(보스 체력 회복) */
+const BOSS_TIME=75;  /* 제한 시간 안에 못 쓰러뜨리거나 아군이 전멸하면 도전 실패(보스 체력 회복) */
 const BOSS_SKILL={
   chop:{n:'참수의 일격',d:'앞쪽 부채꼴을 크게 베어요'},
   thrust:{n:'관통하는 창',d:'일직선으로 찌르며 돌진해요'},
@@ -2695,8 +2699,11 @@ const BOSS_SKILL={
   swim:{n:'해일',d:'넓은 물결로 전장을 휩쓸어요'},
   dash:{n:'약탈',d:'모든 적을 차례로 꿰뚫고 지나가요'},
   blink:{n:'그림자 이동',d:'사라졌다가 표적 바로 위에 나타나 내리쳐요'}};
+const BREAK_HINT={chop:'보스 뒤·옆으로',thrust:'옆으로 비켜서기',charge:'옆으로 비켜서기',pounce:'표적이 원 밖으로',swoop:'표적이 원 밖으로',blink:'표적이 원 밖으로',
+  rear:'정면을 피해 옆으로',stomp:'멀리 떨어지기',roar:'멀리 떨어지기',spin:'거리 벌리며 달아나기',cast:'발밑 마법진 밖으로',strike:'물리는 아군이 계속 움직이기',
+  breath:'보스 옆·뒤로',shoot:'표시된 원 밖으로 흩어지기',swim:'물결과 나란히 옆으로',dash:'선 밖으로 비켜서기'};
 const alive=()=>SC.ms.filter(a=>a.down<=0);
-function hurt(a,frac,col){if(!a||a.down>0)return;frac*=(SC.boss&&SC.boss.dm)||1;a.hp-=a.max*frac;a.flash=0.2;
+function hurt(a,frac,col,raw){if(!a||a.down>0)return;if(!raw)frac*=(SC.boss&&SC.boss.dm)||1;a.hp-=a.max*frac;a.flash=0.2;
   SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:0.8,txt:'-'+Math.round(frac*100)+'%',col:col||'#FF6B6B',sz:12});
   if(a.hp<=0){a.down=2;SC.fx.push({k:'num',x:a.x,y:a.y-36,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}
 /* 예고 도형: 원·부채꼴·띠. inShape로 판정하고, 피할 방향을 돌려줘요 */
@@ -2705,7 +2712,7 @@ function inShape(T,x,y){
   if(T.s==='cone'){const dx=x-T.x,dy=y-T.y,d=Math.hypot(dx,dy);if(d>T.r)return false;let da=Math.atan2(dy,dx)-T.a;da=Math.atan2(Math.sin(da),Math.cos(da));return Math.abs(da)<=T.ang/2||d<14}
   if(T.s==='line'){const vx=T.x1-T.x,vy=T.y1-T.y,L=Math.hypot(vx,vy)||1,ux=vx/L,uy=vy/L,px=x-T.x,py=y-T.y,along=px*ux+py*uy,perp=Math.abs(-px*uy+py*ux);return along>=-10&&along<=L+10&&perp<=T.w/2}
   return false}
-function escapeDir(a){for(const T of SC.tele){if(T.t>=T.dur-0.05||!inShape(T,a.x,a.y))continue;
+function escapeDir(a){if(a._rt==null)a._rt=rand(0.4,0.85);for(const T of SC.tele){if(T.t<a._rt||T.t>=T.dur-0.05||!inShape(T,a.x,a.y))continue;  /* 자동 회피는 반응이 늦어요(0.4~0.85초) */
   let ex,ey;if(T.s==='line'){const vx=T.x1-T.x,vy=T.y1-T.y,L=Math.hypot(vx,vy)||1;ex=-vy/L;ey=vx/L;if((a.x-T.x)*ex+(a.y-T.y)*ey<0){ex=-ex;ey=-ey}}
   else{ex=a.x-T.x;ey=a.y-T.y;const d=Math.hypot(ex,ey)||1;ex/=d;ey/=d;if(T.s==='cone'){ex=-Math.sin(T.a);ey=Math.cos(T.a);if((a.x-T.x)*ex+(a.y-T.y)*ey<0){ex=-ex;ey=-ey}}}
   return {x:ex,y:ey}}return null}
@@ -2713,7 +2720,7 @@ function tele(o){o.t=0;SC.tele.push(o);return o}
 function spawnBoss(){
   const sp=bossSp();
   const st=STYLE[SPECIES[sp][1]]||{m:'chop',f:'blood',d:''};
-  const per=Math.max(5,teamPower()/4),ratio=Math.max(0.4,Math.min(8,reqNow()/Math.max(1,teamPower()))),hp=Math.round(per*rand(65,80)*Math.pow(ratio,3));
+  const per=Math.max(5,teamPower()/4),ratio=Math.max(0.4,Math.min(8,reqNow()/Math.max(1,teamPower()))),hp=Math.round(per*rand(140,175)*Math.pow(ratio,3));  /* 권장 전투력이면 약 20초, 대기술 2~3번 */
   const b={floor:curFloor(),dm:Math.max(0.5,Math.min(4,ratio)),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
   SC.mobs.push(b);SC.boss=b;SC.bossIntro=2.4;SC.tele=[];renderBossBar(true)}
 /* 대기술 시작: 예고를 그리고 act에 진행 상태를 저장해요 */
@@ -2737,10 +2744,17 @@ function bossSpecial(m,tg){const st=m.st,C=FXCOL[st.f]||FXCOL.blood,dx=tg.x-m.x,
     case 'spin':act.dur=2.6;act.spin=1;SC.fx.push({k:'ring',x:m.x,y:m.y,t:0,life:0.5,r:50,col:C[0],w:5});break;
     case 'strike':act.dur=1.3;act.bites=[0.5,0.8,1.1];break;
     case 'dash':{const ps=alive();let px=m.x,py=m.y;act.path=[];ps.forEach(p=>{const nx=p.x+(p.x-px)*0.3,ny=p.y+(p.y-py)*0.3;T.push(tele({s:'line',x:px,y:py,x1:nx,y1:ny,w:30,dur:1.0,dmg:0.2}));act.path.push({x:nx,y:ny});px=nx;py=ny});act.dur=1.6;break}}
-  act.T=T;m.act=act}
+  act.T=T;act.ai=Math.random()<0.35;m.act=act}  /* 자동 모드에서 35% 확률로 소환사가 인장으로 파훼를 시도 */
 /* 예고가 끝나면 판정 + 속성 효과 */
+/* ===== 대기술은 치명적: 정통으로(예고의 안쪽) 맞으면 권장 전투력보다 10% 강해도 쓰러져요 =====
+   피해 = 1.2 × 치명 계수 × (안쪽 1.0 / 가장자리 0.45). 치명 계수 = 1.6 − 0.6×(팀 전투력 ÷ 권장), 0.25~1.6
+   (권장 1.1배 → 0.94 → 안쪽 113% 즉사, 1.5배 → 0.7 → 84%, 2배 → 0.4 → 48%). 게임의 핵심은 악마마다 다른 파훼법이에요. */
+const lethalK=()=>Math.max(0.25,Math.min(1.6,1.6-0.6*teamPower()/Math.max(1,reqNow())));
+function coreHit(T,x,y){if(T.s==='circle')return Math.hypot(x-T.x,y-T.y)<=T.r*0.6;
+  if(T.s==='cone'){const dx=x-T.x,dy=y-T.y;let da=Math.atan2(dy,dx)-T.a;da=Math.atan2(Math.sin(da),Math.cos(da));return Math.abs(da)<=T.ang*0.3&&Math.hypot(dx,dy)<=T.r*0.8}
+  const vx=T.x1-T.x,vy=T.y1-T.y,L=Math.hypot(vx,vy)||1;return Math.abs(-(x-T.x)*vy/L+(y-T.y)*vx/L)<=T.w*0.3}
 function teleHit(T,m){const st=m.st,C=FXCOL[st.f]||FXCOL.blood;
-  alive().forEach(p=>{if(inShape(T,p.x,p.y)){hurt(p,T.dmg);if(T.push){const dx=p.x-T.x,dy=p.y-T.y,d=Math.hypot(dx,dy)||1;p.x+=dx/d*30;p.y+=dy/d*30;p.y=Math.max(16,Math.min(SC.H-16,p.y))}}});
+  alive().forEach(p=>{if(inShape(T,p.x,p.y)){const core=coreHit(T,p.x,p.y),f=1.2*lethalK()*(core?1:0.45)*(T.dmg/0.3);hurt(p,f,core?'#FF2A2A':'#FF8A6A',true);if(core)SC.fx.push({k:'num',x:p.x,y:p.y-46,t:0,life:1,txt:'정통!',col:'#FF2A2A',sz:13});if(T.push){const dx=p.x-T.x,dy=p.y-T.y,d=Math.hypot(dx,dy)||1;p.x+=dx/d*30;p.y+=dy/d*30;p.y=Math.max(16,Math.min(SC.H-16,p.y))}}});
   const cx=T.s==='line'?(T.x+T.x1)/2:T.s==='cone'?T.x+Math.cos(T.a)*T.r*0.5:T.x,cy=T.s==='line'?(T.y+T.y1)/2:T.s==='cone'?T.y+Math.sin(T.a)*T.r*0.5:T.y;
   if(T.s==='circle')SC.fx.push({k:'ring',x:T.x,y:T.y,t:0,life:0.45,r:T.r,col:C[0],w:6});
   if(T.magic)SC.fx.push({k:'circle',x:T.x,y:T.y,t:0,life:0.5,r:T.r,col:C[0],c2:C[1]});
@@ -2754,13 +2768,15 @@ function bossFail(m,why){m.hp=m.max;m.tl=BOSS_TIME;m.act=null;m.fly=0;m.vanish=0
   SC.fx.push({k:'num',x:m.x,y:m.y-70,t:0,life:2,txt:`도전 실패 · ${why}`,col:'#FF6B6B',sz:16});addLog(`${curFloor()}층 보스에게 ${why} · 다시 도전해요`);
   SC.ms.forEach(a=>{a.down=0;a.hp=a.max})}
 function bossStep(m,dt){
+  if(m.stagger>0){m.stagger-=dt;m.wind=0;m.inR=false;return}
   if(!SC.bossIntro){m.tl-=dt;if(m.tl<=0)return bossFail(m,'시간 초과')}
   if(SC.ms.length&&SC.ms.every(a=>a.down>0))return bossFail(m,'아군 전멸');
   if(m.slow>0)m.slow-=dt;if(m.vuln>0)m.vuln-=dt;m.x+=m.kx;m.y+=m.ky;m.kx*=0.5;m.ky*=0.5;
   const ps=alive();if(!ps.length)return;let tg=ps[0],bd=1e9;ps.forEach(a=>{const d=Math.hypot(a.x-m.x,a.y-m.y);if(d<bd){bd=d;tg=a}});m.tg=tg;
   const C=FXCOL[m.st.f]||FXCOL.blood;
   /* 대기술 진행 중 */
-  if(m.act){const A=m.act;A.t+=dt;const lead=A.T&&A.T.length?A.T[0].dur:0.6;m.wind=A.t<lead?Math.max(0.01,0.9-0.9*A.t/lead):0;m.inR=false;
+  if(m.act){const A=m.act;A.t+=dt;
+    if(A.ai&&!SC.manual&&A.t>0.35&&!A.tried){A.tried=1;const c=SC.ms.find(a=>a.key==='char');if(c&&(SC.skcd.char||0)<=0)castSkill(c,false)}const lead=A.T&&A.T.length?A.T[0].dur:0.6;m.wind=A.t<lead?Math.max(0.01,0.9-0.9*A.t/lead):0;m.inR=false;
     if(A.leap){const k=Math.max(0,Math.min(1,(A.t-(lead-0.25))/0.25));if(A.leap.fly){m.fly=A.t<lead-0.25?Math.min(2.6,A.t*3):2.6*(1-k)}else m.fly=Math.sin(Math.PI*k)*1.2;
       if(k>0){m.x=A.leap.x0+(A.leap.x-A.leap.x0)*k;m.y=A.leap.y0+(A.leap.y-A.leap.y0)*k}}
     if(A.dash&&A.t>lead){const k=Math.min(1,(A.t-lead)/0.22);if(!A.d0)A.d0={x:m.x,y:m.y};m.x=A.d0.x+(A.dash.x-A.d0.x)*k;m.y=A.d0.y+(A.dash.y-A.d0.y)*k;
@@ -2799,7 +2815,7 @@ function renderBossBar(force){const b=SC.boss,el=$('bossBar');if(!el)return;
   if(!b||b.hp<=0){el.hidden=true;return}el.hidden=false;
   const sp=SPECIES[b.k],no=sp[5],bs=BOSS_SKILL[b.st.m];
   if(force||el.dataset.k!=String(b.k)){el.dataset.k=b.k;el.querySelector('.bn').innerHTML=`${artHTML(b.k)} ${sp[1]}`;
-    el.querySelector('.bt').textContent=`고에티아 ${no}번 · ${sp[4]} · ${b.st.d}`;el.querySelector('.bs').textContent=bs?`대기술 「${bs.n}」 ${bs.d}`:''}
+    el.querySelector('.bt').textContent=`고에티아 ${no}번 · ${sp[4]} · ${b.st.d}`;el.querySelector('.bs').textContent=bs?`대기술 「${bs.n}」 ${bs.d} · 파훼: ${BREAK_HINT[b.st.m]||''}`:''}
   el.querySelector('.bh i').style.width=Math.max(0,b.hp/b.max*100)+'%';el.classList.toggle('casting',!!b.act);
   const tm=el.querySelector('.btm');if(tm){const t=Math.max(0,Math.ceil(b.tl||0));tm.textContent=`${b.floor}층 보스 · 남은 시간 ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;tm.classList.toggle('low',t<=10)}}
 
