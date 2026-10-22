@@ -432,7 +432,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
         <div id="fuseWrap" style="display:flex;flex-direction:column;gap:12px">
         <div class="panel">
           <h2>악마 합성</h2>
-          <div class="muted">재료 2~4마리와 골드를 넣으면 평균 등급의 새 악마가 태어나요. 비용은 재료 등급이 높을수록 커요. 재료가 많을수록 대성공 확률이 오르고, 능력치 하나에 랜덤 보너스가 붙어요. 새 악마의 종류는 재료들이 사는 지역 중 한 곳에서 정해지고, 공개 조합법에 맞으면 희귀 악마가 나올 수 있어요. 팀에 있는 악마는 재료로 쓸 수 없어요.</div>
+          <div class="muted">재료 2~4마리와 골드를 넣으면 평균 등급의 새 악마가 태어나요. 비용은 재료 등급이 높을수록 커요. 재료가 많을수록 대성공 확률이 오르고, 능력치 하나에 랜덤 보너스가 붙어요. 새 악마의 종류는 재료로 넣은 종류를 뺀 일반 악마 전체에서 랜덤으로 정해지고, 공개 조합법에 맞으면 희귀 악마가 나올 수 있어요. 팀에 있는 악마는 재료로 쓸 수 없어요.</div>
           <div class="fslots" id="fslots"></div>
           <div class="preview" id="fprev"></div>
           <div class="row"><button class="btn primary" id="fuseBtn">합성하기</button><button class="btn" id="fuseAuto">자동 선택</button><button class="btn" id="fuseClear">선택 해제</button></div>
@@ -1412,7 +1412,7 @@ function doFuse(quiet){
   S.mons=S.mons.filter(m=>!fuseSel.includes(m.id));
   let sp, rare=null;
   if(p.recipes.length&&Math.random()<p.rc){rare=anyOf(p.recipes);sp=rare.r}
-  else{const pool=new Set(commons());p.ms.forEach(x=>{const h=SPECIES[x.sp][2];if(h>=0)exclusiveOf(h,S.diff).forEach(k=>pool.add(k))});sp=anyOf([...pool])}
+  else{/* 일반 결과: 조합 전용(16체)을 뺀 모든 악마 중, 재료로 넣은 종류를 빼고 랜덤 */const used=new Set(p.ms.map(x=>x.sp));let pool=SPECIES.map((x,k)=>k).filter(k=>SPECIES[k][2]!==-2&&!used.has(k));if(!pool.length)pool=SPECIES.map((x,k)=>k).filter(k=>SPECIES[k][2]!==-2);sp=anyOf(pool)}
   const m=makeMonster(rand(TH[g]+3,TH[g+1]-3),sp,rare?'조합':'합성');
   const keys=Object.keys(LABEL), bon=[];
   for(let t=0;t<(rare?2:1);t++){const k=anyOf(keys), mul=rand(1.08,1.3);
