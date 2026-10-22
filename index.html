@@ -1982,10 +1982,10 @@ function pose2D(e,dt){e.atkT=e.atkT==null?9:e.atkT+dt;
   const st=styleOf(e),mv=(e.atkA<0?MOTION.cast:MOTION[st.m]||MOTION.chop)(t,n,A,now);
   const hit=Math.min(1,Math.max(e.hit||0,e.flash||0)/0.15);
   const T={sw:(mv.sw||0)-0.3*hit,tw:mv.tw||0,y:mv.y||0,f:mv.f||0,rx:mv.rx||0,ry:mv.ry||0,sq:mv.sq||1,sc:mv.sc==null?1:mv.sc};
-  if(e._px!=null&&dt>0){const v=Math.hypot(e.x-e._px+(SC.walkDX||0),e.y-e._py)/dt;e._v=(e._v||0)+(Math.min(v,240)-(e._v||0))*Math.min(1,dt*8)}e._px=e.x;e._py=e.y;
+  if(e._px!=null&&dt>0){const v=Math.hypot(e.x-e._px+(SC.walkDX||0),e.y-e._py)/dt;e._v=(e._v||0)+(Math.min(v,240)-(e._v||0))*Math.min(1,dt*8);const vx=(e.x-e._px)/dt;e._vx=(e._vx||0)+(Math.max(-240,Math.min(240,vx))-(e._vx||0))*Math.min(1,dt*6)}e._px=e.x;e._py=e.y;
   const wk=e.down>0||(e.fly||0)>0.2?0:Math.min(1,(e._v||0)/55);e._ph=(e._ph||Math.random()*6)+(e._v||0)*dt*0.11;
   const P=e._p||(e._p={sw:0,tw:0,y:0,f:0,rx:0,sq:1,sc:1,wk:0});const k=Math.min(1,dt*24);
-  for(const q of ['sw','tw','y','f','rx','sq'])P[q]+=(T[q]-P[q])*k;P.sc+=(T.sc-P.sc)*Math.min(1,dt*18);P.ry=T.ry;P.wk+=(wk-P.wk)*Math.min(1,dt*8);P.hit=hit;return P}
+  for(const q of ['sw','tw','y','f','rx','sq'])P[q]+=(T[q]-P[q])*k;P.sc+=(T.sc-P.sc)*Math.min(1,dt*18);P.ry=T.ry;P.wk+=(wk-P.wk)*Math.min(1,dt*8);P.hit=hit;P.n=Math.min(1,n);P.s=t<0.6?env(t,0.08,0.32)*A:0;P.m=e.atkA<0?'cast':st.m;return P}
 /* 지역별 바닥 색과 소품 */
 const ENV2=[
   {g:'#1c1813',s:'#2a241c',p:'ruins',glow:'#E7A33E'},{g:'#191816',s:'#26241f',p:'waste',glow:'#9A8A6A'},{g:'#241c12',s:'#33281a',p:'desert',glow:'#E7A33E'},
@@ -2103,13 +2103,59 @@ function drawSpr(g,im,DW,DH,DB,G,ph,wk){const nw=im.naturalWidth,nh=im.naturalHe
   const st=2,span=nh-ly;
   for(const side of [0,1]){const x0=side?mx:0,x1=side?nw:mx;if(x1-x0<1)continue;const s=Math.sin(ph+side*Math.PI),lift=Math.max(0,Math.cos(ph+side*Math.PI));
     for(let sy=ly;sy<nh;sy+=st){const f=(sy-ly)/span,dx=s*A[0]*nh*f*wk,dy=-lift*A[1]*nh*f*f*wk;
-      g.drawImage(im,x0,sy,x1-x0,Math.min(st+0.7,nh-sy),ox+(x0+dx)*k,oy+(sy+dy)*k,(x1-x0)*k,(st+0.7)*k)}}}
+      g.drawImage(im,x0,sy,x1-x0,Math.min(st+0.3,nh-sy),ox+(x0+dx)*k,oy+(sy+dy)*k,(x1-x0)*k,(st+0.3)*k)}}}
+/* ===== 공격 동작: 그림을 부위별로 휘게 해서 몸이 실제로 움직이는 것처럼 =====
+   그림을 가로 4칸 × 세로 띠로 잘라 칸마다 조금씩 다르게 밀어요. 다리는 땅에 붙여 두고, 상체만 젖혔다 휘두르거나(베기),
+   앞발만 들어 올리거나(앞발 들기), 머리만 내밀어 물거나 불을 뿜고(머리), 날개를 접었다 내리치고(날갯짓), 몸을 똬리 틀었다 튕겨요(뱀).
+   n = 기를 모으는 정도(뒤로 젖힘), s = 내지르는 정도. 값은 그림 높이 대비 비율이고, u는 뒤(0)→머리 쪽(1), v는 위(0)→아래(1).
+   FACE: 원래 그림이 보는 방향(1 오른쪽, -1 왼쪽, 0 정면). 싸울 때는 늘 적을, 걸을 때는 가는 쪽을 보도록 그림을 좌우로 돌려요. */
+const FACE={1:0,2:1,3:0,4:1,5:0,6:1,7:-1,8:0,9:-1,10:0,11:0,12:1,13:1,14:0,15:1,16:0,17:-1,18:-1,19:-1,20:-1,21:1,22:0,23:0,24:-1,25:-1,26:0,27:1,28:1,29:-1,30:0,31:0,32:-1,33:0,34:-1,35:-1,36:0,37:-1,38:1,39:1,40:1,41:0,42:0,43:1,44:-1,45:1,46:1,47:1,48:1,49:1,50:1,51:1,52:1,53:-1,54:1,55:1,56:1,57:1,58:0,59:1,60:1,61:1,62:1,63:1,64:1,65:1,66:1,67:1,68:0,69:0,70:1,71:0,72:-1};
+const sm=(a,b,x)=>ease((x-a)/(b-a));
+const DEF={
+  swing:(u,v,vh,n,s)=>{const a=Math.max(0,vh-v)/vh;return [a*(0.32*s-0.2*n)+(v>vh&&u>0.5?0.05*s*(v-vh)/(1-vh):0),a*a*0.08*s-a*0.03*n]},
+  thrust:(u,v,vh,n,s)=>{const w=v<vh?1:Math.max(0,1-(v-vh)/(1-vh));return [w*(0.2*s-0.08*n),0]},
+  pounce:(u,v,vh,n,s)=>[u*(0.2*s-0.05*n),(1-v)*0.1*n-u*(1-v*0.6)*0.2*s],
+  rear:(u,v,vh,n,s)=>{const l=Math.pow(u,1.4);return [l*(0.1*s-0.04*n),-l*(0.26*n+0.06*s)*(1-0.4*v)]},
+  charge:(u,v,vh,n,s)=>{const hd=u*(1-v);return [u*(0.12*s-0.04*n),hd*0.12*s+(1-v)*0.05*n]},
+  head:(u,v,vh,n,s)=>{const w=sm(0.4,1,u)*sm(0.8,0.1,v);return [w*(0.17*s-0.07*n),-w*0.08*n+w*0.03*s]},
+  flap:(u,v,vh,n,s)=>{const w=Math.pow(1-v,2);return [w*0.04*s,-w*(0.12*n-0.14*s)]},
+  cast:(u,v,vh,n,s)=>{const a=Math.max(0,vh-v)/vh;return [a*0.08*s,-(1-v)*(0.07*n+0.02*s)]},
+  shoot:(u,v,vh,n,s)=>{const a=Math.max(0,vh-v)/vh;return [a*(0.05*s-0.12*n),0]},
+  coil:(u,v,vh,n,s)=>{const w=Math.pow(1-v,1.5);return [w*(0.22*s-0.1*n)+Math.sin(v*9)*0.025*(n+s)*w,w*0.06*n]},
+  stomp:(u,v,vh,n,s)=>[0,(1-v)*(0.12*n-0.05*s)]};
+function atkKind(m,gt){if(gt==='slither')return m==='cast'?'cast':'coil';
+  if(m==='chop'||m==='strike')return 'swing';if(m==='thrust')return 'thrust';if(m==='pounce')return gt==='fly'?'flap':gt==='robe'||gt==='seat'?'swing':'pounce';
+  if(m==='rear')return gt==='quad'||gt==='ride'?'rear':'swing';if(m==='charge')return 'charge';if(m==='roar'||m==='breath')return gt==='fly'?'flap':'head';
+  if(m==='swoop')return 'flap';if(m==='cast')return 'cast';if(m==='shoot')return 'shoot';if(m==='swim')return 'coil';if(m==='stomp')return 'stomp';return null}
+/* 매끄럽게 휘기: 그림의 픽셀을 직접 옮겨 그려요(칸 사이 틈이 생기지 않게). 변형 값은 6픽셀 격자에서 계산해 사이를 부드럽게 이어요.
+   화면에 그려질 크기에 맞춰 해상도를 낮춰 계산하므로 가벼워요. 원본 픽셀은 그림마다 한 번만 읽어 둬요. */
+const SRCPX=new Map();
+function srcPx(im){let d=SRCPX.get(im.src);if(!d){const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d');x.drawImage(im,0,0);
+  try{d=x.getImageData(0,0,c.width,c.height)}catch(err){d=null}SRCPX.set(im.src,d||0)}return d||null}
+function drawDef(g,im,DW,DH,DB,kind,fe,n,s,vh,e,res){const S=srcPx(im);const nw=im.naturalWidth,nh=im.naturalHeight,k=DW/nw,f=DEF[kind];
+  if(!S){g.drawImage(im,-DW/2,-DH+DB,DW,DH);return}
+  const r=Math.max(0.35,Math.min(1,res/nh)),px=Math.round(nh*0.22),pt=Math.round(nh*0.24),pb=6;
+  const W=Math.round((nw+2*px)*r),H=Math.round((nh+pt+pb)*r);
+  let c=e._wc;if(!c){c=e._wc=document.createElement('canvas')}if(c.width!==W||c.height!==H){c.width=W;c.height=H;c._id=null}
+  const x2=c.getContext('2d'),out=c._id&&c._id.width===W?c._id:(c._id=x2.createImageData(W,H)),O=out.data,I=S.data;
+  const GS=6,gw=Math.ceil(W/GS)+1,gh=Math.ceil(H/GS)+1,DX=new Float32Array(gw*gh),DY=new Float32Array(gw*gh);
+  for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){const sx=i*GS/r-px,sy=j*GS/r-pt,u0=Math.max(0,Math.min(1,sx/nw)),v=Math.max(0,Math.min(1,sy/nh)),u=fe>0?u0:1-u0,d=f(u,v,vh,n,s);DX[j*gw+i]=fe*d[0]*nh;DY[j*gw+i]=d[1]*nh}
+  for(let y=0;y<H;y++){const gy=y/GS,j0=gy|0,ty=gy-j0;
+    for(let x=0;x<W;x++){const gx=x/GS,i0=gx|0,tx=gx-i0,a=j0*gw+i0,b=a+1,c2=a+gw,d2=c2+1;
+      const dx=(DX[a]*(1-tx)+DX[b]*tx)*(1-ty)+(DX[c2]*(1-tx)+DX[d2]*tx)*ty,dy=(DY[a]*(1-tx)+DY[b]*tx)*(1-ty)+(DY[c2]*(1-tx)+DY[d2]*tx)*ty;
+      const sx=Math.round(x/r-px-dx),sy=Math.round(y/r-pt-dy),o=(y*W+x)*4;
+      if(sx<0||sy<0||sx>=nw||sy>=nh){O[o+3]=0;continue}const q=(sy*nw+sx)*4;O[o]=I[q];O[o+1]=I[q+1];O[o+2]=I[q+2];O[o+3]=I[q+3]}}
+  x2.putImageData(out,0,0);g.drawImage(c,-DW/2-px*k,-DH+DB-pt*k,(nw+2*px)*k,(nh+pt+pb)*k)}
 function drawActor(g,e,baseH,dir,dt){const im=sprImg(e);if(!im.complete||!im.naturalWidth)return;const P=pose2D(e,dt);
   const ps=0.86+0.28*Math.max(0,Math.min(1,e.y/SC.H)),h=baseH*ps,sp=e.key!=='char'&&im.naturalHeight===316?h/240:0,w=sp?(im.naturalWidth-128)*sp:h*im.naturalWidth/im.naturalHeight;
   /* 오라가 들어간 그림은 위·옆으로 64px, 아래로 12px 여백이 있어요 → 몸 크기(h)는 그대로, 그림만 여백만큼 크게 */
   const DW=sp?im.naturalWidth*sp:w,DH=sp?im.naturalHeight*sp:h,DB=sp?12*sp:0;
   const lx=e.lunge>0?e.lx*12*(e.lunge/0.12):0,ly=e.lunge>0?e.ly*12*(e.lunge/0.12):0,now=performance.now()/1000;
   const GT=gaitOf(e),gt=GT[0],ph=e._ph||0,GW=GA[gt];
+  /* 어느 쪽을 볼지: 걸을 때는 가는 쪽, 아니면 적 쪽. 그림이 반대를 보면 좌우로 돌려요(빠르게 납작해졌다 펴지며) */
+  const F0=e.key==='char'?0:(FACE[SPECIES[e.k][5]]||0),want=Math.abs(e._vx||0)>30&&!(e.inR)?Math.sign(e._vx):dir,tf=F0===0?1:(F0===want?1:-1);
+  e._fl=e._fl==null?tf:e._fl+Math.max(-dt*8,Math.min(dt*8,tf-e._fl));
+  const AK=e.down>0?null:atkKind(P.m,gt),aOn=AK&&(P.n>0.02||P.s>0.02),fe=F0||want;
   /* 몸의 오르내림: 두 발은 한 걸음마다 두 번, 네 발은 살짝, 나는 것은 늘 둥실 */
   let bob=GW?Math.abs(Math.sin(ph))*GW[2]*h*P.wk:0,wob=gt==='robe'||gt==='seat'?Math.sin(ph)*0.035*P.wk:gt==='biped'?Math.sin(ph)*0.02*P.wk:0;
   if(gt==='fly')bob=4+Math.sin(now*3.2+(e.k||0))*4+P.wk*3;else if(gt==='float')bob=3+Math.sin(now*1.8+(e.k||0))*4;else if(gt==='seat')bob=Math.abs(Math.sin(ph*0.5))*2*P.wk;
@@ -2121,12 +2167,15 @@ function drawActor(g,e,baseH,dir,dt){const im=sprImg(e);if(!im.complete||!im.nat
   g.save();g.translate(x,y);
   const ENT=SC.ent&&SC.ent.a===e?SC.ent:null;if(ENT){const r=entRise(ENT);if(r<=0){g.restore();return null}g.beginPath();g.rect(-500,-1200,1000,1200+4);g.clip();g.translate(0,(1-r)*h*1.25)}
   if(e.invis>0)g.globalAlpha=0.14+0.08*Math.sin(performance.now()/90);
-  if(e.down>0){g.rotate(dir*1.2);g.globalAlpha=0.45}else g.rotate((P.sw*0.3+P.rx*0.45)*dir+wob);if(gt==='wheel'&&!(e.down>0)){g.translate(0,-h*0.5);g.rotate(ph*0.9);g.translate(0,h*0.5)}
+  if(e.down>0){g.rotate(dir*1.2);g.globalAlpha=0.45}else g.rotate((P.sw*0.3+P.rx*0.45)*dir*(aOn?0.35:1)+wob);if(gt==='wheel'&&!(e.down>0)){g.translate(0,-h*0.5);g.rotate(ph*0.9);g.translate(0,h*0.5)}
   const flip=Math.cos(P.ry||0),sq=P.sq,sc=P.sc*(e.boss?Math.max(0.02,1-(e.vanish||0)):1);
-  g.scale(sc*Math.sqrt(2-sq)*(1-Math.abs(P.tw)*0.18)*(Math.abs(flip)<0.08?0.08:flip),sc*sq*breathe);
-  drawSpr(g,im,DW,DH,DB,GT,ph,e.down>0?0:P.wk);
-  if(P.hit>0.05){g.globalCompositeOperation='lighter';g.globalAlpha=0.55*P.hit;drawSpr(g,im,DW,DH,DB,GT,ph,e.down>0?0:P.wk);g.globalCompositeOperation='source-over'}
-  if(e.enr&&!(e.invis>0)){g.globalCompositeOperation='lighter';g.globalAlpha=0.25+0.15*Math.sin(performance.now()/120);g.filter='sepia(1) saturate(6) hue-rotate(-40deg)';drawSpr(g,im,DW,DH,DB,GT,ph,e.down>0?0:P.wk);g.filter='none';g.globalCompositeOperation='source-over'}
+  const fl=Math.abs(e._fl)<0.12?0.12*Math.sign(e._fl||1):e._fl;
+  g.scale(sc*Math.sqrt(2-sq)*(1-Math.abs(P.tw)*0.18)*(Math.abs(flip)<0.08?0.08:flip)*fl,sc*sq*breathe);
+  const VH=GT[3]||!GA[gt]?Math.max(0.45,GT[1]||0.6):GT[1];
+  const paint=()=>aOn?drawDef(g,im,DW,DH,DB,AK,fe,P.n,P.s,VH,e,DH*SC.dpr):drawSpr(g,im,DW,DH,DB,GT,ph,e.down>0?0:P.wk);
+  paint();
+  if(P.hit>0.05){g.globalCompositeOperation='lighter';g.globalAlpha=0.55*P.hit;paint();g.globalCompositeOperation='source-over'}
+  if(e.enr&&!(e.invis>0)){g.globalCompositeOperation='lighter';g.globalAlpha=0.25+0.15*Math.sin(performance.now()/120);g.filter='sepia(1) saturate(6) hue-rotate(-40deg)';paint();g.filter='none';g.globalCompositeOperation='source-over'}
   if(e.minion){g.globalAlpha=1}
   g.restore();g.globalAlpha=1;return {top:y-h*sc*sq,h}}
 /* 투사체 */
