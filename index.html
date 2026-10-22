@@ -212,6 +212,9 @@ h2{color:#E7C27A}
 .skills button .sig{position:absolute;inset:0 0 10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#F2C24A;text-shadow:0 0 8px #F2C24A}
 .skills button small{position:absolute;left:0;right:0;bottom:1px;font:600 8.5px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1;text-shadow:0 1px 2px #000}
 .skills button em{position:absolute;right:3px;top:1px;font:600 9px var(--mono);font-style:normal;color:#A39079;z-index:3}
+.bulk{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:13px}.bulk label{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.affbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:rgba(231,163,62,.05);display:flex;flex-direction:column;gap:3px;font-size:13.5px}
+.affbox b{color:#E7C27A}.affbox div{color:#D8CBB4}.unid{color:#C9A0FF;font-weight:600}
 .story{display:flex;flex-direction:column;gap:8px;max-width:62ch}
 .story .sub{font-size:12px;color:var(--hot);letter-spacing:.12em}
 .story h3{font-family:var(--display);font-weight:800;font-size:20px;color:#E7C27A}
@@ -415,7 +418,9 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
           <div class="muted">재료 2~4마리와 골드를 넣으면 평균 등급의 새 악마가 태어나요. 비용은 재료 등급이 높을수록 커요. 재료가 많을수록 대성공 확률이 오르고, 능력치 하나에 랜덤 보너스가 붙어요. 새 악마의 종류는 재료들이 사는 지역 중 한 곳에서 정해지고, 공개 조합법에 맞으면 희귀 악마가 나올 수 있어요. 팀에 있는 악마는 재료로 쓸 수 없어요.</div>
           <div class="fslots" id="fslots"></div>
           <div class="preview" id="fprev"></div>
-          <div class="row"><button class="btn primary" id="fuseBtn">합성하기</button><button class="btn" id="fuseClear">선택 해제</button></div>
+          <div class="row"><button class="btn primary" id="fuseBtn">합성하기</button><button class="btn" id="fuseAuto">자동 선택</button><button class="btn" id="fuseClear">선택 해제</button></div>
+          <div class="bulk"><b>일괄 합성</b><label>재료 등급 <select id="bulkCap" aria-label="일괄 합성할 최고 등급"></select> 이하</label><button class="btn" id="fuseBulk">일괄 합성</button>
+            <div class="note" id="bulkNote">같은 등급끼리 4마리씩 묶어 낮은 등급부터 골드가 허락하는 만큼 한 번에 합성해요. 팀에 있는 악마와 S 이상은 쓰지 않아요.</div></div>
         </div>
         <div id="fresult"></div>
         <div class="panel">
@@ -446,8 +451,9 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
       <div style="display:flex;flex-direction:column;gap:12px">
         <div class="panel">
           <h2>소환사 장비</h2>
-          <div class="muted">탐험 중 약 1시간에 1개꼴로 발견되는 아주 귀한 보상이에요. 난이도가 높을수록 등급과 능력치가 좋아지고, 장착한 장비의 전투력은 소환사에게 더해져요. 장비도 레벨업할 때마다 성장률이 바뀌어 등급이 오르내려요.</div>
+          <div class="muted">탐험 중 약 12분에 1개꼴로 발견돼요. 새 장비는 <b>미감정</b> 상태라 숨은 부가 능력치가 있어요. 난이도가 높을수록 등급과 능력치가 좋아지고, 장착한 장비의 전투력은 소환사에게 더해져요. 장비도 레벨업할 때마다 성장률이 바뀌어 등급이 오르내려요.</div>
           <div class="gear3" id="gearEq"></div>
+          <div class="note" id="gearAff"></div>
         </div>
         <div class="row"><h2>장비 가방</h2><span class="muted" id="gearNote"></span></div>
         <div class="grid" id="gearGrid"></div>
@@ -479,8 +485,8 @@ const P_MIN=60;
 const CAPTURE=[null,27,13,6,2.6,0.9,0.3,0.08,0.02,0.0089];
 CAPTURE[0]=100-CAPTURE.slice(1).reduce((a,b)=>a+b,0);
 const MAXLV=100, MAXINV=200, MAXITEMS=60, TICK_MS=3000, KEY='solomon-72-v1';
-const FIND_RATE=MAXINV/(3*3600/(TICK_MS/1000));      /* 3시간에 보관함 200칸이 차는 속도 */
-const ITEM_RATE=(TICK_MS/1000)/3600;                  /* 장비: 1시간에 1개꼴 */
+const FIND_RATE=MAXINV/(12*3600/(TICK_MS/1000));     /* 보통 속도로 12시간이면 악마 보관함 200칸이 차요 (약 3.6분에 1마리) */
+const ITEM_RATE=MAXITEMS/(12*3600/(TICK_MS/1000));   /* 12시간이면 장비 가방 60칸이 차요 (약 12분에 1개) */
 const MAXSTAGE=20, UNLOCK_AT=10, EXCLUSIVE_RATE=0.65;
 const DIFFS=[{n:'수습 퇴마사',off:0},{n:'정식 퇴마사',off:40},{n:'고참 퇴마사',off:80},{n:'대퇴마사',off:120},{n:'솔로몬의 후계자',off:160}];
 /* 솔로몬의 72악마 (Ars Goetia, 17세기 『레메게톤』 1부). [임시 기호, 이름, 지역(-2 = 왕: 조합 전용), 등장 난이도, 계급, 고에티아 서열]
@@ -623,10 +629,10 @@ const invMax=()=>MAXINV+dexBonus().inv;
 const rebirthCostBase=g=>Math.round(5000*Math.pow(1+g,2.2)/100)*100;
 const rebirthCost=g=>Math.round(rebirthCostBase(g)*(1-dexBonus().reb)/100)*100;
 const fuseCost=ms=>Math.round(ms.reduce((a,m)=>a+30*Math.pow(1+Math.min(m.grade,MAXG),1.6),0));
-const teamPower=()=>charPower()+gearPower()+S.team.reduce((a,id)=>{const m=id!=null&&byId(id);return a+(m?power(m):0)},0);
+const teamPower=()=>(charPower()+gearPower()+S.team.reduce((a,id)=>{const m=id!=null&&byId(id);return a+(m?power(m):0)},0))*(1+affixBonus().atk);
 const stageReq=(E,d)=>Math.round(40*Math.pow(1+(E+d*10-1)*0.25,1.3)*(1+d*0.15));
 const reqNow=()=>stageReq(eff(),S.diff);
-const gps=()=>teamPower()/20*(1+(eff()-1)*0.08)*(1+S.diff*0.3)*(1+dexBonus().gold)*mapBonus();
+const gps=()=>teamPower()/20*(1+(eff()-1)*0.08)*(1+S.diff*0.3)*(1+dexBonus().gold+affixBonus().gold)*mapBonus();
 const lvCost=m=>Math.round(8*Math.pow(m.lv,1.35)*(1+m.grade*0.15));
 const releaseGold=m=>5*(1+m.grade)**2;
 const itemSell=it=>Math.round(20*(1+it.grade)**2*(1+it.d));
@@ -786,14 +792,30 @@ function makeItem(d,i,forceGrade){
   const sc=(10+E*2.5)*(1+d*0.25)*0.6, pot=sc*rand(Math.max(0.6,IT[g])+0.02,IT[g+1]-0.02), r=rand(.35,.55);
   return itemFinish({id:S.nextId++,slot:s,d,map:i,name:`${MAPS[i].adj} ${SLOTS[s].w}`,sc,lv:1,pw:r2(pot*r),g:r4(pot*(1-r)/(ILV-1)),isNew:true});
 }
+/* ===== 감정과 부가 능력치 (디아블로식) =====
+   새 장비는 미감정. 숨은 능력 개수는 등급에 따라(F 0~1 … SS 이상 3~4). 감정하면 아래 10종 중에서 겹치지 않게 랜덤으로 붙어요.
+   값은 장비 등급이 높을수록 크고, 레벨이 오를수록 커져요(100레벨에 +60%). 장착한 장비의 능력만 적용돼요. 재감정은 5배 비용으로 다시 뽑기. */
+const AFFIX={atk:{n:'전투력',u:'%',lo:3,hi:10},exp:{n:'경험치',u:'%',lo:4,hi:14},gold:{n:'골드',u:'%',lo:4,hi:14},find:{n:'악마 발견',u:'%',lo:5,hi:18},
+  ifind:{n:'장비 발견',u:'%',lo:5,hi:18},crit:{n:'치명타 확률',u:'%p',lo:2,hi:7},cdr:{n:'스킬 재사용 시간',u:'%',lo:4,hi:12,neg:1},ult:{n:'필살기 충전',u:'%',lo:6,hi:20},
+  boss:{n:'보스 피해',u:'%',lo:6,hi:20},regen:{n:'전투 중 체력 회복',u:'%',lo:15,hi:45}};
+const affixCount=it=>it.nAff!=null?it.nAff:(it.nAff=Math.min(4,[0,0,1,1,1,2,2,3,3,3,4,4,4,4][Math.min(13,it.grade)]+(Math.random()<0.5?1:0)));
+const affixLvMul=it=>1+0.6*(it.lv-1)/(ILV-1);
+const affixVal=(it,a)=>a.v*affixLvMul(it);
+function rollAffixes(it){const keys=Object.keys(AFFIX).sort(()=>Math.random()-0.5).slice(0,affixCount(it)),gm=1+Math.min(it.grade,12)*0.12;
+  it.aff=keys.map(k=>{const A=AFFIX[k];return {k,v:+(rand(A.lo,A.hi)*gm).toFixed(1)}});it.ident=1}
+const identCost=it=>Math.round(40*Math.pow(1+Math.min(it.grade,12),1.5)*(1+it.d*0.3));
+function affixBonus(){const B={atk:0,exp:0,gold:0,find:0,ifind:0,crit:0,cdr:0,ult:0,boss:0,regen:0};
+  (S.equip||[]).forEach(id=>{const it=id!=null&&itemById(id);if(it&&it.ident&&it.aff)it.aff.forEach(a=>{B[a.k]+=affixVal(it,a)/100})});B.cdr=Math.min(0.5,B.cdr);return B}
+const affixLine=(it,a)=>{const A=AFFIX[a.k];return `${A.n} ${A.neg?'−':'+'}${affixVal(it,a).toFixed(1)}${A.u}`};
+const ifmt=x=>x<1000?(Math.round(x*10)/10).toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1}):fmt(x);
 const itemCost=it=>Math.round(10*Math.pow(it.lv,1.3)*(1+it.grade*0.2)*(1+it.d*0.3));
 /* +5 버튼 비용: 현재 등급이 유지된다고 보고 5레벨 비용을 합친 값(골드가 모자라면 가능한 만큼만 올려요) */
 const itemCost5=it=>{let c=0;for(let l=it.lv;l<Math.min(ILV,it.lv+5);l++)c+=itemCost({...it,lv:l});return c};
 function levelUpItem(it){
-  const before=it.grade;it.pw=r4(it.pw+it.g);it.lv++;let ch=null;
+  const before=it.grade,p0=ipw(it);it.pw=r4(it.pw+it.g);it.lv++;let ch=null;
   if(it.lv<ILV){const x=Math.random(), f=x<0.15?rand(0.90,0.97):x<0.30?rand(1.03,1.10):rand(growC(it)-0.03,growC(it)+0.03);
     it.g=r4(it.g*f);ch={pct:Math.round((f-1)*100),kind:x<0.15?'down':x<0.30?'up':''}}
-  itemFinish(it);it.lastLv={lv:it.lv,ch,before,after:it.grade};
+  itemFinish(it);it.lastLv={lv:it.lv,ch,before,after:it.grade,gain:ipw(it)-p0};
   if(it.grade>TOP&&it.grade>before)toast(`${it.name} 각성 ★${it.grade-TOP}! 전투력 +${Math.round((STAR_BONUS[it.grade-TOP]-1)*100)}%`);
 }
 /* 경험치: 팀에 있는 악마만 사냥(탐험 1회=3초)마다 경험치를 얻어요.
@@ -803,7 +825,7 @@ function levelUpItem(it){
    난이도마다 30%씩 더해져 마스터 화산 20단계는 약 347 (약 35배) */
 const expNeed=lv=>Math.round(10*(100+24*Math.pow(lv,1.62)));
 const expAt=(E,d)=>10*(1+0.25*(E-1))*(1+0.3*d);
-const expPerTick=()=>expAt(eff(),S.diff)*(1+dexBonus().exp)*mapBonus();
+const expPerTick=()=>expAt(eff(),S.diff)*(1+dexBonus().exp+affixBonus().exp)*mapBonus();
 function gainExp(m,x,quiet){
   if(m.lv>=MAXLV)return 0;
   m.exp=(m.exp||0)+x;let ups=0;
@@ -871,13 +893,13 @@ function explore(){
     if(st===MAXSTAGE){addLog(`${tag} 정복! 여기 머물며 전용 악마를 계속 모을 수 있어요`,true);if(d===0)queueStory('clear'+S.map)}
     checkUnlock(d);changed=true}
   else if(!S.blocked){addLog(`${tag} ${st}단계에서 막혔어요. 전투력 ${fmt(req)}이 필요해요.`);S.blocked=true}
-  if(Math.random()<FIND_RATE){
+  if(Math.random()<FIND_RATE*(1+affixBonus().find)){
     if(S.mons.length>=invMax())addLog('보관함이 가득 찼어요. 합성하거나 퇴마하세요.');
     else{const m=makeMonster(wildP(eff()),spFor(S.map,d),tag);
       if(!keepMon(m)){const g=releaseGold(m);S.gold+=g;scenePush(`${nm(m)} ${gname(m.grade)} → +${fmt(g)}G`,'#8C8276',false,m.sp);}
       else{S.mons.push(m);scenePush(`봉인! ${nm(m)} ${gname(m.grade)}`,RAR(m.grade),m.grade>=6,m.sp);pushFeed(`${nm(m)} ${mb(m)}`,m.grade>=6?'hot':'');addLog(`${nm(m)} 발견 · ${gname(m.grade)}등급`,m.grade>=5);if(m.grade>=7)toast(`${gname(m.grade)}등급 ${nm(m)} 봉인!`);changed=true}}
   }
-  if(Math.random()<ITEM_RATE*(1+dexBonus().item)){
+  if(Math.random()<ITEM_RATE*(1+dexBonus().item+affixBonus().ifind)){
     if(S.items.length>=MAXITEMS)addLog('장비 가방이 가득 차서 장비를 놓쳤어요.');
     else{const it=makeItem(d,S.map);
       if(!keepItem(it)){const g=itemSell(it);S.gold+=g;scenePush(`${it.name} ${gname(it.grade)} 분해 +${fmt(g)}G`,'#8C8276');}
@@ -920,7 +942,7 @@ function renderExplore(){
   const rule=d===0?`${UNLOCK_AT}단계를 넘으면 다음 지역이 열리고, 모든 지역이 열리면 정식 퇴마사로 승급해요.`
     :d+1<DIFFS.length?`모든 지역에서 ${UNLOCK_AT}단계를 넘으면 ${DIFFS[d+1].n} 난이도가 개방돼요.`:'최고 난이도예요.';
   $('stageNote').textContent=(conquered()?'정복한 지역이에요. 머물면서 전용 악마를 계속 모을 수 있어요. ':tp>=req?'다음 탐험에서 이 단계를 돌파해요. 봉인 등급 확률은 모든 지역과 난이도에서 같아요. ':'전투력이 부족해요. 악마 레벨업, 합성, 소환사 강화, 장비로 팀을 키우세요. ')
-    +(conquered()?'':` 다음 단계에서는 사냥 1회 경험치가 ${fmt(expPerTick())} → ${fmt(expAt(Math.min(eff()+1,MAPS[S.map].off+MAXSTAGE),S.diff))}로 늘어나요.`)+' '+rule+` 악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 1시간에 1개 발견돼요.`;
+    +(conquered()?'':` 다음 단계에서는 사냥 1회 경험치가 ${fmt(expPerTick())} → ${fmt(expAt(Math.min(eff()+1,MAPS[S.map].off+MAXSTAGE),S.diff))}로 늘어나요.`)+' '+rule+` 악마는 평균 약 ${(TICK_MS/1000/FIND_RATE/60).toFixed(1)}분, 장비는 약 ${Math.round(TICK_MS/1000/ITEM_RATE/60)}분에 1개 발견돼요(12시간이면 보관함·가방이 가득 차는 속도).`;
   $('prog').style.width=(S.prog*100)+'%';$('hudProg').style.width=(conquered()?100:S.prog*100)+'%';
   $('hudPow').innerHTML=`전투력 <b class="${conquered()||tp>=req?'ok':'no'}">${fmt(tp)}</b> / ${conquered()?'정복':fmt(req)}`;
   let h=`<div class="teamcol"><button class="slot filled" data-char="1"><span class="em"><img class="art" alt="소환사" src="${SPR_DATA[0]}"></span><span class="nm">소환사 Lv${S.charLv}</span><span class="pw">${fmt(charPower()+gearPower())}</span><span class="xpbar"><i style="width:${Math.min(100,(S.charExp||0)/expNeed(S.charLv)*100)}%"></i></span></button>
@@ -1016,13 +1038,14 @@ function renderFuse(){
 }
 function itemCard(it){
   const eq=S.equip.includes(it.id);
-  return `<button class="card ${it.isNew?'new':''}" data-item="${it.id}">${eq?'<span class="tag">장착</span>':''}<span class="em">${SLOTS[it.slot].e}</span><span class="nm">${it.name}</span><span>${mb(it)} <span class="meta">Lv${it.lv}</span></span><span class="meta">+${fmt(ipw(it))}</span><span class="meta">${DIFFS[it.d].n}</span></button>`;
+  return `<button class="card ${it.isNew?'new':''}" data-item="${it.id}">${eq?'<span class="tag">장착</span>':''}<span class="em">${SLOTS[it.slot].e}</span><span class="nm">${it.name}</span><span>${mb(it)} <span class="meta">Lv${it.lv}</span></span><span class="meta">+${ifmt(ipw(it))}${it.ident?(it.aff.length?` · 능력 ${it.aff.length}`:''):' · <b class="unid">미감정</b>'}</span><span class="meta">${DIFFS[it.d].n}</span></button>`;
 }
 function renderGear(){
   $('gearEq').innerHTML=SLOTS.map((s,i)=>{const it=itemById(S.equip[i]);
-    return it?`<button class="slot filled" data-item="${it.id}"><span class="em">${s.e}</span><span class="nm">${mb(it)} ${it.name}</span><span class="pw">+${fmt(ipw(it))}</span></button>`
+    return it?`<button class="slot filled" data-item="${it.id}"><span class="em">${s.e}</span><span class="nm">${mb(it)} ${it.name}</span><span class="pw">+${ifmt(ipw(it))}</span></button>`
       :`<div class="slot"><span class="em" style="opacity:.35">${s.e}</span><span class="nm muted">${s.n} 없음</span><span class="pw">&nbsp;</span></div>`}).join('');
-  $('gearNote').textContent=`${S.items.length} / ${MAXITEMS} · 장비 전투력 +${fmt(gearPower())}`;
+  $('gearNote').textContent=`${S.items.length} / ${MAXITEMS} · 장비 전투력 +${ifmt(gearPower())}`;
+  {const B=affixBonus(),ks=Object.keys(B).filter(k=>B[k]>0);$('gearAff').innerHTML=ks.length?'장착 부가 능력 합계 · '+ks.map(k=>`${AFFIX[k].n} ${AFFIX[k].neg?'−':'+'}${(B[k]*100).toFixed(1)}${AFFIX[k].u}`).join(' · '):'장착한 장비의 부가 능력이 없어요. 장비를 감정해 보세요.'}
   const a=[...S.items].sort((x,y)=>y.grade-x.grade||y.pw-x.pw);
   $('gearGrid').innerHTML=a.length?a.map(itemCard).join(''):'<div class="muted">아직 장비가 없어요.</div>';
 }
@@ -1125,19 +1148,24 @@ function openItem(id){
   const q=itemPot(it)/it.sc, lo=IT[it.grade], hi=IT[it.grade+1], pct=Math.max(0,Math.min(100,(q-lo)/(hi-lo)*100));
   const need=it.grade<MAXG?Math.ceil(hi*it.sc-itemPot(it)):0;
   const L=it.lastLv&&it.lastLv.lv===it.lv?it.lastLv:null;
-  const lvBox=L?`<div class="lvbox"><b>${L.from?`Lv ${L.from} → `:''}Lv ${L.lv} 달성</b>${L.before!==L.after?` · 등급 ${badge(L.before)} → ${badge(L.after)} <b class="${L.after>L.before?'upc':'downc'}">${L.after>L.before?'상승!':'하락'}</b>`:''}
+  const lvBox=L?`<div class="lvbox"><b>${L.from?`Lv ${L.from} → `:''}Lv ${L.lv} 달성</b>${L.gain!=null?` · 전투력 <b class="upc">+${ifmt(L.gain)}</b>`:''}${L.before!==L.after?` · 등급 ${badge(L.before)} → ${badge(L.after)} <b class="${L.after>L.before?'upc':'downc'}">${L.after>L.before?'상승!':'하락'}</b>`:''}
     <div>${L.sum&&L.sum.length>1?`성장률 변화 ${L.sum.map(x=>`<span class="${x>=3?'upc':x<=-3?'downc':''}">${x>=0?'+':''}${x}%</span>`).join(' · ')}`:L.ch?`<span class="${L.ch.kind==='up'?'upc':L.ch.kind==='down'?'downc':''}">성장률 ${L.ch.pct>=0?'+':''}${L.ch.pct}%${L.ch.kind==='up'?' 급성장':L.ch.kind==='down'?' 정체':''}</span>`:'최대 레벨이라 더 이상 성장하지 않아요'}</div></div>`:'';
   $('sheet').innerHTML=`
     <div class="head"><span class="em">${SLOTS[it.slot].e}</span><div><h3>${it.name} ${mb(it)}</h3>
       <div class="muted">${SLOTS[it.slot].n} · ${DIFFS[it.d].n} ${MAPS[it.map].n}에서 획득 · Lv <span class="num">${it.lv}/${ILV}</span></div></div></div>
     ${lvBox}
     <table><thead><tr><th>전투력</th><th>현재</th><th>레벨당 성장</th><th>만렙 예상</th></tr></thead><tbody>
-      <tr><td>소환사에게 +</td><td>${fmt(ipw(it))}</td><td>+${gf(it.g)}</td><td>${fmt(itemPot(it))}</td></tr></tbody></table>
+      <tr><td>소환사에게 +</td><td>${ifmt(ipw(it))}</td><td>+${gf(it.g*STAR_BONUS[starsOf(it)])}</td><td>${ifmt(itemPot(it))}</td></tr></tbody></table>
+    <div class="note">레벨업마다 '레벨당 성장'만큼 전투력이 오르고, 그 값은 레벨업마다 성장률에 따라 바뀌어요.</div>
+    <div class="affbox">${it.ident?`<b>부가 능력</b>${it.aff.length?it.aff.map(a=>`<div>◆ ${affixLine(it,a)}</div>`).join(''):'<div class="muted">숨은 능력이 없는 장비예요</div>'}
+      <div class="note">레벨이 오를수록 부가 능력도 커져요 (지금 ×${affixLvMul(it).toFixed(2)}, 100레벨 ×1.60)${eq?'':' · 장착해야 적용돼요'}</div>`
+      :`<b class="unid">미감정</b><div class="muted">숨은 부가 능력 ${affixCount(it)}개 · 감정해서 확인하세요</div>`}
+      <div class="row" style="margin-top:6px"><button class="btn ${it.ident?'':'primary'}" data-act="ident" ${S.gold<identCost(it)*(it.ident?5:1)?'disabled':''}>${it.ident?`재감정 · ${fmt(identCost(it)*5)}G`:`감정하기 · ${fmt(identCost(it))}G`}</button></div></div>
     <div><div class="gauge"><i style="width:${pct}%;background:${gc(it.grade)}"></i></div>
       <div class="note">${it.grade<MAXG?`${gname(it.grade+1)}까지 만렙 예상 전투력 ${fmt(need)} 부족`:'최대 각성(★3)'}${starsOf(it)?` · 각성 ★${starsOf(it)} 전투력 +${Math.round((STAR_BONUS[starsOf(it)]-1)*100)}%`:''} · 탄생 등급 ${gname(it.g0)} · 100레벨까지 평균 ${EXPECT[it.g0]?`+${EXPECT[it.g0]}등급`:'유지'} 기대</div></div>
     <div class="row"><button class="btn" data-act="ilv" ${it.lv>=ILV||S.gold<cost?'disabled':''}>${it.lv>=ILV?'최대 레벨':`레벨업 · ${fmt(cost)}G`}</button>${it.lv<ILV?`<button class="btn" data-act="ilv5" ${S.gold<cost?'disabled':''}>+${Math.min(5,ILV-it.lv)} 레벨업 · ${fmt(cost5)}G</button>`:''}</div>
-    <div class="row"><span class="muted">전투력</span><b class="num" style="font-size:22px">+${fmt(ipw(it))}</b>
-      ${diff!=null?`<span class="num" style="color:${diff>=0?'var(--accent)':'var(--warn)'}">${diff>=0?'▲':'▼'} ${fmt(Math.abs(diff))}</span><span class="muted">장착 중인 ${cur.name} 대비</span>`:''}</div>
+    <div class="row"><span class="muted">전투력</span><b class="num" style="font-size:22px">+${ifmt(ipw(it))}</b>
+      ${diff!=null?`<span class="num" style="color:${diff>=0?'var(--accent)':'var(--warn)'}">${diff>=0?'▲':'▼'} ${ifmt(Math.abs(diff))}</span><span class="muted">장착 중인 ${cur.name} 대비</span>`:''}</div>
     <div class="row"><button class="btn primary" data-act="${eq?'unequip':'equip'}">${eq?'장착 해제':'장착하기'}</button></div>
     <div class="row">
       <button class="btn danger" data-act="sell" ${eq?'disabled':''}>분해 (+${fmt(itemSell(it))}G)</button>
@@ -1155,7 +1183,7 @@ function openChar(){
     <div><div class="row" style="justify-content:space-between"><span class="muted">경험치</span><span class="num">${fmt(xp)} / ${fmt(need)}</span></div>
       <div class="gauge"><i style="width:${Math.min(100,xp/need*100)}%"></i></div>
       <div class="note">다음 레벨까지 약 ${mins<60?mins+'분':(mins/60).toFixed(1)+'시간'}</div></div>
-    <div class="note">소환사는 사냥하며 경험치를 얻고, 레벨이 오를 때마다 기본 전투력이 6씩 올라요. 장비는 탐험 중 약 1시간에 1개 발견돼요.</div>
+    <div class="note">소환사는 사냥하며 경험치를 얻고, 레벨이 오를 때마다 기본 전투력이 6씩 올라요. 장비는 탐험 중 약 12분에 1개 발견돼요.</div>
     <table><thead><tr><th>부위</th><th style="text-align:left">장비</th><th>전투력</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="row">
 
@@ -1198,9 +1226,12 @@ $('sheet').addEventListener('click',e=>{
   }
   if($('sheet').dataset.kind==='item'){
     const it=itemById(id);if(!it)return closeSheet();
-    if(act==='ilv5'){const b0=it.grade,lv0=it.lv,chs=[];let n=0;
+    if(act==='ident'){const c=identCost(it)*(it.ident?5:1);if(S.gold>=c){S.gold-=c;const re=!!it.ident;rollAffixes(it);
+      addLog(`${it.name} ${re?'재감정':'감정'} · ${it.aff.length?it.aff.map(a=>affixLine(it,a)).join(', '):'숨은 능력 없음'}`,it.aff.length>=3);
+      toast(it.aff.length?`${re?'재감정':'감정'} 완료: ${it.aff.map(a=>AFFIX[a.k].n).join(' · ')}`:'숨은 능력이 없는 장비였어요')}}
+    if(act==='ilv5'){const b0=it.grade,lv0=it.lv,pw0=ipw(it),chs=[];let n=0;
       while(n<5&&it.lv<ILV&&S.gold>=itemCost(it)){S.gold-=itemCost(it);levelUpItem(it);if(it.lastLv.ch)chs.push(it.lastLv.ch.pct);n++}
-      if(n){it.lastLv={lv:it.lv,ch:it.lastLv.ch,before:b0,after:it.grade,from:n>1?lv0:0,sum:chs};
+      if(n){it.lastLv={lv:it.lv,ch:it.lastLv.ch,before:b0,after:it.grade,from:n>1?lv0:0,sum:chs,gain:ipw(it)-pw0};
         if(it.grade!==b0)addLog(`${it.name} Lv${it.lv} · 등급 ${gname(b0)} → ${gname(it.grade)}`,it.grade>b0)}}
     if(act==='ilv'){const c=itemCost(it);if(S.gold>=c&&it.lv<ILV){S.gold-=c;levelUpItem(it);
       if(it.lastLv.after!==it.lastLv.before)addLog(`${it.name} Lv${it.lv} · 등급 ${gname(it.lastLv.before)} → ${gname(it.lastLv.after)}`,it.lastLv.after>it.lastLv.before)}}
@@ -1230,7 +1261,7 @@ $('sheet').addEventListener('click',e=>{
 });
 
 /* ---------- fusion ---------- */
-function doFuse(){
+function doFuse(quiet){
   const p=fusePreview();if(!p)return;
   if(S.gold<p.cost)return toast(`골드가 부족해요 (${fmt(p.cost)}G 필요)`);
   S.gold-=p.cost;
@@ -1251,7 +1282,7 @@ function doFuse(){
   S.mons.push(m);fuseSel=[];
   lastResult={m,success:jump>0,jump,bonus:m.bonus,rare:!!rare};
   addLog(`합성으로 ${nm(m)} 탄생 · ${gname(m.grade)}등급${jump?' (대성공)':''}`,jump>0||m.grade>=5);
-  save();renderAll();
+  if(quiet)return;save();renderAll();
 }
 $('fuseBtn').onclick=doFuse;
 $('fuseMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;fuseMode=b.dataset.mode;renderFuse()});
@@ -1273,6 +1304,26 @@ $('recipes').addEventListener('click',e=>{const b=e.target.closest('[data-qf]');
   S.team=S.team.map(x=>pr.some(m=>m.id===x)?null:x);
   fuseSel=pr.map(m=>m.id);doFuse();
   $('fresult').scrollIntoView({behavior:'smooth',block:'center'})});
+/* 합성 편의: 자동 선택 · 일괄 합성 */
+const fuseable=()=>S.mons.filter(m=>!S.team.includes(m.id)&&m.grade<6);
+function autoGroup(cap){const by={};fuseable().forEach(m=>{if(m.grade<=cap)(by[m.grade]=by[m.grade]||[]).push(m)});
+  for(let g=0;g<=cap;g++){const L=(by[g]||[]).sort((a,b)=>a.pot-b.pot);if(L.length>=2)return L.slice(0,4)}return null}
+let bulkArm=false;
+function bulkPlan(cap){const by={};fuseable().forEach(m=>{if(m.grade<=cap)(by[m.grade]=by[m.grade]||0,by[m.grade]++)});let n=0;for(const g in by)n+=Math.floor(by[g]/4);return n}
+$('fuseAuto').onclick=()=>{const gpk=autoGroup(Math.min(5,+($('bulkCap').value||5)));if(!gpk)return toast('같은 등급 재료가 2마리 이상 없어요');fuseSel=gpk.map(m=>m.id);lastResult=null;renderFuse()};
+$('fuseBulk').onclick=()=>{const cap=+$('bulkCap').value;const plan=bulkPlan(cap);if(!plan)return toast('4마리씩 묶을 같은 등급 재료가 없어요');
+  if(!bulkArm){bulkArm=true;$('fuseBulk').textContent=`약 ${plan}번 이상 합성 · 한 번 더 누르기`;$('fuseBulk').classList.add('primary');return}
+  bulkArm=false;let done=0,spent=0;const got={},rares=[];
+  for(let i=0;i<60;i++){let grp=null;const by={};fuseable().forEach(m=>{if(m.grade<=cap)(by[m.grade]=by[m.grade]||[]).push(m)});
+    for(let g=0;g<=cap&&!grp;g++){const L=(by[g]||[]).sort((a,b)=>a.pot-b.pot);if(L.length>=4)grp=L.slice(0,4)}
+    if(!grp)break;const cost=fuseCost(grp);if(S.gold<cost)break;fuseSel=grp.map(m=>m.id);const g0=S.gold;doFuse(true);if(S.gold===g0)break;spent+=cost;done++;
+    const m=lastResult.m;got[m.grade]=(got[m.grade]||0)+1;if(lastResult.rare)rares.push(nm(m))}
+  fuseSel=[];save();renderAll();
+  const sum=Object.keys(got).sort((a,b)=>b-a).map(g=>`${gname(+g)} ${got[g]}`).join(' · ');
+  $('bulkNote').innerHTML=done?`<b>${done}번 합성</b> · ${fmt(spent)}G 사용 · 결과 ${sum}${rares.length?` · 희귀 ${rares.join(', ')}`:''}`:'골드가 부족해서 합성하지 못했어요.';
+  toast(done?`일괄 합성 ${done}번 완료`:'골드가 부족해요');$('fuseBulk').textContent='일괄 합성';$('fuseBulk').classList.remove('primary')};
+$('bulkCap').innerHTML=[0,1,2,3,4,5].map(g=>`<option value="${g}" ${g===2?'selected':''}>${GRADES[g]}</option>`).join('');
+$('bulkCap').onchange=()=>{bulkArm=false;$('fuseBulk').textContent='일괄 합성';$('fuseBulk').classList.remove('primary')};
 $('fuseClear').onclick=()=>{fuseSel=[];lastResult=null;renderFuse()};
 $('fuseGrid').addEventListener('click',e=>{
   const b=e.target.closest('.card');if(!b)return;const id=+b.dataset.id;
@@ -1336,7 +1387,7 @@ $('pop').addEventListener('click',()=>{clearTimeout(popT);nextPop()});
 /* ===== 자동 떼 사냥 장면 (보이는 동안만 그려요. 보상 계산은 3초 탐험 틱이 담당) =====
    파티가 오른쪽으로 전진하며 악마 떼와 부딪혀요. 근접 악마는 돌진해 때리고, 원거리(소환사 등)는 투사체를 쏴요.
    적도 반격하고, 정예는 장판 공격을 예고한 뒤 내려찍어요. 연속 처치·넉백·화면 흔들림으로 손맛을 줘요. */
-const SC={mobs:[],fx:[],drops:[],shots:[],ms:[],spawn:0,elite:20,ult:0,scroll:0,shake:0,combo:0,comboT:0,comboShow:0,W:0,H:0,dpr:1};
+const SC={ab:{atk:0,exp:0,gold:0,find:0,ifind:0,crit:0,cdr:0,ult:0,boss:0,regen:0},mobs:[],fx:[],drops:[],shots:[],ms:[],spawn:0,elite:20,ult:0,scroll:0,shake:0,combo:0,comboT:0,comboShow:0,W:0,H:0,dpr:1};
 const sceneQ=[];
 function scenePush(text,color,big,sp){sceneQ.push({text,color,big,sp});if(sceneQ.length>8)sceneQ.shift()}
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1361,7 +1412,7 @@ function spawnMob(elite){
   const per=Math.max(5,teamPower()/4), hp=per*(elite?22:rand(4,7));
   SC.mobs.push({x,y,hp,max:hp,sp:rand(26,46)*(elite?0.55:1),k:spFor(S.map,S.diff),elite,hit:0,cd:rand(0.5,1.2),slam:elite?3:0,wind:0,kx:0,ky:0})}
 function nearestMob(x,y,maxd){let best=null,bd=maxd;SC.mobs.forEach(m=>{if(m.hp<=0)return;const d=Math.hypot(m.x-x,m.y-y);if(d<bd){bd=d;best=m}});return best}
-function dmgMob(mob,d,crit,fromX,fromY){if(mob.vuln>0)d=Math.round(d*1.3);
+function dmgMob(mob,d,crit,fromX,fromY){if(mob.vuln>0)d=Math.round(d*1.3);if(mob.boss)d=Math.round(d*(1+SC.ab.boss));
   mob.hp-=d;mob.hit=0.12;
   const a=Math.atan2(mob.y-fromY,mob.x-fromX), k=(crit?16:7)*(mob.boss?0.08:mob.elite?0.3:1);mob.kx+=Math.cos(a)*k;mob.ky+=Math.sin(a)*k;
   if(crit&&!RM)SC.shake=Math.max(SC.shake,crit===2?9:4);
@@ -1439,7 +1490,7 @@ function castSkill(a,manual){
     else if(sk.t==='hex'){SC.mobs.forEach(m=>{if(Math.hypot(m.x-t.x,m.y-t.y)<100)hexMob(m,4)});R(t.x,t.y,100,1.0);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.6,r:100,col:sk.col,w:5})}
     else if(sk.t==='strike'){const x0=a.x,y0=a.y,d=Math.hypot(t.x-a.x,t.y-a.y)||1;if(a.key!=='char'){a.x=t.x-(t.x-a.x)/d*16;a.y=t.y-(t.y-a.y)/d*16}
       dmgMob(t,Math.round(pw*4.2),2,x0,y0);R(t.x,t.y,40,1.2);SC.fx.push({k:'slash',x:t.x,y:t.y,a:Math.atan2(t.y-y0,t.x-x0),t:0,life:0.25})}}
-  SC.skcd[a.key]=sk.cd;a.atkT=0;a.atkA=sk.t==='mend'?-0.35:0.95;
+  SC.skcd[a.key]=sk.cd*(1-SC.ab.cdr);a.atkT=0;a.atkA=sk.t==='mend'?-0.35:0.95;
   SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:1.1,txt:sk.n,col:sk.col,sz:12});
   return true}
 function autoSkills(){if(SC.manual)return;SC.ms.forEach(a=>{if((SC.skcd[a.key]||0)<=0&&SC.mobs.some(m=>Math.hypot(m.x-a.x,m.y-a.y)<240)){
@@ -1508,7 +1559,7 @@ const RANGE_PX=220;
 function sceneStep(dt){
   dt*=S.fast?3:1;
   syncT-=dt;if(syncT<=0){syncTeam();syncT=0.5}
-  SC.ult=Math.min(1,SC.ult+dt/25);
+  SC.ab=affixBonus();SC.ult=Math.min(1,SC.ult+dt/25*(1+SC.ab.ult));
   SC.comboT-=dt;SC.comboShow-=dt;SC.shake=Math.max(0,SC.shake-dt*30);
   /* 보스: 한 번에 한 마리. 쓰러뜨리면 잠시 전진한 뒤 다음 보스 */
   if(!SC.boss||!SC.mobs.includes(SC.boss)){SC.boss=null;SC.bossT-=dt;if(SC.bossT<=0&&!SC.mobs.length)spawnBoss()}
@@ -1539,7 +1590,7 @@ function sceneStep(dt){
     a.flash=Math.max(0,a.flash-dt);a.lunge=Math.max(0,a.lunge-dt);a.bob+=dt*(SC.manual&&a.key!=='char'?(Math.hypot(a.vx||0,a.vy||0)>15?9:2):(walk?9:4));
     if(a.down>0){a.down-=dt;if(a.down<=0)a.hp=a.max;return}
     {const es=SC.tele.length&&!(SC.manual&&a.key==='char')?escapeDir(a):null;if(es){a.x+=es.x*170*dt;a.y+=es.y*170*dt;a.y=Math.max(16,Math.min(SC.H-16,a.y));a.bob+=dt*9;a.inR=false;a.cd=Math.max(a.cd,0.1);return}}
-    a.hp=Math.min(a.max,a.hp+a.max*0.05*dt);
+    a.hp=Math.min(a.max,a.hp+a.max*0.05*dt*(1+SC.ab.regen));
     a.cd-=dt;
     if(SC.focus)a.tgt=SC.focus;
     else if(!a.tgt||a.tgt.hp<=0||!SC.mobs.includes(a.tgt))a.tgt=(SC.boss&&SC.mobs.includes(SC.boss)&&SC.boss.x<SC.W*0.95?SC.boss:null)||nearestMob(a.x,a.y,a.kind==='melee'?190:230);
@@ -1552,7 +1603,7 @@ function sceneStep(dt){
       a.inR=d<=reach+4;
       if(d>reach){if(SC.manual)steer(a,t.x,t.y,reach-2,175,dt);else{a.x+=(t.x-a.x)/d*150*dt;a.y+=(t.y-a.y)/d*150*dt}}
       else if(a.cd<=0){a.cd=rand(0.4,0.55);a.lunge=0.12;a.lx=(t.x-a.x)/d;a.ly=(t.y-a.y)/d;a.atkT=0;a.atkA=0.75;atkFx(a,t,false);
-        const crit=Math.random()<0.15?1:0, dmg=Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1)));
+        const crit=Math.random()<0.15+SC.ab.crit?1:0, dmg=Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1)));
         if(0)SC.fx.push({k:'slash',x:(a.x+t.x)/2,y:(a.y+t.y)/2,a:Math.atan2(t.y-a.y,t.x-a.x),t:0,life:0.16});
         dmgMob(t,dmg,crit,a.x,a.y);
         if(Math.random()<0.2){SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.35,r:50,col:'#4FB6A4',w:3});
@@ -1565,7 +1616,7 @@ function sceneStep(dt){
         const dx=gx-a.x,dy=gy-a.y,d=Math.hypot(dx,dy);if(d>2){a.x+=dx/d*Math.min(d,120*dt);a.y+=dy/d*Math.min(d,120*dt)}a.vx=0;a.vy=0}
       const inRange=t&&Math.hypot(t.x-a.x,t.y-a.y)<=RANGE_PX+(SC.manual?80:10);
       a.inR=!!inRange;
-      if(inRange&&a.cd<=0){a.cd=rand(0.5,0.7);const crit=Math.random()<0.12?1:0;a.atkT=0;a.atkA=0.42;atkFx(a,t,false);
+      if(inRange&&a.cd<=0){a.cd=rand(0.5,0.7);const crit=Math.random()<0.12+SC.ab.crit?1:0;a.atkT=0;a.atkA=0.42;atkFx(a,t,false);
         fireShot(a,t,Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1))),crit,false)}
     }
   });
@@ -2593,13 +2644,13 @@ function offline(){
   const sec=Math.min((8+dexBonus().off)*3600,(Date.now()-S.last)/1000);if(sec<15)return;
   const g=gps()*sec;S.gold+=g;
   const tag=`${DIFFS[S.diff].n} ${MAPS[S.map].n}`;
-  let found=0,items=0;const n=Math.floor(sec/(TICK_MS/1000)*FIND_RATE+Math.random());
+  let found=0,items=0;const n=Math.floor(sec/(TICK_MS/1000)*FIND_RATE*(1+affixBonus().find)+Math.random());
   let freed=0;for(let i=0;i<n&&S.mons.length<invMax();i++){const m=makeMonster(wildP(eff()),spFor(S.map,S.diff),tag);if(keepMon(m)){S.mons.push(m);found++}else{S.gold+=releaseGold(m);freed++}}
   S.kills=(S.kills||0)+Math.round(sec/0.6);
   const ox=sec/(TICK_MS/1000)*expPerTick();let ups=0;
   S.team.forEach(id=>{const m=id!=null&&byId(id);if(m)ups+=gainExp(m,ox,true)});
   const cups=gainCharExp(ox);
-  const ni=Math.floor(sec/3600*(1+dexBonus().item)+Math.random());
+  const ni=Math.floor(sec/(TICK_MS/1000)*ITEM_RATE*(1+dexBonus().item+affixBonus().ifind)+Math.random());
   for(let i=0;i<ni&&S.items.length<MAXITEMS;i++){const it=makeItem(S.diff,S.map);if(keepItem(it)){S.items.push(it);items++}else S.gold+=itemSell(it)}
   addLog(`자리를 비운 ${Math.round(sec/60)}분 동안 ${fmt(g)}G, 악마 ${found}마리${items?`, 장비 ${items}개`:''}를 얻었어요${freed?` · ${freed}마리는 설정에 따라 퇴마함`:''}${ups?` · 악마 총 ${ups}레벨 성장`:''}${cups?` · 소환사 ${cups}레벨 성장`:''}`,true);
   setTimeout(()=>toast(`오프라인 보상: ${fmt(g)}G · 악마 ${found}마리${items?` · 장비 ${items}개`:''}`),300);
