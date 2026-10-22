@@ -206,6 +206,11 @@ h2{color:#E7C27A}
 .skills{position:absolute;left:8px;bottom:8px;display:flex;gap:6px}
 .skills button{width:54px;height:54px;border-radius:12px;border:2px solid var(--c,#7E1712);background:radial-gradient(circle at 40% 30%,#2A1612,#0E0807);color:#F2D8B8;cursor:pointer;position:relative;overflow:hidden;padding:0}
 .skills button.ready{box-shadow:0 0 10px var(--c)}
+.skcell{display:flex;flex-direction:column;align-items:center;gap:3px}
+.skills .skmini{width:54px;height:22px;border-radius:7px;border:1px solid #5A3A20;background:rgba(14,9,7,.85);color:#E7C27A;font:600 11px var(--body);padding:0;overflow:visible}
+.skills .skmini:hover{border-color:#E7A33E}
+.skills .skmini:focus-visible{outline:2px solid #FFD166;outline-offset:1px}
+.skempty{width:54px;height:54px;border-radius:12px;border:1px dashed #4A372C;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);background:rgba(14,9,7,.5)}
 .skills button span{position:absolute;inset:0;background:rgba(0,0,0,.72);transform-origin:bottom;transform:scaleY(var(--cd,0));z-index:2}
 .skills button i{position:absolute;inset:2px 2px 12px;display:flex;align-items:center;justify-content:center;font-size:30px}
 .skills button i img.art{width:38px;height:38px}
@@ -1664,15 +1669,21 @@ function castSkill(a,manual){
 function autoSkills(){if(SC.manual)return;SC.ms.forEach(a=>{if((SC.skcd[a.key]||0)<=0&&SC.mobs.some(m=>Math.hypot(m.x-a.x,m.y-a.y)<240)){
   const sk=skillOf(a);if(sk.t==='mend'&&!SC.ms.some(b=>b.hp<b.max*0.6))return;castSkill(a,false)}})}
 let skBarKey='';
-function renderSkillBar(){const key=SC.ms.map(a=>a.key).join(',');if(key===skBarKey)return;skBarKey=key;
-  $('skills').innerHTML=SC.ms.map((a,i)=>{const sk=skillOf(a);const pic=a.key==='char'?'<b class="sig">✡</b>':`<i>${artHTML(a.k)}</i>`;
-    const who=a.key==='char'?'소환사':SPECIES[a.k][1];return `<button data-sk="${a.key}" aria-label="${who} 스킬 ${sk.n}" title="${who} · ${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${who}</small><em>${i+1}</em></button>`}).join('')}
-$('skills').addEventListener('click',e=>{const b=e.target.closest('button[data-sk]');if(!b)return;const a=SC.ms.find(x=>x.key===b.dataset.sk);
+/* 스킬 칸 아래 작은 버튼: 소환사는 '정보'(소환사 정보 창), 악마는 '교체'(그 자리 팀 교체 창). 빈 자리는 '추가' */
+function renderSkillBar(){const key=SC.ms.map(a=>a.key).join(',')+'|'+S.team.join(',');if(key===skBarKey)return;skBarKey=key;
+  const cells=SC.ms.map((a,i)=>{const sk=skillOf(a);const pic=a.key==='char'?'<b class="sig">✡</b>':`<i>${artHTML(a.k)}</i>`;
+    const who=a.key==='char'?'소환사':SPECIES[a.k][1],slot=a.key==='char'?-1:S.team.indexOf(+a.key.slice(1));
+    return `<div class="skcell"><button data-sk="${a.key}" aria-label="${who} 스킬 ${sk.n}" title="${who} · ${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${who}</small><em>${i+1}</em></button>`+
+      (a.key==='char'?`<button class="skmini" data-info="1" aria-label="소환사 정보">정보</button>`:`<button class="skmini" data-swap="${slot}" aria-label="${who} 교체">교체</button>`)+`</div>`});
+  S.team.forEach((id,i)=>{if(id==null)cells.push(`<div class="skcell"><div class="skempty">빈 자리</div><button class="skmini" data-swap="${i}" aria-label="${i+1}번 자리에 악마 추가">추가</button></div>`)});
+  $('skills').innerHTML=cells.join('')}
+$('skills').addEventListener('click',e=>{const mi=e.target.closest('.skmini');if(mi){if(mi.dataset.info)return openChar();detailFromTeam=false;return openTeam(+mi.dataset.swap)}
+  const b=e.target.closest('button[data-sk]');if(!b)return;const a=SC.ms.find(x=>x.key===b.dataset.sk);
   if(!a)return;if(!castSkill(a,true))toast((SC.skcd[a.key]||0)>0?'아직 재사용 대기 중이에요':'대상이 없어요')});
 document.addEventListener('keydown',e=>{if(!$('overlay').hidden||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;
   const n='1234'.indexOf(e.key);if(n>=0&&SC.ms[n]){castSkill(SC.ms[n],true);e.preventDefault()}});
 function tickSkills(dt){for(const k in SC.skcd)SC.skcd[k]=Math.max(0,SC.skcd[k]-dt);autoSkills();renderSkillBar();
-  $('skills').querySelectorAll('button').forEach(b=>{const a=SC.ms.find(x=>x.key===b.dataset.sk);if(!a)return;const cd=SC.skcd[a.key]||0,mx=skillOf(a).cd;b.firstChild.style.setProperty('--cd',(cd/mx).toFixed(3));b.classList.toggle('ready',cd<=0)})}
+  $('skills').querySelectorAll('button[data-sk]').forEach(b=>{const a=SC.ms.find(x=>x.key===b.dataset.sk);if(!a)return;const cd=SC.skcd[a.key]||0,mx=skillOf(a).cd;b.firstChild.style.setProperty('--cd',(cd/mx).toFixed(3));b.classList.toggle('ready',cd<=0)})}
 
 /* ===== 스토리: 솔로몬의 마지막 후계자, 퇴마사의 여정 ===== */
 const STORY={
