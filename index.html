@@ -755,8 +755,7 @@ const effOf=(d,i)=>floorE(curFloor());
 const eff=()=>floorE(curFloor());
 const cleared=f=>f<(S.top||1);
 const conquered=()=>cleared(curFloor());
-/* 봉인되는 악마: 지금 층까지 나온 야생 악마 중 랜덤, 지금 층 보스 종류는 35% */
-const spForFloor=f=>{f=f||curFloor();const wild=FLOORS.slice(0,Math.min(f,56));const b=bossSp(f);return SPECIES[b][2]!==-2&&Math.random()<0.35?b:anyOf(wild)};
+const spForFloor=f=>{f=f||curFloor();const b=bossSp(f);return SPECIES[b][2]===-2?null:b};  /* 그 층에서는 그 층 보스 악마만 봉인돼요. 조합 전용 보스 층(57~72층)에서는 악마가 봉인되지 않아요 */
 const where=m=>{const h=SPECIES[m.sp][2],t=tierOf(m.sp);return `제${SPECIES[m.sp][5]}위 ${cultOf(m.sp)} · `+(h===-2?`조합 전용 · ${floorOf(m.sp)}층 보스`:`${floorOf(m.sp)}층 보스 · ${floorOf(m.sp)}층부터 등장`)};
 function rollCapture(){let x=Math.random()*100;for(let g=TOP;g>0;g--){if(x<CAPTURE[g])return g;x-=CAPTURE[g]}return 0}
 /* 봉인 등급 확률은 모든 지역·난이도에서 같아요 */
@@ -1063,7 +1062,7 @@ function explore(){
   let changed=false;S.map=zoneOf(f);
   if(conquered()){}
   /* 층 돌파는 전투 화면에서 그 층 보스를 쓰러뜨려야 해요(clearFloor). 전투력 제한은 없어요 */
-  if(Math.random()<FIND_RATE*(1+affixBonus().find)){
+  if(spForFloor()!=null&&Math.random()<FIND_RATE*(1+affixBonus().find)){
     if(S.mons.length>=invMax())addLog('보관함이 가득 찼어요. 합성하거나 퇴마하세요.');
     else{const m=makeMonster(wildP(eff()),spForFloor(),tag);
       if(!keepMon(m)){const g=releaseGold(m);S.gold+=g;scenePush(`${nm(m)} ${gname(m.grade)} → +${fmt(g)}G`,'#8C8276',false,m.sp);}
@@ -1096,7 +1095,7 @@ function renderExplore(){
   $('req').textContent=conquered()?'—':fmt(req);
   $('gps').innerHTML=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;
   $('stageNote').textContent=(conquered()?'클리어한 층이에요. 머물면서 악마와 장비를 계속 모을 수 있어요. ':`전투 화면에서 이 층 보스를 ${BOSS_TIME}초 안에 쓰러뜨리면 클리어하고 다음 층으로 올라가요. 권장 전투력 ${fmt(req)}보다 약하면 보스가 단단하고 아프게 때려서, 시간 초과나 전멸로 실패하기 쉬워요. `)
-    +`봉인되는 악마: 1~${Math.min(f,56)}층에 나온 악마 중 랜덤, 이 층 보스 종류는 35%. 악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 ${Math.round(TICK_MS/1000/ITEM_RATE/60)}분에 1개 발견돼요.`;
+    +`${SPECIES[b][2]===-2?'조합 전용 보스 층이라 악마가 봉인되지 않아요(장비·골드·경험치는 그대로). ':`이 층에서는 보스 ${SPECIES[b][1]}만 봉인돼요. `}악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 ${Math.round(TICK_MS/1000/ITEM_RATE/60)}분에 1개 발견돼요.`;
   renderFloors();
   $('prog').style.width=(S.prog*100)+'%';$('hudProg').style.width=(conquered()?100:S.prog*100)+'%';
   $('hudPow').innerHTML=`전투력 <b class="${conquered()||tp>=req?'ok':'no'}">${fmt(tp)}</b> / 권장 ${fmt(req)}${conquered()?' ✓':''}`;
@@ -2884,7 +2883,7 @@ function offline(){
   const g=gps()*sec;S.gold+=g;
   const tag=`${curFloor()}층`;
   let found=0,items=0;const n=Math.floor(sec/(TICK_MS/1000)*FIND_RATE*(1+affixBonus().find)+Math.random());
-  let freed=0;for(let i=0;i<n&&S.mons.length<invMax();i++){const m=makeMonster(wildP(eff()),spForFloor(),tag);if(keepMon(m)){S.mons.push(m);found++}else{S.gold+=releaseGold(m);freed++}}
+  let freed=0;for(let i=0;i<n&&S.mons.length<invMax()&&spForFloor()!=null;i++){const m=makeMonster(wildP(eff()),spForFloor(),tag);if(keepMon(m)){S.mons.push(m);found++}else{S.gold+=releaseGold(m);freed++}}
   S.kills=(S.kills||0)+Math.round(sec/0.6);
   const ox=sec/(TICK_MS/1000)*expPerTick();let ups=0;
   S.team.forEach(id=>{const m=id!=null&&byId(id);if(m)ups+=gainExp(m,ox,true)});
