@@ -210,6 +210,11 @@ h2{color:#E7C27A}
 .skills .skg.skr{background:#2a1a10;color:#F2C24A;border:1px solid #7A5A20;font-size:8px;padding:1px 3px}
 .card.aura7{box-shadow:0 0 10px rgba(224,72,79,.45),inset 0 0 12px rgba(224,72,79,.18)}.card.aura8{box-shadow:0 0 12px rgba(217,64,122,.5),inset 0 0 14px rgba(217,64,122,.2)}.card.aura9{box-shadow:0 0 14px rgba(232,184,40,.6),inset 0 0 16px rgba(232,184,40,.22);animation:aurap 2.4s ease-in-out infinite}
 @keyframes aurap{50%{box-shadow:0 0 22px rgba(232,184,40,.8),inset 0 0 18px rgba(232,184,40,.3)}}@media (prefers-reduced-motion:reduce){.card.aura9{animation:none}}
+.sklv{width:54px;height:15px;display:flex;flex-direction:column;align-items:stretch;gap:1px}
+.sklv span{font:600 9.5px/1 var(--mono);color:#E7DFD3;text-align:center;text-shadow:0 1px 2px #000}
+.sklv b{display:block;height:3px;border-radius:2px;background:rgba(0,0,0,.6);box-shadow:0 0 0 1px rgba(255,255,255,.08);overflow:hidden}
+.sklv i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4FB6A4,#9AE0C8)}
+.sklv.max i{background:#E7A33E}.sklv.max span{color:#E7A33E}
 .skcell{display:flex;flex-direction:column;align-items:center;gap:3px}
 .skills .skmini{width:54px;height:22px;border-radius:7px;border:1px solid #5A3A20;background:rgba(14,9,7,.85);color:#E7C27A;font:600 11px var(--body);padding:0;overflow:visible}
 .skills .skmini:hover{border-color:#E7A33E}
@@ -1724,16 +1729,21 @@ const skGrade=a=>{if(a.key==='char')return `<b class="skg skr" title="승급 ${r
 function renderSkillBar(){const key=SC.ms.map(a=>a.key+':'+(a.key==='char'?rankOf():(byId(+a.key.slice(1))||{}).grade)).join(',')+'|'+S.team.join(',');if(key===skBarKey)return;skBarKey=key;
   const cells=SC.ms.map((a,i)=>{const sk=skillOf(a);const pic=a.key==='char'?'<b class="sig">✡</b>':`<i>${artHTML(a.k)}</i>`;
     const who=a.key==='char'?'소환사':SPECIES[a.k][1],slot=a.key==='char'?-1:S.team.indexOf(+a.key.slice(1));
-    return `<div class="skcell"><button data-sk="${a.key}" aria-label="${who} 스킬 ${sk.n}" title="${who} · ${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${who}</small><em>${i+1}</em>${skGrade(a)}</button>`+
+    return `<div class="skcell"><div class="sklv" data-lv="${a.key}"><span></span><b><i></i></b></div><button data-sk="${a.key}" aria-label="${who} 스킬 ${sk.n}" title="${who} · ${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${who}</small><em>${i+1}</em>${skGrade(a)}</button>`+
       (a.key==='char'?`<button class="skmini" data-info="1" aria-label="소환사 정보">정보</button>`:`<button class="skmini" data-swap="${slot}" aria-label="${who} 교체">교체</button>`)+`</div>`});
-  S.team.forEach((id,i)=>{if(id==null)cells.push(`<div class="skcell"><div class="skempty">빈 자리</div><button class="skmini" data-swap="${i}" aria-label="${i+1}번 자리에 악마 추가">추가</button></div>`)});
+  S.team.forEach((id,i)=>{if(id==null)cells.push(`<div class="skcell"><div class="sklv"></div><div class="skempty">빈 자리</div><button class="skmini" data-swap="${i}" aria-label="${i+1}번 자리에 악마 추가">추가</button></div>`)});
   $('skills').innerHTML=cells.join('')}
 $('skills').addEventListener('click',e=>{const mi=e.target.closest('.skmini');if(mi){if(mi.dataset.info)return openChar();detailFromTeam=false;return openTeam(+mi.dataset.swap)}
   const b=e.target.closest('button[data-sk]');if(!b)return;const a=SC.ms.find(x=>x.key===b.dataset.sk);
   if(!a)return;if(!castSkill(a,true))toast((SC.skcd[a.key]||0)>0?'아직 재사용 대기 중이에요':'대상이 없어요')});
 document.addEventListener('keydown',e=>{if(!$('overlay').hidden||/INPUT|SELECT|TEXTAREA/.test(document.activeElement&&document.activeElement.tagName))return;
   const n='1234'.indexOf(e.key);if(n>=0&&SC.ms[n]){castSkill(SC.ms[n],true);e.preventDefault()}});
-function tickSkills(dt){for(const k in SC.skcd)SC.skcd[k]=Math.max(0,SC.skcd[k]-dt);autoSkills();renderSkillBar();
+/* 스킬 칸 위: 레벨과 다음 레벨까지 경험치 막대 */
+function skLvInfo(key){if(key==='char')return {lv:S.charLv,p:Math.min(1,(S.charExp||0)/expNeed(S.charLv)),max:false};const m=byId(+key.slice(1));if(!m)return null;
+  return {lv:m.lv,p:m.lv>=MAXLV?1:Math.min(1,(m.exp||0)/expNeed(m.lv)),max:m.lv>=MAXLV}}
+function updSkLv(){document.querySelectorAll('#skills .sklv[data-lv]').forEach(el=>{const I=skLvInfo(el.dataset.lv);if(!I)return;
+  const t=I.max?'MAX':`Lv${I.lv}`;const sp=el.firstChild;if(sp.textContent!==t)sp.textContent=t;el.querySelector('i').style.width=(I.p*100).toFixed(1)+'%';el.classList.toggle('max',I.max)})}
+function tickSkills(dt){updSkLv();for(const k in SC.skcd)SC.skcd[k]=Math.max(0,SC.skcd[k]-dt);autoSkills();renderSkillBar();
   $('skills').querySelectorAll('button[data-sk]').forEach(b=>{const a=SC.ms.find(x=>x.key===b.dataset.sk);if(!a)return;const cd=SC.skcd[a.key]||0,mx=skillOf(a).cd;b.firstChild.style.setProperty('--cd',(cd/mx).toFixed(3));b.classList.toggle('ready',cd<=0)})}
 
 /* ===== 스토리: 솔로몬의 마지막 후계자, 퇴마사의 여정 ===== */
