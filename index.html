@@ -1839,9 +1839,9 @@ function steer(a,tx,ty,stop,maxSp,dt){
 const RANGE_PX=220;
 function sceneStep(dt){
   dt*=S.fast?3:1;
-  syncT-=dt;if(syncT<=0){syncTeam();syncT=0.5}
+  syncT-=dt;if(syncT<=0){syncTeam();entCheck();syncT=0.5}
   SC.ab=affixBonus();SC.ult=Math.min(1,SC.ult+dt/25*(1+SC.ab.ult));
-  SC.comboT-=dt;SC.comboShow-=dt;SC.shake=Math.max(0,SC.shake-dt*30);
+  SC.comboT-=dt;SC.comboShow-=dt;SC.hsCd=Math.max(0,(SC.hsCd||0)-dt);entStep(dt);SC.shake=Math.max(0,SC.shake-dt*30);
   /* 보스: 한 번에 한 마리. 쓰러뜨리면 잠시 전진한 뒤 다음 보스 */
   if(!SC.boss||!SC.mobs.includes(SC.boss)){SC.boss=null;SC.bossT-=dt;if(SC.bossT<=0&&!SC.mobs.length)spawnBoss()}
   if(SC.bossIntro>0)SC.bossIntro=Math.max(0,SC.bossIntro-dt);
@@ -1888,7 +1888,7 @@ function sceneStep(dt){
       else if(a.cd<=0){a.cd=rand(0.4,0.55);a.lunge=0.12;a.lx=(t.x-a.x)/d;a.ly=(t.y-a.y)/d;a.atkT=0;a.atkA=0.75;atkFx(a,t,false);
         const crit=Math.random()<0.15+SC.ab.crit?1:0, dmg=Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1)));
         if(0)SC.fx.push({k:'slash',x:(a.x+t.x)/2,y:(a.y+t.y)/2,a:Math.atan2(t.y-a.y,t.x-a.x),t:0,life:0.16});
-        SC.lastEl=elOf(a);dmgMob(t,Math.round(dmg*elemMul(SC.lastEl,t)),crit,a.x,a.y);SC.lastEl=null;
+        SC.lastEl=elOf(a);dmgMob(t,Math.round(dmg*elemMul(SC.lastEl,t)),crit,a.x,a.y);SC.lastEl=null;if(crit)gradeCrit(a,t.x,t.y);
         if(Math.random()<0.2){SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.35,r:50,col:'#4FB6A4',w:3});
           SC.mobs.forEach(m=>{if(m!==t&&Math.hypot(m.x-t.x,m.y-t.y)<50)dmgMob(m,Math.round(dmg*0.6),0,t.x,t.y)})}}
     }else{
@@ -1905,7 +1905,7 @@ function sceneStep(dt){
   });
   /* 투사체 */
   SC.shots.forEach(s=>{const gone=s.en?(s.t.down>0||!SC.ms.includes(s.t)):s.t.hp<=0;const d=Math.hypot(s.t.x-s.x,s.t.y-s.y);
-    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=2;SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else{SC.lastEl=s.el||null;dmgMob(s.t,Math.round(s.dmg*elemMul(s.el,s.t)),s.crit,s.fx,s.fy);SC.lastEl=null}if(s.pt)shotHit(s)}s.done=1;return}
+    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=2;SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else{SC.lastEl=s.el||null;dmgMob(s.t,Math.round(s.dmg*elemMul(s.el,s.t)),s.crit,s.fx,s.fy);SC.lastEl=null;if(s.crit&&s.src)gradeCrit(s.src,s.t.x,s.t.y)}if(s.pt)shotHit(s)}s.done=1;return}
     s.x+=(s.t.x-s.x)/d*s.sp*dt;s.y+=(s.t.y-s.y)/d*s.sp*dt;if(s.pt)shotTrail(s,dt)});
   SC.shots=SC.shots.filter(s=>!s.done);
   /* 적 */
@@ -2024,6 +2024,54 @@ function drawAura(g,e,x,y,w,h,dt){const gr=actorGrade(e);if(gr<7)return;const c=
   g.globalAlpha=0.35*pulse;g.lineWidth=6+st*2;g.stroke();g.restore();
   if(gr>=9&&Math.random()<dt*(8+st*6))spk(e.x+rand(-w*0.4,w*0.4),e.y+rand(-4,4),rand(0,0.4),rand(-6,6),rand(-3,3),rand(1.2,2.2),Math.random()<0.5?c:'#FFF4C8',rand(0.6,1.1),rand(1.6,2.6));
   else if(Math.random()<dt*4)spk(e.x+rand(-w*0.35,w*0.35),e.y,0.1,0,0,rand(0.9,1.6),c,0.8,2)}
+/* ===== 등급 연출(내 악마에게만) =====
+   ① B 이상: 발밑에 솔로몬 인장 원(등급 색). 등급이 높을수록 크고 빠르게 돌아요. 여러 마리면 가장 높은 등급 하나만 크고 밝게, 나머지는 작고 흐리게.
+   ② SR 이상: 치명타 때 히트스톱(아주 잠깐 멈춤) + 화면 흔들림 + 등급 색 섬광. 동시에 여러 번 터지면 가장 높은 등급 것 하나만.
+   ③ SSR: 전투에 처음 들어올 때(합성으로 막 SSR이 됐을 때 포함) 땅의 인장이 갈라지며 솟아오르고, 이름이 크게 떠요. */
+const GCOL={};const gcol=g=>GCOL[Math.min(g,9)]||(GCOL[Math.min(g,9)]=gc2(g));
+function sigilPath(g,r){g.beginPath();g.arc(0,0,r,0,Math.PI*2);g.moveTo(r*0.84,0);g.arc(0,0,r*0.84,0,Math.PI*2);
+  for(let t=0;t<2;t++)for(let i=0;i<=3;i++){const a=-Math.PI/2+t*Math.PI/3+i*2*Math.PI/3,x=Math.cos(a)*r*0.8,y=Math.sin(a)*r*0.8;i?g.lineTo(x,y):g.moveTo(x,y)}
+  for(let i=0;i<12;i++){const a=i*Math.PI/6;g.moveTo(Math.cos(a)*r*0.86,Math.sin(a)*r*0.86);g.lineTo(Math.cos(a)*r*0.97,Math.sin(a)*r*0.97)}}
+function drawSigils(g){const now=performance.now()/1000;let top=null,tg=3;
+  const al=SC.ms.filter(a=>{if(a.down>0||(SC.ent&&SC.ent.a===a&&SC.ent.t<1.1))return false;const gr=actorGrade(a);if(gr>tg){tg=gr;top=a}return gr>=4});
+  g.save();g.globalCompositeOperation='lighter';
+  al.forEach(a=>{const gr=actorGrade(a),main=a===top,c=gcol(gr),r=(17+(Math.min(gr,9)-4)*3+Math.max(0,gr-9)*2)*(main?1.15:0.78);
+    g.save();g.translate(a.x,a.y+2);g.scale(1,0.36);g.rotate(now*(0.25+0.12*(gr-4))*(main?1:0.7));g.strokeStyle=c;
+    if(main){g.globalAlpha=0.22;g.lineWidth=5;sigilPath(g,r);g.stroke()}
+    g.globalAlpha=main?0.8:0.3;g.lineWidth=main?1.6:1;sigilPath(g,r);g.stroke();g.restore()});
+  g.restore()}
+/* ② 치명타 히트스톱 */
+function gradeCrit(a,x,y){const gr=actorGrade(a);if(gr<8)return;if((SC.hsCd||0)>0&&gr<=(SC.hsG||0))return;
+  SC.hs=gr>=9?0.12:0.075;SC.hsCd=0.45;SC.hsG=gr;if(!RM)SC.shake=Math.max(SC.shake,gr>=9?10:6);
+  SC.fx.push({k:'ring',x,y,t:0,life:0.45,r:gr>=9?95:65,col:gcol(gr),w:4});SC.flashHit={x,y,t:0,col:gcol(gr),big:gr>=9}}
+/* ③ SSR 등장 */
+function entCheck(){SC.ms.forEach(a=>{if(a.key==='char')return;const gr=actorGrade(a);if(gr>=9&&(a._g==null||a._g<9)){SC.entQ=SC.entQ||[];if(SC.entQ.length<3&&!(SC.ent&&SC.ent.a===a))SC.entQ.push(a)}a._g=gr});
+  if(SC.entQ&&SC.entQ.length>1)SC.entQ.sort((p,q)=>actorGrade(q)-actorGrade(p))}
+function entStep(dt){if(SC.ent){SC.ent.t+=dt;const E=SC.ent;if(!E.boom&&E.t>0.55){E.boom=1;if(!RM)SC.shake=Math.max(SC.shake,9);
+      for(let i=0;i<26;i++)spk(E.a.x+rand(-30,30),E.a.y+rand(-6,6),rand(0,0.5),rand(-30,30),rand(-10,10),rand(1.5,3.5),Math.random()<0.5?E.col:'#FFF4C8',rand(0.6,1.2),rand(2,3.4))}
+    if(E.t>=E.life||!SC.ms.includes(E.a))SC.ent=null}
+  if(!SC.ent&&SC.entQ&&SC.entQ.length){const a=SC.entQ.shift();if(!SC.ms.includes(a))return;const gr=actorGrade(a);
+    const cr=[];for(let i=0;i<9;i++){const a0=i/9*Math.PI*2+rand(-0.2,0.2),pts=[[0,0]];let r=0;for(let j=0;j<4;j++){r+=rand(14,24);pts.push([Math.cos(a0+rand(-0.35,0.35))*r,Math.sin(a0+rand(-0.35,0.35))*r])}cr.push(pts)}
+    SC.ent={a,t:0,life:2.6,col:gcol(gr),name:SPECIES[a.k][1],gr,cr}}}
+const entRise=E=>Math.max(0,Math.min(1,(E.t-0.55)/0.6));
+function drawEntGround(g){const E=SC.ent;if(!E)return;const k=Math.min(1,E.t/0.5),fade=E.t>E.life-0.6?(E.life-E.t)/0.6:1,now=performance.now()/1000;
+  g.save();g.globalCompositeOperation='lighter';g.translate(E.a.x,E.a.y+2);g.scale(1,0.4);g.strokeStyle=E.col;
+  g.save();g.rotate(-now*1.2);g.globalAlpha=0.25*fade;g.lineWidth=7;sigilPath(g,30+50*k);g.stroke();g.globalAlpha=0.95*fade;g.lineWidth=2;sigilPath(g,30+50*k);g.stroke();g.restore();
+  /* 땅이 갈라지는 금 */
+  const ck=Math.min(1,Math.max(0,(E.t-0.25)/0.35));g.globalAlpha=fade;g.lineWidth=2.5;g.strokeStyle='#FFE6A0';
+  E.cr.forEach(p=>{g.beginPath();const n=Math.max(1,Math.round(ck*(p.length-1)));g.moveTo(p[0][0],p[0][1]);for(let i=1;i<=n;i++)g.lineTo(p[i][0]*1.6,p[i][1]*1.6);g.stroke()});
+  g.restore()}
+function drawEntLight(g){const E=SC.ent;if(!E||E.t<0.45)return;const k=Math.min(1,(E.t-0.45)/0.25)*Math.max(0,1-(E.t-0.9)/1.0);if(k<=0)return;
+  g.save();g.globalCompositeOperation='lighter';const W=46*k+10,gr=g.createLinearGradient(0,E.a.y-260,0,E.a.y);gr.addColorStop(0,E.col+'00');gr.addColorStop(0.7,E.col+'88');gr.addColorStop(1,'#FFF4C8');
+  g.globalAlpha=k;g.fillStyle=gr;g.beginPath();g.ellipse(E.a.x,E.a.y-130,W,135,0,0,Math.PI*2);g.fill();g.restore()}
+function drawEntUI(q){const E=SC.ent;if(!E||E.t<0.8)return;const k=Math.min(1,(E.t-0.8)/0.3)*Math.min(1,(E.life-E.t)/0.5);
+  q.save();q.globalAlpha=Math.max(0,k);q.textAlign='center';const cx=SC.W/2,cy=-SC.oy+SC.VH*0.3,sl=(1-Math.min(1,(E.t-0.8)/0.3))*30;
+  q.fillStyle='rgba(0,0,0,.55)';q.fillRect(0,cy-46,SC.W,84);q.strokeStyle=E.col;q.lineWidth=1;q.beginPath();q.moveTo(cx-140-sl,cy+30);q.lineTo(cx+140+sl,cy+30);q.moveTo(cx-140-sl,cy-38);q.lineTo(cx+140+sl,cy-38);q.stroke();
+  q.font='600 12px "IBM Plex Mono",monospace';q.fillStyle=E.col;q.fillText(`${gname(E.gr)} · 귀속된 악마가 강림한다`,cx,cy-22);
+  q.font='800 34px "Nanum Myeongjo",serif';q.shadowColor=E.col;q.shadowBlur=18;q.fillStyle='#FFF4D8';q.fillText(E.name,cx,cy+10);q.restore()}
+/* 히트 섬광: 맞은 자리에서 잠깐 번쩍 */
+function drawHitFlash(q,dt){const F=SC.flashHit;if(!F)return;F.t+=dt;const L=F.big?0.22:0.15;if(F.t>L){SC.flashHit=null;return}const k=1-F.t/L,R=F.big?120:80;
+  q.save();q.globalCompositeOperation='lighter';const rg=q.createRadialGradient(F.x,F.y-30,0,F.x,F.y-30,R);rg.addColorStop(0,'#FFFFFF');rg.addColorStop(0.3,F.col);rg.addColorStop(1,F.col+'00');q.globalAlpha=0.7*k;q.fillStyle=rg;q.fillRect(F.x-R,F.y-30-R,R*2,R*2);q.restore()}
 const RARE_FX={
   fire:(e,w,h)=>spk(e.x+rand(-w*.3,w*.3),e.y-rand(0,h*.5),rand(0.2,1.5),rand(-8,8),rand(-4,4),rand(1.2,2.4),Math.random()<.5?'#FF7A1A':'#FFC24A',rand(.4,.8),rand(2,3.5)),
   poison:(e,w,h)=>spk(e.x+rand(-w*.4,w*.4),e.y-rand(0,h*.3),rand(0,.8),rand(-6,6),rand(-3,3),rand(.4,.9),Math.random()<.5?'#7FE04A':'#3A9A2A',rand(.8,1.3),rand(3,5)),
@@ -2050,6 +2098,7 @@ function drawActor(g,e,baseH,dir,dt){const im=sprImg(e);if(!im.complete||!im.nat
   g.globalAlpha=e.down>0?0.2:0.45;g.fillStyle='#000';g.beginPath();g.ellipse(e.x+lx,e.y+ly+2,w*0.36,w*0.1,0,0,Math.PI*2);g.fill();g.globalAlpha=1;
   drawAura(g,e,x,y,w,h,dt);rareFx(e,w,h,dt);
   g.save();g.translate(x,y);
+  const ENT=SC.ent&&SC.ent.a===e?SC.ent:null;if(ENT){const r=entRise(ENT);if(r<=0){g.restore();return null}g.beginPath();g.rect(-500,-1200,1000,1200+4);g.clip();g.translate(0,(1-r)*h*1.25)}
   if(e.invis>0)g.globalAlpha=0.14+0.08*Math.sin(performance.now()/90);
   if(e.down>0){g.rotate(dir*1.2);g.globalAlpha=0.45}else g.rotate((P.sw*0.3+P.rx*0.45)*dir+wob);
   const flip=Math.cos(P.ry||0),sq=P.sq,sc=P.sc*(e.boss?Math.max(0.02,1-(e.vanish||0)):1);
@@ -2071,7 +2120,7 @@ function drawShot(g,s){const h=(s.pt?shotH(s):0.55)*26,x=s.x,y=s.y-h,dx=s.t.x-s.
   else{const big=s.pt==='blob'?1.7:s.pt==='orb'?1:0.7,fl=1+0.12*Math.sin(performance.now()/50);glow(16*big*fl,s.col);g.fillStyle=s.el==='shadow'?'#2a1040':s.c2||s.col;g.beginPath();g.arc(x,y,4.5*big,0,Math.PI*2);g.fill()}
   g.restore()}
 function sceneDraw(){
-  const c=$('scene'),g=c.getContext('2d'),dt=Math.min(0.05,(performance.now()-(SC._lt||performance.now()))/1000);SC._lt=performance.now();
+  const c=$('scene'),g=c.getContext('2d'),rdt=Math.min(0.05,(performance.now()-(SC._lt||performance.now()))/1000),dt=SC.hs>0?0:rdt;SC._lt=performance.now();
   let u=$('sceneUI');if(!u){u=document.createElement('canvas');u.id='sceneUI';u.className='ui';$('dark').after(u)}
   if(u.width!==c.width||u.height!==c.height){u.width=c.width;u.height=c.height}const q=u.getContext('2d');
   if(!SC.flat){SC.flat=1;$('sceneBox').classList.add('flat')}
@@ -2081,6 +2130,7 @@ function sceneDraw(){
   drawGround(g);g.textAlign='center';g.textBaseline='middle';q.textAlign='center';q.textBaseline='middle';
   /* 바닥 효과: 고리·마법진·갈라짐 (그림보다 아래) */
   SC.fx.filter(f=>f.k==='ring').forEach(f=>{const k=f.t/f.life;g.strokeStyle=f.col;g.globalAlpha=1-k;g.lineWidth=f.w||3;g.beginPath();g.ellipse(f.x,f.y,8+f.r*k,(8+f.r*k)*0.55,0,0,Math.PI*2);g.stroke();g.globalAlpha=1});
+  drawSigils(g);drawEntGround(g);
   /* 악마들: 아래(앞)에 있는 것을 나중에 */
   const list=[];SC.ms.forEach(a=>list.push({e:a,y:a.y,H:a.key==='char'?88:80,dir:1}));
   SC.mobs.forEach(m=>list.push({e:m,y:m.y,H:m.boss?170:m.minion?58:m.elite?104:74,dir:-1}));
@@ -2088,7 +2138,7 @@ function sceneDraw(){
   if(SC.boss)SC.mobs.forEach(x=>{if(!x.minion)return;g.strokeStyle='rgba(201,160,255,.35)';g.lineWidth=2;g.setLineDash([4,4]);g.beginPath();g.moveTo(SC.boss.x,SC.boss.y-40);g.lineTo(x.x,x.y-20);g.stroke();g.setLineDash([])});
   /* 검은 연기(일반 합성으로 어둡게) */
   SC.fx.forEach(f=>{if(f.k!=='smoke')return;const k=f.t/f.life;g.globalAlpha=0.55*(1-k);g.fillStyle=k<0.3?'#1a0a10':'#0a0608';g.beginPath();g.arc(f.x+Math.sin(f.t*3+f.r)*6,f.y-f.h*26,f.r*(1+k*1.5),0,Math.PI*2);g.fill()});g.globalAlpha=1;
-  drawSealWorld(g,dt);
+  drawEntLight(g);drawSealWorld(g,dt);
   /* 투사체 */
   SC.shots.forEach(s=>drawShot(g,s));
   /* 빛나는 효과: 모양·불티·번개 */
@@ -2110,14 +2160,14 @@ function sceneDraw(){
     if(d.big&&d.t<1.2){q.strokeStyle=d.col;q.globalAlpha=0.5*a;q.lineWidth=2;q.beginPath();q.moveTo(d.x,d.y);q.lineTo(d.x,d.y-70);q.stroke();q.globalAlpha=a}
     q.font=`600 ${d.big?13:11}px "IBM Plex Sans KR",sans-serif`;const w=q.measureText(d.txt).width+12,h=d.big?20:17,y=d.y-34;
     q.fillStyle='rgba(12,10,9,.9)';q.fillRect(d.x-w/2,y-h/2,w,h);q.strokeStyle=d.col;q.lineWidth=1;q.strokeRect(d.x-w/2+0.5,y-h/2+0.5,w-1,h-1);q.fillStyle=d.col;q.fillText(d.txt,d.x,y+1);q.globalAlpha=1});
-  drawSealUI(q);
+  drawSealUI(q);drawHitFlash(q,rdt);drawEntUI(q);
   if(SC.comboShow>0&&SC.combo>=5){const k=Math.min(1,SC.comboShow/0.3);q.globalAlpha=k;q.font=`${22+Math.min(10,SC.combo/5)}px "Nanum Myeongjo",serif`;q.fillStyle='#000';q.fillText(`${SC.combo} 연속 처치!`,SC.W/2+1,-14);q.fillStyle='#FFD166';q.fillText(`${SC.combo} 연속 처치!`,SC.W/2,-15);q.globalAlpha=1}
 }
 function sceneLoop(now){
   const dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
   if(!document.hidden){
     if(!SC.W){sceneSize();syncTeam();init3D();size3D()}
-    if(SC.W){sceneStep(dt);if(R3.on)render3D(dt);else sceneDraw()}
+    if(SC.W){if(SC.hs>0)SC.hs-=dt;else sceneStep(dt);if(R3.on)render3D(dt);else sceneDraw()}
     tickSkills(dt*(S.fast?3:1));
     const u=$('ultBtn');u.style.setProperty('--p',Math.round(SC.ult*100)+'%');u.disabled=SC.ult<1;u.textContent=SC.ult<1?`필살기 ${Math.round(SC.ult*100)}%`:'필살기!';
     $('hudKills').textContent=`처치 ${fmt(S.kills||0)}`;renderBossBar();
@@ -2678,7 +2728,7 @@ function atkFx(e,t,mob){const st=styleOf(e),C=FXCOL[st.f]||FXCOL.blood;if(mob&&M
 function shotKind(e){const st=styleOf(e);if(e.key==='char')return 'seal';return st.m==='shoot'?'arrow':st.m==='roar'?'sonic':st.m==='breath'?'blob':'orb'}
 function fireShot(e,t,dmg,crit,en){const st=styleOf(e),C=FXCOL[st.f]||FXCOL.gold,pt=shotKind(e);
   const sp=pt==='arrow'?460:pt==='sonic'?300:pt==='blob'?260:330;
-  SC.shots.push({x:e.x+8,y:e.y,t,sp,dmg,crit,col:C[0],c2:C[1],el:st.f,pt,en:en?1:0,fx:e.x,fy:e.y,d0:Math.max(30,Math.hypot(t.x-e.x,t.y-e.y)),big:crit})}
+  SC.shots.push({x:e.x+8,y:e.y,t,sp,dmg,crit,col:C[0],c2:C[1],el:st.f,pt,en:en?1:0,src:en?null:e,fx:e.x,fy:e.y,d0:Math.max(30,Math.hypot(t.x-e.x,t.y-e.y)),big:crit})}
 function shotTrail(s,dt){s.tr=(s.tr||0)+dt;const iv=s.pt==='blob'?0.025:s.pt==='orb'||s.pt==='seal'?0.04:s.pt==='arrow'&&(s.el==='poison'||s.el==='fire')?0.05:1;
   while(s.tr>iv){s.tr-=iv;const c=Math.random()<0.5?s.col:s.c2,h=shotH(s);
     if(s.el==='fire')spk(s.x,s.y,h,rand(-10,10),rand(-6,6),rand(0.3,0.9),c,0.35,s.pt==='blob'?4:3);
