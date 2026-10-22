@@ -206,6 +206,8 @@ h2{color:#E7C27A}
 .skills{position:absolute;left:8px;bottom:8px;display:flex;gap:6px}
 .skills button{width:54px;height:54px;border-radius:12px;border:2px solid var(--c,#7E1712);background:radial-gradient(circle at 40% 30%,#2A1612,#0E0807);color:#F2D8B8;cursor:pointer;position:relative;overflow:hidden;padding:0}
 .skills button.ready{box-shadow:0 0 10px var(--c)}
+.skills .skg{position:absolute;right:2px;top:2px;z-index:3;font:700 9px/1 var(--mono);color:#120c08;background:var(--gc,#E9C46A);padding:2px 3px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.skills .skg.skr{background:#2a1a10;color:#F2C24A;border:1px solid #7A5A20;font-size:8px;padding:1px 3px}
 .skcell{display:flex;flex-direction:column;align-items:center;gap:3px}
 .skills .skmini{width:54px;height:22px;border-radius:7px;border:1px solid #5A3A20;background:rgba(14,9,7,.85);color:#E7C27A;font:600 11px var(--body);padding:0;overflow:visible}
 .skills .skmini:hover{border-color:#E7A33E}
@@ -216,7 +218,7 @@ h2{color:#E7C27A}
 .skills button i img.art{width:38px;height:38px}
 .skills button .sig{position:absolute;inset:0 0 10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#F2C24A;text-shadow:0 0 8px #F2C24A}
 .skills button small{position:absolute;left:0;right:0;bottom:1px;font:600 8.5px var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1;text-shadow:0 1px 2px #000}
-.skills button em{position:absolute;right:3px;top:1px;font:600 9px var(--mono);font-style:normal;color:#A39079;z-index:3}
+.skills button em{position:absolute;left:4px;top:1px;font:600 9px var(--mono);font-style:normal;color:#A39079;z-index:3}
 .bulk{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:13px}.bulk label{display:flex;align-items:center;gap:6px;color:var(--muted)}
 .affbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:rgba(231,163,62,.05);display:flex;flex-direction:column;gap:3px;font-size:13.5px}
 .affbox b{color:#E7C27A}.affbox div{color:#D8CBB4}.unid{color:#C9A0FF;font-weight:600}
@@ -1670,10 +1672,11 @@ function autoSkills(){if(SC.manual)return;SC.ms.forEach(a=>{if((SC.skcd[a.key]||
   const sk=skillOf(a);if(sk.t==='mend'&&!SC.ms.some(b=>b.hp<b.max*0.6))return;castSkill(a,false)}})}
 let skBarKey='';
 /* 스킬 칸 아래 작은 버튼: 소환사는 '정보'(소환사 정보 창), 악마는 '교체'(그 자리 팀 교체 창). 빈 자리는 '추가' */
-function renderSkillBar(){const key=SC.ms.map(a=>a.key).join(',')+'|'+S.team.join(',');if(key===skBarKey)return;skBarKey=key;
+const skGrade=a=>{if(a.key==='char')return `<b class="skg skr" title="승급 ${rankOf()}단계 · ${SOL_STAGES[rankOf()].n}">승급${rankOf()}</b>`;const m=byId(+a.key.slice(1));return m?`<b class="skg" style="--gc:${gc(m.grade)}" title="${gname(m.grade)}등급">${gname(m.grade)}</b>`:''};
+function renderSkillBar(){const key=SC.ms.map(a=>a.key+':'+(a.key==='char'?rankOf():(byId(+a.key.slice(1))||{}).grade)).join(',')+'|'+S.team.join(',');if(key===skBarKey)return;skBarKey=key;
   const cells=SC.ms.map((a,i)=>{const sk=skillOf(a);const pic=a.key==='char'?'<b class="sig">✡</b>':`<i>${artHTML(a.k)}</i>`;
     const who=a.key==='char'?'소환사':SPECIES[a.k][1],slot=a.key==='char'?-1:S.team.indexOf(+a.key.slice(1));
-    return `<div class="skcell"><button data-sk="${a.key}" aria-label="${who} 스킬 ${sk.n}" title="${who} · ${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${who}</small><em>${i+1}</em></button>`+
+    return `<div class="skcell"><button data-sk="${a.key}" aria-label="${who} 스킬 ${sk.n}" title="${who} · ${sk.n}" style="--c:${sk.col}"><span></span>${pic}<small>${who}</small><em>${i+1}</em>${skGrade(a)}</button>`+
       (a.key==='char'?`<button class="skmini" data-info="1" aria-label="소환사 정보">정보</button>`:`<button class="skmini" data-swap="${slot}" aria-label="${who} 교체">교체</button>`)+`</div>`});
   S.team.forEach((id,i)=>{if(id==null)cells.push(`<div class="skcell"><div class="skempty">빈 자리</div><button class="skmini" data-swap="${i}" aria-label="${i+1}번 자리에 악마 추가">추가</button></div>`)});
   $('skills').innerHTML=cells.join('')}
