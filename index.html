@@ -1828,7 +1828,7 @@ function sceneStep(dt){
 /* ===== 보스 봉인 연출: 쓰러진 보스를 인장으로 봉인할 때의 음산한 효과 =====
    0~0.7초 바닥에 핏빛 솔로몬 인장이 새겨지고 검은 연기가 피어올라요 → 0.3~1.7초 보스가 검은 실루엣이 되어 사슬에 묶여 소용돌이 속으로 빨려들어요
    → 1.5~3.4초 어둠 속에서 봉인된 악마의 그림이 핏빛 테두리로 떠올라요. 그동안 화면 가장자리가 짙게 어두워져요. */
-const SEAL_P=0.25;  /* 야생 악마 보스를 쓰러뜨리면 25% 확률로 그 보스를 봉인(조합 전용 보스는 봉인되지 않아요) */
+const SEAL_P=0.10;  /* 야생 악마 보스를 쓰러뜨리면 10% 확률로 그 보스를 봉인(조합 전용 보스는 봉인되지 않아요) */
 function sealSil(k){const im=artImg(k);if(!im.complete||!im.naturalWidth)return null;const c=document.createElement('canvas');c.width=im.naturalWidth+40;c.height=im.naturalHeight+40;const x=c.getContext('2d');
   x.shadowColor='#8a0a12';x.shadowBlur=18;x.drawImage(im,20,20);x.shadowBlur=0;x.globalCompositeOperation='source-in';x.fillStyle='#07030a';x.fillRect(0,0,c.width,c.height);
   x.globalCompositeOperation='destination-over';x.shadowColor='#b0101a';x.shadowBlur=22;x.drawImage(im,20,20);return c}
