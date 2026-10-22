@@ -693,7 +693,12 @@ let S, fuseSel=[], tab='explore', lastResult=null;
 function gradeOf(p){let g=0;for(let i=0;i<=MAXG;i++) if(p>=TH[i]) g=i;return g}
 /* atk·hp·def는 현재 능력치. 잠재력 = 현재 능력치 + 남은 레벨 동안 지금 성장률로 오를 예상치 */
 function potential(m){return m.atk+m.hp/5+m.def+(m.gAtk+m.gHp/5+m.gDef)*(MAXLV-m.lv)}
-function power(m){return Math.round((m.atk+m.hp/5+m.def)*STAR_BONUS[starsOf(m)]*spMul(m.sp))}
+/* 종족 기본 능력: 높은 층 악마일수록 능력치 배율이 커요(1층 ×1.00 → 56층 ×1.66).
+   조합 전용 희귀 악마(57~72층)는 고유 능력(260~377, 레벨에 따라 최대 2.5배)이 더해지고 조합 배율도 곱해져서,
+   F등급이라도 같은 레벨의 낮은 층(약 20층 이하) S등급 악마보다 강해요. 등급(성장 운)은 따로 계산돼요. */
+const floorMulOf=sp=>SPECIES[sp][2]===-2?1:1+0.012*(floorOf(sp)-1);
+const innateOf=(sp,lv)=>SPECIES[sp][2]===-2?260*(1+0.03*(floorOf(sp)-57))*(1+1.5*((lv||1)-1)/99):0;
+function power(m){return Math.round(((m.atk+m.hp/5+m.def)*floorMulOf(m.sp)+innateOf(m.sp,m.lv))*STAR_BONUS[starsOf(m)]*spMul(m.sp))}
 /* 레벨업마다 성장률이 변해요: 15% 급성장, 15% 성장 정체, 70% 소폭 변동.
    소폭 변동의 중심값은 '처음 태어났을 때 등급(g0)'에 따라 달라서, 낮은 등급일수록 크게 자라요.
    1→100레벨 평균 등급 변화(악마·장비 각 4,000개 시뮬레이션):
@@ -740,7 +745,7 @@ const RECIPE_FLOORS=['자간','마르코시아스','비네','단탈리온','바�
 const FLOORS=[...SPECIES.map((x,k)=>k).filter(k=>SPECIES[k][2]>=0).sort((a,b)=>SPECIES[a][2]-SPECIES[b][2]||tierOf(a)-tierOf(b)||SPECIES[a][5]-SPECIES[b][5]),
   ...RECIPE_FLOORS.map(n=>SPECIES.findIndex(x=>x[1]===n))];
 const NFLOOR=FLOORS.length;
-const floorOf=k=>FLOORS.indexOf(k)+1;
+const FLOOR_IDX={};const floorOf=k=>FLOOR_IDX[k]||(FLOOR_IDX[k]=FLOORS.indexOf(k)+1);
 const zoneOf=f=>Math.min(MAPS.length-1,Math.floor((f-1)*MAPS.length/NFLOOR));
 const floorE=f=>Math.round(1+(f-1)*1.66);
 const floorD=f=>Math.min(4,Math.floor((f-1)/15));
@@ -1281,7 +1286,7 @@ function openDetail(id,fromTeam){
     <div><div class="row" style="justify-content:space-between"><span class="muted">잠재력 점수 (현재 능력치 + 남은 레벨의 예상 성장) · 레벨업마다 성장률이 바뀌어 등급도 변해요</span><span class="num">${m.pot}</span></div>
       <div class="gauge"><i style="width:${pct}%;background:${gc(m.grade)}"></i></div>
       <div class="note">${m.grade<MAXG?`${gname(m.grade+1)}까지 ${hi-m.pot}점 부족`:'최대 각성(★3)'}${starsOf(m)?` · 각성 ★${starsOf(m)} 능력치 +${Math.round((STAR_BONUS[starsOf(m)]-1)*100)}%`:m.grade>=TOP-1?` · 각성 ★1·★2·★3 = 능력치 +10·30·50%`:''}${m.lv>=MAXLV?' · 100레벨 달성! 같은 등급과 환생할 수 있어요':''}${m.bonus?` · 합성 보너스: ${m.bonus}`:''}</div>
-      <div class="note">${spMul(m.sp)>1?`조합 악마 · 기본 능력치 ×${spMul(m.sp)} (전투력에 반영) · `:''}탄생 등급 ${gname(m.g0)} · 100레벨까지 평균 ${EXPECT[m.g0]?`+${EXPECT[m.g0]}등급 성장`:m.g0>=TOP?'등급 유지, 각성(★) 도전':'등급 유지'} 기대</div></div>
+      <div class="note">${spMul(m.sp)>1?`조합 전용 희귀 악마 · 고유 능력 +${Math.round(innateOf(m.sp,m.lv))} · 조합 배율 ×${spMul(m.sp)} (전투력에 반영) · `:`${floorOf(m.sp)}층 악마 · 기본 능력 ×${floorMulOf(m.sp).toFixed(2)} (전투력에 반영) · `}탄생 등급 ${gname(m.g0)} · 100레벨까지 평균 ${EXPECT[m.g0]?`+${EXPECT[m.g0]}등급 성장`:m.g0>=TOP?'등급 유지, 각성(★) 도전':'등급 유지'} 기대</div></div>
     <div class="row">
       ${teamBtns}
     </div>
