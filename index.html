@@ -261,6 +261,7 @@ label.speed{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--m
 .bossbar .bh{height:9px;margin:4px 0 3px;border:1px solid #7E1712;background:rgba(10,4,3,.8);border-radius:2px;overflow:hidden}
 .bossbar .bh i{display:block;height:100%;background:linear-gradient(180deg,#E0402F,#8E1A12);transition:width .15s}
 .bossbar .bt{font-size:11px;color:#CDBEA6}
+.bossbar .btm{font:600 11px var(--mono);color:#CDBEA6;letter-spacing:.04em}.bossbar .btm.low{color:#FF6B6B}
 .bossbar .bs{font-size:11px;color:#E7A33E;margin-top:1px}
 .bossbar.casting .bs{color:#FF7A5A;font-weight:600}
 @media (prefers-reduced-motion:reduce){.bossbar{animation:none}}
@@ -324,7 +325,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
 <div class="scene" id="sceneBox">
           <div class="dark" id="dark" aria-hidden="true"></div>
           <canvas id="scene" aria-label="자동 사냥 장면" role="img"></canvas>
-          <div class="bossbar" id="bossBar" hidden><div class="bn"></div><div class="bh"><i></i></div><div class="bt"></div><div class="bs"></div></div>
+          <div class="bossbar" id="bossBar" hidden><div class="btm"></div><div class="bn"></div><div class="bh"><i></i></div><div class="bt"></div><div class="bs"></div></div>
           <div class="hud"><span id="hudKills">처치 0</span><span id="hudLoot"></span><span id="hudMode"></span></div>
           <button class="modebtn" id="modeBtn" aria-pressed="false">직접 조작</button>
           <div class="skills" id="skills"></div>
@@ -361,7 +362,7 @@ body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .s
           <div class="vs">
             <div><span class="muted">우리 팀 전투력</span><b id="tp">0</b></div>
             <span class="mid">VS</span>
-            <div><span class="muted">스테이지 요구</span><b id="req">0</b></div>
+            <div><span class="muted">권장 전투력</span><b id="req">0</b></div>
           </div>
           <div class="note" id="stageNote"></div>
         </div>
@@ -1049,13 +1050,7 @@ function explore(){
   const d=S.diff, f=curFloor(), tp=teamPower(), req=reqNow(), tag=`${f}층`;
   let changed=false;S.map=zoneOf(f);
   if(conquered()){}
-  else if(tp>=req){const rw=Math.round(req*0.5);S.gold+=rw;S.top=f+1;S.blocked=false;
-    addLog(`${f}층 보스 ${SPECIES[bossSp(f)][1]} 격파! +${fmt(rw)}G`,true);
-    if(f===NFLOOR){addLog('72층 정복! 솔로몬의 인장이 모든 악마를 굴복시켰어요',true);toast('72층 정복!')}
-    if(zoneOf(f+1)!==zoneOf(f)&&f<NFLOOR){queueStory('clear'+zoneOf(f));queueStory('ch'+zoneOf(f+1))}else if(f===NFLOOR)queueStory('clear'+zoneOf(f));
-    if(S.autoClimb!==false&&f<NFLOOR){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;if(SC.boss){SC.boss.hp=0}}
-    changed=true}
-  else if(!S.blocked){addLog(`${f}층 보스 ${SPECIES[bossSp(f)][1]}에게 막혔어요. 전투력 ${fmt(req)}이 필요해요.`);S.blocked=true}
+  /* 층 돌파는 전투 화면에서 그 층 보스를 쓰러뜨려야 해요(clearFloor). 전투력 제한은 없어요 */
   if(Math.random()<FIND_RATE*(1+affixBonus().find)){
     if(S.mons.length>=invMax())addLog('보관함이 가득 찼어요. 합성하거나 퇴마하세요.');
     else{const m=makeMonster(wildP(eff()),spForFloor(),tag);
@@ -1088,11 +1083,11 @@ function renderExplore(){
   $('tp').textContent=fmt(tp);$('tp').className=conquered()||tp>=req?'ok':'no';
   $('req').textContent=conquered()?'—':fmt(req);
   $('gps').innerHTML=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;
-  $('stageNote').textContent=(conquered()?'격파한 층이에요. 머물면서 악마와 장비를 계속 모을 수 있어요. ':tp>=req?'다음 사냥에서 이 층 보스를 격파해요. ':`이 층 보스를 격파하려면 전투력 ${fmt(req)}이 필요해요. 악마를 키우거나 합성해 보세요. `)
+  $('stageNote').textContent=(conquered()?'클리어한 층이에요. 머물면서 악마와 장비를 계속 모을 수 있어요. ':`전투 화면에서 이 층 보스를 ${BOSS_TIME}초 안에 쓰러뜨리면 클리어하고 다음 층으로 올라가요. 권장 전투력 ${fmt(req)}보다 약하면 보스가 단단하고 아프게 때려서, 시간 초과나 전멸로 실패하기 쉬워요. `)
     +`봉인되는 악마: 1~${Math.min(f,56)}층에 나온 악마 중 랜덤, 이 층 보스 종류는 35%. 악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 ${Math.round(TICK_MS/1000/ITEM_RATE/60)}분에 1개 발견돼요.`;
   renderFloors();
   $('prog').style.width=(S.prog*100)+'%';$('hudProg').style.width=(conquered()?100:S.prog*100)+'%';
-  $('hudPow').innerHTML=`전투력 <b class="${conquered()||tp>=req?'ok':'no'}">${fmt(tp)}</b> / ${conquered()?'정복':fmt(req)}`;
+  $('hudPow').innerHTML=`전투력 <b class="${conquered()||tp>=req?'ok':'no'}">${fmt(tp)}</b> / 권장 ${fmt(req)}${conquered()?' ✓':''}`;
   let h=`<div class="teamcol"><button class="slot filled" data-char="1"><span class="em"><img class="art" alt="소환사" src="${solSrc()}"></span><span class="nm">${promoState()&&promoState().ok?"⬆ ":""}소환사 Lv${S.charLv}</span><span class="pw">${fmt(charPower()+gearPower())}</span><span class="xpbar"><i style="width:${Math.min(100,(S.charExp||0)/expNeed(S.charLv)*100)}%"></i></span></button>
     <button class="mini" data-gearbtn="1">장비</button></div>`;
   S.team.forEach((id,i)=>{const m=id!=null&&byId(id);
@@ -1583,7 +1578,14 @@ function dmgMob(mob,d,crit,fromX,fromY){if(mob.vuln>0)d=Math.round(d*1.3);if(mob
   const a=Math.atan2(mob.y-fromY,mob.x-fromX), k=(crit?16:7)*(mob.boss?0.08:mob.elite?0.3:1);mob.kx+=Math.cos(a)*k;mob.ky+=Math.sin(a)*k;
   if(crit&&!RM)SC.shake=Math.max(SC.shake,crit===2?9:4);
   SC.fx.push({k:'num',x:mob.x+rand(-8,8),y:mob.y-16,t:0,life:0.85,txt:fmt(d)+(crit?'!':''),col:crit?'#FFD166':'#F1E6D6',sz:crit?18:12})}
-function killMob(mob){S.kills=(S.kills||0)+1;burst3D(mob);
+/* 층 보스를 쓰러뜨리면 그 층 클리어 → 다음 층이 열리고, 자동 등반이면 바로 올라가요 */
+function clearFloor(f){if(cleared(f))return false;const rw=Math.round(floorReq(f)*0.5);S.gold+=rw;S.top=f+1;
+  addLog(`${f}층 클리어! 보스 ${SPECIES[bossSp(f)][1]} 격파 · +${fmt(rw)}G`,true);toast(`${f}층 클리어!`);
+  if(f===NFLOOR){addLog('72층 정복! 솔로몬의 인장이 모든 악마를 굴복시켰어요',true);queueStory('clear'+zoneOf(f))}
+  else if(zoneOf(f+1)!==zoneOf(f)){queueStory('clear'+zoneOf(f));queueStory('ch'+zoneOf(f+1))}
+  if(S.autoClimb!==false&&f<NFLOOR){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0}
+  save();renderTop();renderExplore();return true}
+function killMob(mob){S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor)clearFloor(mob.floor);if(mob.boss)trySealBoss(mob);
   if(mob.boss){S.bossKills=(S.bossKills||0)+1;checkPromo();SC.boss=null;SC.bossT=2.2;SC.tele=[];if(!RM)SC.shake=12;burst3D(mob);burst3D(mob);
     SC.fx.push({k:'ring',x:mob.x,y:mob.y,t:0,life:0.8,r:120,col:'#FFD166',w:6},{k:'num',x:mob.x,y:mob.y-70,t:0,life:1.6,txt:`${SPECIES[mob.k][1]} 퇴치!`,col:'#FFD166',sz:18});
     const qs=sceneQ.splice(0,5);if(!qs.length)qs.push({text:`+${fmt(Math.round(gps()*3))}G`,color:'#E9C46A'});
@@ -1788,7 +1790,7 @@ function sceneStep(dt){
   });
   /* 투사체 */
   SC.shots.forEach(s=>{const gone=s.en?(s.t.down>0||!SC.ms.includes(s.t)):s.t.hp<=0;const d=Math.hypot(s.t.x-s.x,s.t.y-s.y);
-    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg;s.t.flash=0.15;if(s.t.hp<=0){s.t.down=2;SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else dmgMob(s.t,s.dmg,s.crit,s.fx,s.fy);if(s.pt)shotHit(s)}s.done=1;return}
+    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=2;SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else dmgMob(s.t,s.dmg,s.crit,s.fx,s.fy);if(s.pt)shotHit(s)}s.done=1;return}
     s.x+=(s.t.x-s.x)/d*s.sp*dt;s.y+=(s.t.y-s.y)/d*s.sp*dt;if(s.pt)shotTrail(s,dt)});
   SC.shots=SC.shots.filter(s=>!s.done);
   /* 적 */
@@ -1806,12 +1808,54 @@ function sceneStep(dt){
     else{m.cd-=dt;if(m.cd<=0){m.cd=rand(0.9,1.4);m.atkT=0;m.atkA=m.elite?0.8:0.6;atkFx(m,tg,true);m.lunge=0.12;m.lx=(tg.x-m.x)/bd;m.ly=(tg.y-m.y)/bd;tg.hp-=tg.max*(m.elite?0.12:0.05);tg.flash=0.15;if(tg.hp<=0){tg.down=2;SC.fx.push({k:'num',x:tg.x,y:tg.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}}
   });
   SC.mobs=SC.mobs.filter(m=>{if(m.hp<=0){killMob(m);return false}return m.x>-60});
-  SC.fx.forEach(f=>{f.t+=dt;if(f.k==='spk'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.h=Math.max(0,f.h+f.vh*dt);f.vh-=2.2*dt;f.vx*=0.96;f.vy*=0.96}if(f.k==='p'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=220*dt}if(f.k==='num')f.y-=30*dt});
+  SC.fx.forEach(f=>{f.t+=dt;if(f.k==='smoke'){f.h+=f.vh*dt}if(f.k==='spk'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.h=Math.max(0,f.h+f.vh*dt);f.vh-=2.2*dt;f.vx*=0.96;f.vy*=0.96}if(f.k==='p'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=220*dt}if(f.k==='num')f.y-=30*dt});
   SC.fx=SC.fx.filter(f=>f.t<f.life);
   const c=SC.ms[0]||{x:SC.W/2,y:SC.H/2};
   SC.drops.forEach(d=>{d.t+=dt;if(d.t<0.5){d.y+=d.vy*dt;d.vy+=380*dt}else if(d.t>(d.coin?0.7:1.2)){d.x+=(c.x-d.x)*Math.min(1,dt*6);d.y+=(c.y-d.y)*Math.min(1,dt*6)}});
   SC.drops=SC.drops.filter(d=>d.t<(d.coin?1.1:1.7));
 }
+/* ===== 보스 봉인 연출: 쓰러진 보스를 인장으로 봉인할 때의 음산한 효과 =====
+   0~0.7초 바닥에 핏빛 솔로몬 인장이 새겨지고 검은 연기가 피어올라요 → 0.3~1.7초 보스가 검은 실루엣이 되어 사슬에 묶여 소용돌이 속으로 빨려들어요
+   → 1.5~3.4초 어둠 속에서 봉인된 악마의 그림이 핏빛 테두리로 떠올라요. 그동안 화면 가장자리가 짙게 어두워져요. */
+const SEAL_P=0.25;  /* 야생 악마 보스를 쓰러뜨리면 25% 확률로 그 보스를 봉인(조합 전용 보스는 봉인되지 않아요) */
+function sealSil(k){const im=artImg(k);if(!im.complete||!im.naturalWidth)return null;const c=document.createElement('canvas');c.width=im.naturalWidth+40;c.height=im.naturalHeight+40;const x=c.getContext('2d');
+  x.shadowColor='#8a0a12';x.shadowBlur=18;x.drawImage(im,20,20);x.shadowBlur=0;x.globalCompositeOperation='source-in';x.fillStyle='#07030a';x.fillRect(0,0,c.width,c.height);
+  x.globalCompositeOperation='destination-over';x.shadowColor='#b0101a';x.shadowBlur=22;x.drawImage(im,20,20);return c}
+function trySealBoss(mob){const k=mob.k;if(SPECIES[k][2]===-2||Math.random()>=SEAL_P)return false;
+  if(S.mons.length>=invMax()){addLog(`${SPECIES[k][1]}을(를) 봉인할 수 있었지만 보관함이 가득 찼어요`);return false}
+  const m=makeMonster(wildP(eff()),k,`${mob.floor||curFloor()}층 보스 봉인`);S.mons.push(m);
+  addLog(`보스 봉인! ${nm(m)} ${gname(m.grade)}등급`,true);pushFeed(`봉인 ${nm(m)} ${mb(m)}`,'hot');
+  SC.seal={k,x:mob.x,y:mob.y,t:0,life:3.4,txt:`${nm(m)}`,g:m.grade,sil:sealSil(k)};if(!RM)SC.shake=Math.max(SC.shake,6);return true}
+function drawSealWorld(g,dt){const E=SC.seal;if(!E)return;E.t+=dt;if(E.t>E.life){SC.seal=null;return}const t=E.t,x=E.x,y=E.y;
+  /* 바닥 인장 */
+  const a=Math.min(1,t/0.5)*(t>E.life-0.6?(E.life-t)/0.6:1),R=70*Math.min(1,t/0.6+0.3),rot=t*0.6;
+  g.save();g.translate(x,y);g.scale(1,0.5);g.globalAlpha=a*0.9;
+  const gr=g.createRadialGradient(0,0,0,0,0,R*1.4);gr.addColorStop(0,'rgba(0,0,0,.85)');gr.addColorStop(0.6,'rgba(20,0,6,.6)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.beginPath();g.arc(0,0,R*1.4,0,Math.PI*2);g.fill();
+  g.strokeStyle='#7a0a12';g.lineWidth=3;g.shadowColor='#c0101c';g.shadowBlur=14;g.beginPath();g.arc(0,0,R,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,0,R*0.82,0,Math.PI*2);g.stroke();
+  g.rotate(rot);g.beginPath();for(const o of [0,Math.PI]){for(let i=0;i<=3;i++){const q=o+i*Math.PI*2/3-Math.PI/2;i?g.lineTo(Math.cos(q)*R*0.8,Math.sin(q)*R*0.8):g.moveTo(Math.cos(q)*R*0.8,Math.sin(q)*R*0.8)}}g.stroke();
+  for(let i=0;i<8;i++){const q=i/8*Math.PI*2;g.fillStyle='#a01018';g.font='bold 11px serif';g.fillText('ᛉᛟᚦᛗᚱᛞᛜᛇ'[i],Math.cos(q)*R*0.91-4,Math.sin(q)*R*0.91+4)}
+  g.restore();
+  /* 검은 연기 */
+  if(t<2.2&&Math.random()<0.9)for(let i=0;i<2;i++)SC.fx.push({k:'smoke',x:x+rand(-40,40),y:y+rand(-10,10),h:0,vh:rand(0.8,1.6),r:rand(8,16),t:0,life:rand(0.9,1.5)});
+  /* 사슬에 묶여 빨려드는 실루엣 */
+  if(E.sil&&t>0.15&&t<1.8){const k=Math.min(1,(t-0.15)/1.5),sc=1.9*(1-k*0.92),h=74*sc*1.0,im=E.sil,w=h*im.width/im.height*1.0;
+    g.save();g.translate(x,y-(1-k)*20);g.rotate(k*k*6);g.globalAlpha=1-k*0.3;g.drawImage(im,-w/2,-h*1.05,w,h*1.1);g.restore();
+    g.save();g.strokeStyle='#3a2a2a';g.lineWidth=2;g.setLineDash([6,3]);g.globalAlpha=0.8*(1-k);
+    for(let i=0;i<4;i++){const q=i/4*Math.PI*2+0.4;g.beginPath();g.moveTo(x+Math.cos(q)*70,y+Math.sin(q)*35);g.lineTo(x+rand(-3,3),y-h*0.5);g.stroke()}g.restore()}}
+function drawSealUI(q){const E=SC.seal;if(!E)return;const t=E.t,fade=t>E.life-0.5?(E.life-t)/0.5:1;
+  /* 화면 가장자리 어둠 */
+  q.save();q.setTransform(SC.dpr,0,0,SC.dpr,0,0);const d=Math.min(1,t/0.4)*fade,cx=E.x,cy=E.y+SC.oy;
+  const gr=q.createRadialGradient(cx,cy-30,40,cx,cy-30,Math.max(SC.VW,SC.VH)*0.7);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,`rgba(0,0,0,${0.75*d})`);q.fillStyle=gr;q.fillRect(0,0,SC.VW,SC.VH);q.restore();
+  /* 떠오르는 봉인 패 */
+  if(t>1.4){const k=Math.min(1,(t-1.4)/0.6),im=artImg(E.k);q.save();q.globalAlpha=k*fade;const W=110,H=150,x=Math.max(8,Math.min(SC.VW-W-8,E.x-W/2)),y=E.y-130-k*20,cxm=x+W/2;
+    q.fillStyle='rgba(8,4,6,.94)';q.shadowColor='#b0101a';q.shadowBlur=24;q.fillRect(x,y,W,H);q.shadowBlur=0;
+    q.strokeStyle='#6a0a10';q.lineWidth=2;q.strokeRect(x+0.5,y+0.5,W-1,H-1);q.strokeStyle='#2a0a0c';q.strokeRect(x+5,y+5,W-10,H-10);
+    if(im.complete&&im.naturalWidth){const ih=88,iw=ih*im.naturalWidth/im.naturalHeight;q.filter='grayscale(.6) brightness(.55) sepia(.4) hue-rotate(-30deg)';q.drawImage(im,cxm-iw/2,y+14,iw,ih);q.filter='none'}
+    q.font='600 10px "IBM Plex Sans KR",sans-serif';q.fillStyle='#a01018';q.textAlign='center';q.fillText('— 봉 인 —',cxm,y+112);
+    q.font='800 14px "Nanum Myeongjo",serif';q.fillStyle='#d8c8b0';q.fillText(E.txt,cxm,y+128);
+    q.font='600 11px "IBM Plex Mono",monospace';q.fillStyle=gc2(E.g);q.fillText(`${gname(E.g)} 등급`,cxm,y+143);q.restore()}}
+const gc2=g=>getComputedStyle(document.documentElement).getPropertyValue('--g'+Math.min(g,TOP)).trim()||'#E9C46A';
+
 /* ===== 2D 전투 장면: 72악마는 판화풍 일러스트를 오려낸 그림(스프라이트)으로 그려요 =====
    위치는 시뮬레이션 좌표 그대로(가운데 띠 = 전투 마당), 아래쪽일수록 조금 크게(원근). 그림은 좌우로 뒤집지 않아요.
    동작은 그림 전체를 기울이기·밀기·눌렀다 늘이기·띄우기·뒤집기(회전)로 표현하고, 걸을 때는 뒤뚱거리며 오르내려요. */
@@ -1893,6 +1937,9 @@ function sceneDraw(){
   const list=[];SC.ms.forEach(a=>list.push({e:a,y:a.y,H:a.key==='char'?88:80,dir:1}));
   SC.mobs.forEach(m=>list.push({e:m,y:m.y,H:m.boss?170:m.elite?104:74,dir:-1}));
   list.sort((a,b)=>a.y-b.y);const tops=new Map();list.forEach(o=>{const r=drawActor(g,o.e,o.H,o.dir,dt);if(r)tops.set(o.e,r)});
+  /* 검은 연기(일반 합성으로 어둡게) */
+  SC.fx.forEach(f=>{if(f.k!=='smoke')return;const k=f.t/f.life;g.globalAlpha=0.55*(1-k);g.fillStyle=k<0.3?'#1a0a10':'#0a0608';g.beginPath();g.arc(f.x+Math.sin(f.t*3+f.r)*6,f.y-f.h*26,f.r*(1+k*1.5),0,Math.PI*2);g.fill()});g.globalAlpha=1;
+  drawSealWorld(g,dt);
   /* 투사체 */
   SC.shots.forEach(s=>drawShot(g,s));
   /* 빛나는 효과: 모양·불티·번개 */
@@ -1914,6 +1961,7 @@ function sceneDraw(){
     if(d.big&&d.t<1.2){q.strokeStyle=d.col;q.globalAlpha=0.5*a;q.lineWidth=2;q.beginPath();q.moveTo(d.x,d.y);q.lineTo(d.x,d.y-70);q.stroke();q.globalAlpha=a}
     q.font=`600 ${d.big?13:11}px "IBM Plex Sans KR",sans-serif`;const w=q.measureText(d.txt).width+12,h=d.big?20:17,y=d.y-34;
     q.fillStyle='rgba(12,10,9,.9)';q.fillRect(d.x-w/2,y-h/2,w,h);q.strokeStyle=d.col;q.lineWidth=1;q.strokeRect(d.x-w/2+0.5,y-h/2+0.5,w-1,h-1);q.fillStyle=d.col;q.fillText(d.txt,d.x,y+1);q.globalAlpha=1});
+  drawSealUI(q);
   if(SC.comboShow>0&&SC.combo>=5){const k=Math.min(1,SC.comboShow/0.3);q.globalAlpha=k;q.font=`${22+Math.min(10,SC.combo/5)}px "Nanum Myeongjo",serif`;q.fillStyle='#000';q.fillText(`${SC.combo} 연속 처치!`,SC.W/2+1,-14);q.fillStyle='#FFD166';q.fillText(`${SC.combo} 연속 처치!`,SC.W/2,-15);q.globalAlpha=1}
 }
 function sceneLoop(now){
@@ -2522,6 +2570,7 @@ const MOTION={
    예고 안에 있으면 큰 피해(체력 20~35%). 자동 모드에서는 악마들이 예고 밖으로 피하고, 직접 조작에서는 소환사를 직접 움직여 피해요.
    대기술 이름과 내용은 BOSS_SKILL 표에 있어요. 보상 계산은 여전히 3초 탐험 틱이 하고, 봉인한 악마가 있으면 그 악마가 다음 보스로 나와요. */
 SC.tele=[];SC.bossT=1.2;SC.boss=null;
+const BOSS_TIME=60;  /* 제한 시간 안에 못 쓰러뜨리거나 아군이 전멸하면 도전 실패(보스 체력 회복) */
 const BOSS_SKILL={
   chop:{n:'참수의 일격',d:'앞쪽 부채꼴을 크게 베어요'},
   thrust:{n:'관통하는 창',d:'일직선으로 찌르며 돌진해요'},
@@ -2540,7 +2589,7 @@ const BOSS_SKILL={
   dash:{n:'약탈',d:'모든 적을 차례로 꿰뚫고 지나가요'},
   blink:{n:'그림자 이동',d:'사라졌다가 표적 바로 위에 나타나 내리쳐요'}};
 const alive=()=>SC.ms.filter(a=>a.down<=0);
-function hurt(a,frac,col){if(!a||a.down>0)return;a.hp-=a.max*frac;a.flash=0.2;
+function hurt(a,frac,col){if(!a||a.down>0)return;frac*=(SC.boss&&SC.boss.dm)||1;a.hp-=a.max*frac;a.flash=0.2;
   SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:0.8,txt:'-'+Math.round(frac*100)+'%',col:col||'#FF6B6B',sz:12});
   if(a.hp<=0){a.down=2;SC.fx.push({k:'num',x:a.x,y:a.y-36,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}
 /* 예고 도형: 원·부채꼴·띠. inShape로 판정하고, 피할 방향을 돌려줘요 */
@@ -2557,8 +2606,8 @@ function tele(o){o.t=0;SC.tele.push(o);return o}
 function spawnBoss(){
   const sp=bossSp();
   const st=STYLE[SPECIES[sp][1]]||{m:'chop',f:'blood',d:''};
-  const per=Math.max(5,teamPower()/4),hp=Math.round(per*rand(70,90)*Math.max(0.7,Math.min(3,reqNow()/Math.max(1,teamPower()))));
-  const b={boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
+  const per=Math.max(5,teamPower()/4),ratio=Math.max(0.4,Math.min(8,reqNow()/Math.max(1,teamPower()))),hp=Math.round(per*rand(65,80)*Math.pow(ratio,3));
+  const b={floor:curFloor(),dm:Math.max(0.5,Math.min(4,ratio)),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
   SC.mobs.push(b);SC.boss=b;SC.bossIntro=2.4;SC.tele=[];renderBossBar(true)}
 /* 대기술 시작: 예고를 그리고 act에 진행 상태를 저장해요 */
 function bossSpecial(m,tg){const st=m.st,C=FXCOL[st.f]||FXCOL.blood,dx=tg.x-m.x,dy=tg.y-m.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,a=Math.atan2(dy,dx);
@@ -2594,7 +2643,12 @@ function teleHit(T,m){const st=m.st,C=FXCOL[st.f]||FXCOL.blood;
   if(st.f==='bolt')SC.fx.push({k:'bolt',x:cx,y:cy,t:0,life:0.25,col:C[0],seed:Math.random()*1000});
   if(st.m==='stomp'||st.m==='rear')SC.fx.push({k:'crack',x:T.x,y:T.y,t:0,life:0.7,seed:Math.random()*1000,r:T.r*0.8,col:C[0]});
   elemBits(st.f,cx,cy,Math.cos(T.a||0),Math.sin(T.a||0),1.2,true);if(!RM)SC.shake=Math.max(SC.shake,T.dmg>=0.3?7:4)}
+function bossFail(m,why){m.hp=m.max;m.tl=BOSS_TIME;m.act=null;m.fly=0;m.vanish=0;m.wind=0;SC.tele=[];
+  SC.fx.push({k:'num',x:m.x,y:m.y-70,t:0,life:2,txt:`도전 실패 · ${why}`,col:'#FF6B6B',sz:16});addLog(`${curFloor()}층 보스에게 ${why} · 다시 도전해요`);
+  SC.ms.forEach(a=>{a.down=0;a.hp=a.max})}
 function bossStep(m,dt){
+  if(!SC.bossIntro){m.tl-=dt;if(m.tl<=0)return bossFail(m,'시간 초과')}
+  if(SC.ms.length&&SC.ms.every(a=>a.down>0))return bossFail(m,'아군 전멸');
   if(m.slow>0)m.slow-=dt;if(m.vuln>0)m.vuln-=dt;m.x+=m.kx;m.y+=m.ky;m.kx*=0.5;m.ky*=0.5;
   const ps=alive();if(!ps.length)return;let tg=ps[0],bd=1e9;ps.forEach(a=>{const d=Math.hypot(a.x-m.x,a.y-m.y);if(d<bd){bd=d;tg=a}});m.tg=tg;
   const C=FXCOL[m.st.f]||FXCOL.blood;
@@ -2639,7 +2693,8 @@ function renderBossBar(force){const b=SC.boss,el=$('bossBar');if(!el)return;
   const sp=SPECIES[b.k],no=sp[5],bs=BOSS_SKILL[b.st.m];
   if(force||el.dataset.k!=String(b.k)){el.dataset.k=b.k;el.querySelector('.bn').innerHTML=`${artHTML(b.k)} ${sp[1]}`;
     el.querySelector('.bt').textContent=`고에티아 ${no}번 · ${sp[4]} · ${b.st.d}`;el.querySelector('.bs').textContent=bs?`대기술 「${bs.n}」 ${bs.d}`:''}
-  el.querySelector('.bh i').style.width=Math.max(0,b.hp/b.max*100)+'%';el.classList.toggle('casting',!!b.act)}
+  el.querySelector('.bh i').style.width=Math.max(0,b.hp/b.max*100)+'%';el.classList.toggle('casting',!!b.act);
+  const tm=el.querySelector('.btm');if(tm){const t=Math.max(0,Math.ceil(b.tl||0));tm.textContent=`${b.floor}층 보스 · 남은 시간 ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;tm.classList.toggle('low',t<=10)}}
 
 /* 매 프레임 자세 적용: 상체는 셰이더(굽힘·비틀기), 몸 전체는 안쪽 축 그룹(이동·기울기·회전·크기) */
 function pose3D(o,e,dt){const U=o.userData.U,P=o.userData.P;if(!U)return;e.atkT=e.atkT==null?9:e.atkT+dt;
