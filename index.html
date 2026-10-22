@@ -495,7 +495,10 @@ const SOL_STAGES=[
   {n:'현자의 제자',d:'수염이 자라고, 지혜의 두루마리를 든 학자.'},
   {n:'이스라엘의 왕자',d:'금관 띠를 두른 왕자. 육망성 지팡이를 들었어요.'},
   {n:'예루살렘의 왕',d:'왕관과 붉은 왕의 옷, 홀을 든 왕.'},
-  {n:'지혜의 왕 솔로몬',d:'보석 왕관, 흰 수염, 빛나는 인장 홀과 악마를 가둔 황동 그릇. 전설 속 솔로몬 왕.'}];
+  {n:'지혜의 왕 솔로몬',d:'보석 왕관, 흰 수염, 빛나는 인장 홀과 악마를 가둔 황동 그릇. 전설 속 솔로몬 왕.'},
+  {n:'성전의 건축자',d:'악마들을 부려 예루살렘 성전을 세운 왕. 뒤로 성전 입구의 두 청동 기둥 야긴과 보아스가 섰어요.'},
+  {n:'일흔둘의 지배자',d:'일흔두 악마의 인장이 몸 주위를 돌아요. 밤의 망토를 두른 마도의 왕.'},
+  {n:'영원한 지혜',d:'육망성 후광이 빛나고, 솔로몬 왕좌를 지키던 황금 사자들이 곁을 지켜요. 전설의 끝.'}];
 function solomonSVG(st){
   const P=[ // robe, robeDark, mantle, mantleDark, trim, skin, hair, beard
     ['#7a6a52','#3e3326','#5a4a38','#2a2018','#8a7a5a','#c9a882','#2a1c12',0],
@@ -503,7 +506,10 @@ function solomonSVG(st){
     ['#7c7058','#3d3428','#3e4a5a','#1c2430','#a88a50','#c9a680','#33241a',1],
     ['#5a4064','#2a1c30','#6e5a3a','#2e2416','#d0a848','#c8a47c','#2e2016',2],
     ['#7a2a24','#3a0e0c','#5a1a1a','#240808','#e0b850','#c4a07a','#22160e',3],
-    ['#d8ccb0','#8a7a5c','#2c3a5e','#121a2e','#f0c860','#c8a47e','#d8d0c0',4]][st];
+    ['#d8ccb0','#8a7a5c','#2c3a5e','#121a2e','#f0c860','#c8a47e','#d8d0c0',4],
+    ['#2c4a7a','#14223e','#d8ccb0','#8a7a5c','#f0c860','#c8a47e','#c8c0b0',4],
+    ['#2a1a3a','#120a1a','#1a1022','#08040c','#f0c860','#c4a07e','#e0d8c8',4],
+    ['#f2ead8','#b8a880','#e8d8a8','#a08a58','#ffe08a','#d0ae88','#f4f0e8',4]][st];
   const [rb,rd,mt,md,tr,sk,hr,bd]=P;const gold='#e8c060',G=st>=3;
   let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 260"><defs>
 <linearGradient id="rb" x1="0" x2="1"><stop offset="0" stop-color="${rd}"/><stop offset=".45" stop-color="${rb}"/><stop offset=".75" stop-color="${rb}"/><stop offset="1" stop-color="${rd}"/></linearGradient>
@@ -516,6 +522,14 @@ function solomonSVG(st){
 </defs>`;
   const O='stroke="#1a1008" stroke-width="1.8" stroke-linejoin="round"';
   if(st===5)s+=`<circle cx="80" cy="46" r="44" fill="url(#gl)" opacity=".35"/>`;
+  /* 6: 성전의 두 기둥 야긴과 보아스 */
+  if(st===6)s+=[14,146].map((x,k)=>`<rect x="${x-9}" y="40" width="18" height="212" fill="#6a5a3a" ${O}/><rect x="${x-9}" y="40" width="18" height="212" fill="url(#ht2)"/><rect x="${x-13}" y="28" width="26" height="14" rx="3" fill="#c89a40" ${O}/><circle cx="${x}" cy="22" r="7" fill="#c89a40" ${O}/>`+[0,1,2].map(q=>`<circle cx="${x-6+q*6}" cy="34" r="2" fill="#7a2a20"/>`).join('')+`<text x="${x}" y="150" font-size="9" fill="#2a1a08" text-anchor="middle" font-family="serif">${k?'ב':'י'}</text>`).join('')+`<circle cx="80" cy="46" r="48" fill="url(#gl)" opacity=".4"/>`;
+  /* 7: 몸 주위를 도는 일흔두 인장 */
+  if(st===7){s+=`<ellipse cx="80" cy="150" rx="76" ry="104" fill="none" stroke="#9a5ae0" stroke-width="1" opacity=".5"/><circle cx="80" cy="46" r="46" fill="url(#gl)" opacity=".35"/>`;
+    for(let q=0;q<24;q++){const a=q/24*Math.PI*2,x=80+Math.cos(a)*76,y=150+Math.sin(a)*104;s+=`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a*57).toFixed(0)})"><circle r="4.5" fill="#1a0e22" stroke="#c9a0ff" stroke-width=".9"/><path d="M-2.5 0 h5 M0 -2.5 v5 M-1.8 -1.8 l3.6 3.6" stroke="#e8d0ff" stroke-width=".7"/></g>`}}
+  /* 8: 빛의 후광과 육망성, 솔로몬 왕좌의 사자 */
+  if(st===8){for(let q=0;q<16;q++){const a=q/16*Math.PI*2;s+=`<path d="M80 46 L${(80+Math.cos(a-0.09)*74).toFixed(1)} ${(46+Math.sin(a-0.09)*74).toFixed(1)} L${(80+Math.cos(a+0.09)*74).toFixed(1)} ${(46+Math.sin(a+0.09)*74).toFixed(1)} Z" fill="url(#gl)" opacity=".55"/>`}
+    s+=`<circle cx="80" cy="46" r="40" fill="url(#gl)" opacity=".7"/><circle cx="80" cy="46" r="34" fill="none" stroke="#ffe08a" stroke-width="1.6"/><path d="M80 14 L107.7 62 L52.3 62 Z M80 78 L52.3 30 L107.7 30 Z" fill="none" stroke="#fff4c8" stroke-width="1.4" opacity=".9"/>`}
   s+=`<ellipse cx="80" cy="253" rx="52" ry="6" fill="#000" opacity=".4"/><g filter="url(#gr)">`;
   /* 망토(뒤) */
   if(st>=1)s+=`<path d="M48 78 Q22 160 20 250 L140 250 Q138 160 112 78 Z" fill="url(#mt)" ${O}/><path d="M48 78 Q22 160 20 250 L58 250 Q48 160 56 86 Z" fill="url(#ht)"/>`;
@@ -525,9 +539,10 @@ function solomonSVG(st){
 <path d="M70 100 Q66 170 62 250 M90 100 Q94 170 98 250 M80 106 L80 250" stroke="#22180e" stroke-width="1.2" fill="none" opacity=".7"/>`;
   if(G)s+=`<path d="M78 80 L78 252 M82 80 L82 252" stroke="${tr}" stroke-width="2.2" opacity=".9"/><path d="M36 246 L124 246" stroke="${tr}" stroke-width="3"/>`;
   if(st===4)s+=`<path d="M58 78 Q80 96 102 78 Q100 70 80 72 Q60 70 58 78 Z" fill="#e8e0d0" ${O}/>`+[0,1,2,3,4].map(i=>`<circle cx="${63+i*8.5}" cy="${80+Math.abs(i-2)*-1.5+3}" r="1.2" fill="#1a1008"/>`).join('');
-  if(st===5)s+=`<path d="M58 80 Q80 92 102 80" stroke="${gold}" stroke-width="3" fill="none"/><circle cx="80" cy="104" r="7" fill="#2a1a10" stroke="${gold}" stroke-width="1.8"/><path d="M80 98 L85.2 107 L74.8 107 Z M80 110 L74.8 101 L85.2 101 Z" fill="none" stroke="#fff0b0" stroke-width="1"/>`;
+  if(st>=5)s+=`<path d="M58 80 Q80 92 102 80" stroke="${gold}" stroke-width="3" fill="none"/><circle cx="80" cy="104" r="7" fill="#2a1a10" stroke="${gold}" stroke-width="1.8"/><path d="M80 98 L85.2 107 L74.8 107 Z M80 110 L74.8 101 L85.2 101 Z" fill="none" stroke="#fff0b0" stroke-width="1"/>`;
   /* 황동 그릇 (마지막 단계) */
-  if(st===5)s+=`<path d="M10 224 Q6 252 26 252 Q46 252 42 224 Z" fill="#9a7030" ${O}/><ellipse cx="26" cy="224" rx="16" ry="5" fill="#c89a40" ${O}/><path d="M12 236 Q26 242 40 236" stroke="#5a3a10" fill="none"/><path d="M16 226 l20 0 M26 220 v-8" stroke="#5a3a10" stroke-width="1.5"/><circle cx="26" cy="210" r="5" fill="none" stroke="${gold}" stroke-width="1.5"/>`;
+  if(st>=5&&st<8)s+=`<path d="M10 224 Q6 252 26 252 Q46 252 42 224 Z" fill="#9a7030" ${O}/><ellipse cx="26" cy="224" rx="16" ry="5" fill="#c89a40" ${O}/><path d="M12 236 Q26 242 40 236" stroke="#5a3a10" fill="none"/><path d="M16 226 l20 0 M26 220 v-8" stroke="#5a3a10" stroke-width="1.5"/><circle cx="26" cy="210" r="5" fill="none" stroke="${gold}" stroke-width="1.5"/>`;
+  if(st===8)s+=[[24,1],[136,-1]].map(([x,d])=>`<g transform="translate(${x} 230) scale(${d} 1)"><path d="M-18 22 L-18 6 Q-16 -6 -6 -8 Q0 -22 10 -18 Q20 -14 16 -2 L18 22 Z" fill="#d8b050" ${O}/><circle cx="8" cy="-12" r="9" fill="#e8c060" ${O}/><circle cx="8" cy="-12" r="12" fill="none" stroke="#a87a28" stroke-width="3" stroke-dasharray="3 2"/><circle cx="11" cy="-14" r="1.3" fill="#1a1008"/><path d="M-18 4 q-8 -4 -6 -12" stroke="#a87a28" stroke-width="2" fill="none"/></g>`).join('');
   /* 허리띠 */
   s+=st===0?`<path d="M52 136 Q80 144 108 136" stroke="#5a4628" stroke-width="4" fill="none"/>`:`<path d="M50 132 Q80 142 110 132 L111 141 Q80 151 49 141 Z" fill="${st>=3?tr:'#6a5030'}" ${O}/><circle cx="80" cy="142" r="${st>=3?5:3.5}" fill="${st>=3?'#c03030':gold}" stroke="#2a1608"/>`;
   /* 소매와 손 */
@@ -535,13 +550,13 @@ function solomonSVG(st){
   if(G)s+=`<path d="M38 132 Q46 140 54 136 M110 130 Q118 134 124 126" stroke="${tr}" stroke-width="2.5" fill="none"/>`;
   s+=`<ellipse cx="45" cy="139" rx="6.5" ry="5.5" fill="url(#fc)" ${O}/><ellipse cx="117" cy="131" rx="6.5" ry="5.5" fill="url(#fc)" ${O}/>`;
   /* 인장 반지 */
-  const rg=[0.5,0.7,0.8,0.9,1,1.2][st];s+=`<circle cx="47" cy="142" r="2.8" fill="none" stroke="${gold}" stroke-width="1.8"/><circle cx="47" cy="142" r="${8*rg}" fill="url(#gl)" opacity="${0.4+0.4*rg}"/>`;
+  const rg=[0.5,0.7,0.8,0.9,1,1.2,1.3,1.5,1.8][st];s+=`<circle cx="47" cy="142" r="2.8" fill="none" stroke="${gold}" stroke-width="1.8"/><circle cx="47" cy="142" r="${8*rg}" fill="url(#gl)" opacity="${0.4+0.4*rg}"/>`;
   /* 손에 든 것 */
   if(st===2)s+=`<g transform="rotate(-18 40 150)"><rect x="30" y="140" width="22" height="30" rx="3" fill="#d8c8a0" ${O}/><path d="M33 146 h16 M33 151 h16 M33 156 h12 M33 161 h14" stroke="#5a4a30" stroke-width="1"/><ellipse cx="41" cy="140" rx="12" ry="3.5" fill="#c8b48a" ${O}/><ellipse cx="41" cy="170" rx="12" ry="3.5" fill="#c8b48a" ${O}/></g>`;
   if(st<=3){const top=st===3?'hex':st>=1?'ring':'plain';s+=`<line x1="118" y1="26" x2="122" y2="252" stroke="#2a180c" stroke-width="5.5" stroke-linecap="round"/><line x1="118" y1="26" x2="122" y2="252" stroke="#7a5430" stroke-width="2" stroke-linecap="round"/>`;
     if(top!=='plain')s+=`<circle cx="118" cy="22" r="11" fill="none" stroke="${gold}" stroke-width="2.4"/>`+(top==='hex'?`<path d="M118 13 L125.8 26.5 L110.2 26.5 Z M118 31 L110.2 17.5 L125.8 17.5 Z" fill="none" stroke="#fff0b0" stroke-width="1.3"/><circle cx="118" cy="22" r="20" fill="url(#gl)" opacity=".7"/>`:`<circle cx="118" cy="22" r="14" fill="url(#gl)" opacity=".45"/>`)}
   else{/* 홀 */s+=`<line x1="118" y1="58" x2="121" y2="200" stroke="#5a3a10" stroke-width="5" stroke-linecap="round"/><line x1="118" y1="58" x2="121" y2="200" stroke="${gold}" stroke-width="2.2" stroke-linecap="round"/><circle cx="121" cy="200" r="3.5" fill="${gold}" ${O}/>`;
-    s+=st===5?`<circle cx="118" cy="44" r="13" fill="#2a1a10" stroke="${gold}" stroke-width="2.5"/><path d="M118 33 L127.5 49.5 L108.5 49.5 Z M118 55 L108.5 38.5 L127.5 38.5 Z" fill="none" stroke="#fff4c8" stroke-width="1.6"/><circle cx="118" cy="44" r="26" fill="url(#gl)" opacity=".85"/>`
+    s+=st>=5?`<circle cx="118" cy="44" r="13" fill="#2a1a10" stroke="${gold}" stroke-width="2.5"/><path d="M118 33 L127.5 49.5 L108.5 49.5 Z M118 55 L108.5 38.5 L127.5 38.5 Z" fill="none" stroke="#fff4c8" stroke-width="1.6"/><circle cx="118" cy="44" r="26" fill="url(#gl)" opacity=".85"/>`
       :`<circle cx="118" cy="52" r="8" fill="${gold}" ${O}/><circle cx="118" cy="52" r="3.5" fill="#b02828"/><path d="M118 40 l0 4 M110 46 l3 3 M126 46 l-3 3" stroke="${gold}" stroke-width="2"/>`}
   /* 머리 */
   if(st===0){s+=`<path d="M52 80 Q46 36 80 22 Q114 36 108 80 Q96 68 80 68 Q64 68 52 80 Z" fill="url(#rb)" ${O}/><path d="M52 80 Q46 36 80 22 Q64 42 62 74 Z" fill="url(#ht)"/>
@@ -553,21 +568,22 @@ function solomonSVG(st){
     s+=`<path d="M73 ${fy-3} q3 -2 6 0 M81 ${fy-3} q3 -2 6 0" stroke="#2a1a0e" stroke-width="1.4" fill="none"/><path d="M74 ${fy+1} h4 M82 ${fy+1} h4" stroke="#1a1008" stroke-width="1.6"/><path d="M80 ${fy+2} l-1.5 7 l3 0" stroke="#5a3a24" stroke-width="1.1" fill="none"/>`;
     s+=`<path d="M67 ${fy-6} Q70 ${fy-20} 80 ${fy-19} Q90 ${fy-20} 93 ${fy-6} Q88 ${fy-14} 80 ${fy-13} Q72 ${fy-14} 67 ${fy-6} Z" fill="${hr}" ${O}/>`;
     /* 수염 */
-    const L=[0,0,12,22,40,62][st];if(bd)s+=`<path d="M67 ${fy+4} Q66 ${fy+14+L*0.4} ${80-6} ${fy+12+L} L80 ${fy+16+L} L${80+6} ${fy+12+L} Q94 ${fy+14+L*0.4} 93 ${fy+4} Q88 ${fy+12} 80 ${fy+11} Q72 ${fy+12} 67 ${fy+4} Z" fill="${hr}" ${O}/>`+
-      Array.from({length:Math.min(7,2+st)},(_,i)=>`<path d="M${71+i*3} ${fy+12} Q${71+i*3+(i-3)*0.8} ${fy+12+L*0.7} ${78+i*0.6} ${fy+12+L}" stroke="${st===5?'#9a9080':'#0e0804'}" stroke-width=".8" fill="none" opacity=".7"/>`).join('')+`<path d="M74 ${fy+9} Q80 ${fy+7} 86 ${fy+9}" stroke="${hr}" stroke-width="3" fill="none"/>`;
+    const L=[0,0,12,22,40,62,64,66,70][st];if(bd)s+=`<path d="M67 ${fy+4} Q66 ${fy+14+L*0.4} ${80-6} ${fy+12+L} L80 ${fy+16+L} L${80+6} ${fy+12+L} Q94 ${fy+14+L*0.4} 93 ${fy+4} Q88 ${fy+12} 80 ${fy+11} Q72 ${fy+12} 67 ${fy+4} Z" fill="${hr}" ${O}/>`+
+      Array.from({length:Math.min(7,2+st)},(_,i)=>`<path d="M${71+i*3} ${fy+12} Q${71+i*3+(i-3)*0.8} ${fy+12+L*0.7} ${78+i*0.6} ${fy+12+L}" stroke="${st>=5?'#9a9080':'#0e0804'}" stroke-width=".8" fill="none" opacity=".7"/>`).join('')+`<path d="M74 ${fy+9} Q80 ${fy+7} 86 ${fy+9}" stroke="${hr}" stroke-width="3" fill="none"/>`;
     else s+=`<path d="M76 ${fy+9} Q80 ${fy+11} 84 ${fy+9}" stroke="#5a3424" stroke-width="1.3" fill="none"/>`;
     /* 머리쓰개 */
     if(st===1)s+=`<path d="M66 ${fy-9} Q80 ${fy-14} 94 ${fy-9}" stroke="#6b2a26" stroke-width="3.5" fill="none"/>`;
     if(st===2)s+=`<path d="M64 ${fy-6} Q62 ${fy-28} 80 ${fy-30} Q98 ${fy-28} 96 ${fy-6} Q88 ${fy-16} 80 ${fy-16} Q72 ${fy-16} 64 ${fy-6} Z" fill="#d8ccb0" ${O}/><path d="M64 ${fy-10} Q80 ${fy-18} 96 ${fy-10}" stroke="#3e4a5a" stroke-width="3" fill="none"/>`;
     if(st===3)s+=`<path d="M65 ${fy-10} Q80 ${fy-16} 95 ${fy-10}" stroke="${gold}" stroke-width="4" fill="none"/><circle cx="80" cy="${fy-14}" r="2.6" fill="#3a6ab0" stroke="#1a1008"/>`;
     if(st===4)s+=`<path d="M64 ${fy-10} L64 ${fy-26} L70 ${fy-18} L75 ${fy-30} L80 ${fy-19} L85 ${fy-30} L90 ${fy-18} L96 ${fy-26} L96 ${fy-10} Q80 ${fy-16} 64 ${fy-10} Z" fill="${gold}" ${O}/><circle cx="80" cy="${fy-13}" r="2.6" fill="#b02828"/><circle cx="70" cy="${fy-12}" r="1.6" fill="#3a6ab0"/><circle cx="90" cy="${fy-12}" r="1.6" fill="#3a6ab0"/>`;
-    if(st===5)s+=`<path d="M62 ${fy-10} L60 ${fy-30} L68 ${fy-22} L72 ${fy-38} L80 ${fy-26} L88 ${fy-38} L92 ${fy-22} L100 ${fy-30} L98 ${fy-10} Q80 ${fy-17} 62 ${fy-10} Z" fill="${gold}" ${O}/><path d="M62 ${fy-14} Q80 ${fy-21} 98 ${fy-14}" stroke="#8a6020" stroke-width="1.5" fill="none"/>`+
+    if(st>=5)s+=`<path d="M62 ${fy-10} L60 ${fy-30} L68 ${fy-22} L72 ${fy-38} L80 ${fy-26} L88 ${fy-38} L92 ${fy-22} L100 ${fy-30} L98 ${fy-10} Q80 ${fy-17} 62 ${fy-10} Z" fill="${gold}" ${O}/><path d="M62 ${fy-14} Q80 ${fy-21} 98 ${fy-14}" stroke="#8a6020" stroke-width="1.5" fill="none"/>`+
       [[72,-38],[88,-38],[60,-30],[100,-30]].map(([x,y])=>`<circle cx="${x}" cy="${fy+y}" r="2.3" fill="#fff0c0"/>`).join('')+`<circle cx="80" cy="${fy-16}" r="3.2" fill="#b02828" stroke="#1a1008"/><circle cx="71" cy="${fy-14}" r="2" fill="#3a8a5a"/><circle cx="89" cy="${fy-14}" r="2" fill="#3a6ab0"/>`}
   s+=`</g></svg>`;return s}
 
 /* ===== 승급: 솔로몬의 후계자가 단계마다 전설 속 솔로몬 왕의 모습에 가까워져요 =====
-   조건: 서로 다른 종류의 악마 3마리를 일정 등급 이상 보유 + 보스를 일정 수 이상 처치. 승급하면 소환사 기본 전투력 +30%씩. */
-const PROMO=[null,{g:2,b:10},{g:3,b:40},{g:4,b:120},{g:5,b:300},{g:6,b:700}];
+   조건: 서로 다른 종류의 악마 3마리를 일정 등급 이상 보유 + 보스를 일정 수 이상 처치. 승급하면 소환사 기본 전투력 +30%씩(최고 8단계 ×3.4).
+   6~8단계는 SS·SR·SSR 악마가 필요해요. */
+const PROMO=[null,{g:2,b:10},{g:3,b:40},{g:4,b:120},{g:5,b:300},{g:6,b:700},{g:7,b:1200},{g:8,b:2000},{g:9,b:3000}];
 const rankOf=()=>S.rank||0;
 const SOLC={};function solSrc(r){r=r==null?rankOf():r;return SOLC[r]||(SOLC[r]='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(solomonSVG(r)))))}
 function promoState(){const r=rankOf();if(r>=SOL_STAGES.length-1)return null;const q=PROMO[r+1];
