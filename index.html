@@ -731,7 +731,9 @@ function solomonSVG(st){
    6~8단계는 SS·SR·SSR 악마가 필요해요. */
 const PROMO=[null,{g:2,b:10},{g:3,b:40},{g:4,b:120},{g:5,b:300},{g:6,b:700},{g:7,b:1200},{g:8,b:2000},{g:9,b:3000}];
 const rankOf=()=>S.rank||0;
-const SOLC={};function solSrc(r){r=r==null?rankOf():r;return SOLC[r]||(SOLC[r]='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(solomonSVG(r)))))}
+/* 소환사 그림(시안 2 · 반지빛 어둠): 승급 9단계. f=전체 그림, b=부위를 떼어낸 몸통, p=부위(머리 끄덕, 반지 낀 손, 홀) */
+const CRIG={};  /* 소환사 그림도 원본 판화에서 가공한 것이라 공개 저장소에는 넣지 않아요(없으면 직접 그린 SVG로 보여요) */
+function solSrc(r){r=r==null?rankOf():r;return CRIG[r]?CRIG[r].f:'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(solomonSVG(r))))}
 function promoState(){const r=rankOf();if(r>=SOL_STAGES.length-1)return null;const q=PROMO[r+1];
   const best={};S.mons.forEach(m=>{if(m.grade>=q.g&&(!best[m.sp]||best[m.sp].grade<m.grade))best[m.sp]=m});
   const sps=Object.values(best).sort((a,b)=>b.grade-a.grade).slice(0,3);const kills=S.bossKills||0;
@@ -2074,7 +2076,7 @@ const gc2=g=>getComputedStyle(document.documentElement).getPropertyValue('--g'+M
    위치는 시뮬레이션 좌표 그대로(가운데 띠 = 전투 마당), 아래쪽일수록 조금 크게(원근). 그림은 좌우로 뒤집지 않아요.
    동작은 그림 전체를 기울이기·밀기·눌렀다 늘이기·띄우기·뒤집기(회전)로 표현하고, 걸을 때는 뒤뚱거리며 오르내려요. */
 const SPRI={};
-function sprImg(e){const id=e.key==='char'?0:SPECIES[e.k][5];if(!SPRI[id]){const im=new Image();if(id)im.onerror=()=>{im.onerror=null;im.src=ART_FB(e.k)};im.src=id?SPR_DATA[id]:solSrc();SPRI[id]=im}return SPRI[id]}
+function sprImg(e){const id=e.key==='char'?'c'+rankOf():SPECIES[e.k][5];if(!SPRI[id]){const im=new Image();const ch=e.key==='char';if(!ch)im.onerror=()=>{im.onerror=null;im.src=ART_FB(e.k)};im.src=ch?solSrc():SPR_DATA[id];SPRI[id]=im}return SPRI[id]}
 function pose2D(e,dt){e.atkT=e.atkT==null?9:e.atkT+dt;
   const t=e.atkT,A=Math.abs(e.atkA||0.6)/0.75,now=performance.now()/1000;
   let n=0;if(e.wind>0)n=Math.min(1.5,(0.9-e.wind)/0.5);else if(e.inR&&e.cd!=null&&e.cd<0.22&&t>0.3)n=1-Math.max(0,e.cd)/0.22;
@@ -2192,11 +2194,15 @@ function rareFx(e,w,h,dt){if(SPECIES[e.k]==null||SPECIES[e.k][2]!==-2||e.down>0)
    biped 두 발 · robe 긴 옷(옷자락만 살랑) · quad 네 발(앞다리·뒷다리 엇갈림) · ride 탈것(탈것의 다리) · seat 앉은 채 미끄러지듯 · fly 날갯짓하듯 떠서
    slither 뱀처럼 몸 전체가 물결 · wheel 바퀴처럼 굴러감(부에르) · float 둥실. 숫자 = 다리가 시작되는 높이, 앞·뒤(왼·오른) 다리를 나누는 가로 위치(그림 픽셀) */
 const GAIT={1:['seat',200,94],2:['ride',185,120],3:['robe',195,80],4:['quad',150,88],5:['quad',165,105],6:['quad',165,100],7:['quad',160,100],8:['robe',205,112],9:['ride',170,128],10:['wheel',0,0],11:['seat',200,98],12:['fly',0,0],13:['ride',165,140],14:['robe',190,110],15:['ride',150,110],16:['biped',150,74],17:['slither',0,0],18:['ride',160,100],19:['ride',180,100],20:['ride',190,110],21:['quad',160,110],22:['biped',150,92],23:['slither',0,0],24:['robe',190,75],25:['quad',150,100],26:['quad',180,120],27:['biped',160,85],28:['ride',150,100],29:['quad',190,100],30:['slither',0,0],31:['robe',200,87],32:['quad',180,100],33:['robe',200,82],34:['quad',160,110],35:['quad',165,70],36:['fly',0,0],37:['fly',0,0],38:['fly',0,0],39:['fly',0,0],40:['fly',0,0],41:['fly',0,0],42:['slither',0,0],43:['ride',150,90],44:['biped',170,96],45:['ride',160,100],46:['quad',165,120],47:['quad',160,95],48:['quad',165,110],49:['robe',200,60],50:['ride',150,95],51:['ride',185,90],52:['ride',150,100],53:['fly',0,0],54:['quad',175,165],55:['quad',150,85],56:['ride',160,85],57:['quad',160,120],58:['fly',0,0],59:['ride',150,95],60:['quad',165,100],61:['quad',160,90],62:['quad',175,120],63:['ride',175,120],64:['quad',170,140],65:['biped',155,140],66:['ride',150,90],67:['quad',165,100],68:['seat',200,110],69:['float',0,0],70:['ride',150,100],71:['float',0,0],72:['quad',190,100]};
-function gaitOf(e){if(e.key==='char')return ['robe',0.72,0.5,1];const g=GAIT[SPECIES[e.k][5]];return g?[g[0],g[1]/240,g[2],0]:['biped',0.66,0.5,1]}
+function gaitOf(e){if(e.key==='char')return ['robe',0.6,0.5,1];const g=GAIT[SPECIES[e.k][5]];return g?[g[0],g[1]/240,g[2],0]:['biped',0.66,0.5,1]}
 const GA={biped:[0.075,0.045,0.022],robe:[0.035,0.018,0.012],quad:[0.06,0.04,0.014],ride:[0.06,0.04,0.016]};
 function drawSpr(g,im,DW,DH,DB,G,ph,wk){const nw=im.naturalWidth,nh=im.naturalHeight,k=DW/nw,ox=-DW/2,oy=-DH+DB,t=G[0];
   if(wk<0.03||!GA[t]&&t!=='slither'){g.drawImage(im,ox,oy,DW,DH);return}
   if(t==='slither'){const st=3;for(let sy=0;sy<nh;sy+=st){const f=sy/nh,dx=Math.sin(ph*1.6-f*7)*0.035*nw*f*wk;g.drawImage(im,0,sy,nw,Math.min(st+0.6,nh-sy),ox+dx*k,oy+sy*k,DW,(st+0.6)*k)}return}
+  if(t==='robe'){const ly=Math.round(G[1]*nh),st=2,span=nh-ly;g.drawImage(im,0,0,nw,ly+1,ox,oy,DW,(ly+1)*k);
+    /* 걸을 때 옷자락이 뒤로 끌리며 물결쳐요: 아래로 갈수록 늦게·크게, 발끝이 나올 때 밑단이 살짝 들려요 */
+    for(let sy=ly;sy<nh;sy+=st){const f=(sy-ly)/span,dx=(Math.sin(ph-f*1.6)*0.03+Math.sin(ph*2-f*3)*0.008)*nh*f*wk,dy=-Math.max(0,Math.cos(ph))*0.012*nh*f*f*wk;
+      g.drawImage(im,0,sy,nw,Math.min(st+0.3,nh-sy),ox+dx*k,oy+(sy+dy)*k,DW,(st+0.3)*k)}return}
   const A=GA[t],ly=Math.round(G[1]*nh),mx=G[3]?G[2]*nw:Math.min(nw-1,G[2]);
   g.drawImage(im,0,0,nw,ly+1,ox,oy,DW,(ly+1)*k);
   const st=2,span=nh-ly;
@@ -2251,7 +2257,7 @@ function drawDef(g,im,DW,DH,DB,kind,fe,n,s,vh,e,res){const S=srcPx(im);const nw=
    몸통은 그대로 서 있고(다리는 걸음걸이대로) 부위만 움직여요. 꼬리·날개·머리는 가만히 있을 때도 조금씩 살아 움직여요. */
 const RIG={};  /* 부위 리그 그림도 원본 그림에서 잘라낸 것이라 공개 저장소에는 넣지 않아요(없으면 통째 그림으로 움직여요) */
 const RIGI={};
-function rigOf(e){if(e.key==='char')return null;const no=SPECIES[e.k][5],R=RIG[no];if(!R)return null;let L=RIGI[no];
+function rigOf(e){const no=e.key==='char'?'c'+rankOf():SPECIES[e.k][5],R=e.key==='char'?CRIG[rankOf()]:RIG[no];if(!R)return null;let L=RIGI[no];
   if(!L){L=RIGI[no]={b:new Image(),p:R.p.map(q=>{const im=new Image();im.src=q[1];return im})};L.b.src=R.b}
   if(!L.b.complete||!L.b.naturalWidth||L.p.some(im=>!im.complete))return null;return L}
 const D2R=Math.PI/180;
@@ -2266,8 +2272,11 @@ function partPose(q,n,s,fe,now,ph,fly,e){const t=q[0],side=q[8],k0=(e.k||0)*1.7;
   else if(t==='flap'){a=-side*(32*n-42*s)+(fly?-side*12*Math.sin(now*7+k0):-side*2*Math.sin(now*1.8+k0))}
   else if(t==='whip'){a=side*(-8*n+14*s)+3*Math.sin(now*2.5+k0)}
   else if(t==='recoil'){tx=fe*(-0.05*n+0.04*s)}
+  /* 소환사: 반지 낀 손을 끌어당겨 힘을 모았다가 앞으로 내밀어요(빛이 커졌다 터짐). 홀은 뒤로 젖혔다 앞으로 겨눠요 */
+  else if(t==='ring'){const sg=q[9]||side;a=sg*(-10*n+26*s)*fe*sg+2*Math.sin(now*1.7);tx=fe*(-0.02*n+0.05*s);ty=-0.03*n;sc=1+0.12*n+0.1*s}
+  else if(t==='staff'){a=fe*(-9*n+20*s)+1.2*Math.sin(now*1.3)}
   return [a*D2R,tx,ty,sc]}
-function drawRig(g,L,DW,DH,DB,GT,ph,wk,n,s,fe,now,e){const b=L.b,nw=b.naturalWidth,nh=b.naturalHeight,k=DW/nw,ox=-DW/2,oy=-DH+DB,R=RIG[SPECIES[e.k][5]];
+function drawRig(g,L,DW,DH,DB,GT,ph,wk,n,s,fe,now,e){const b=L.b,nw=b.naturalWidth,nh=b.naturalHeight,k=DW/nw,ox=-DW/2,oy=-DH+DB,R=e.key==='char'?CRIG[rankOf()]:RIG[SPECIES[e.k][5]];
   drawSpr(g,b,DW,DH,DB,GT,ph,wk);const fly=GT[0]==='fly';
   R.p.forEach((q,i)=>{const im=L.p[i],[a,tx,ty,sc]=partPose(q,n,s,fe,now,ph,fly,e);
     g.save();g.translate(ox+(q[6]+tx*nh)*k,oy+(q[7]+ty*nh)*k);g.rotate(a);if(sc!==1)g.scale(sc,sc);g.drawImage(im,(q[2]-q[6])*k,(q[3]-q[7])*k,q[4]*k,q[5]*k);g.restore()})}
@@ -2284,10 +2293,13 @@ function drawActor(g,e,baseH,dir,dt){const im=sprImg(e);if(!im.complete||!im.nat
   /* 몸의 오르내림: 두 발은 한 걸음마다 두 번, 네 발은 살짝, 나는 것은 늘 둥실 */
   let bob=GW?Math.abs(Math.sin(ph))*GW[2]*h*P.wk:0,wob=gt==='robe'||gt==='seat'?Math.sin(ph)*0.035*P.wk:gt==='biped'?Math.sin(ph)*0.02*P.wk:0;
   if(gt==='fly')bob=4+Math.sin(now*3.2+(e.k||0))*4+P.wk*3;else if(gt==='float')bob=3+Math.sin(now*1.8+(e.k||0))*4;else if(gt==='seat')bob=Math.abs(Math.sin(ph*0.5))*2*P.wk;
+  /* 걷는 방향으로 몸을 살짝 숙여요(공격 중엔 안 함), 발이 땅에 닿을 때마다 흙먼지 */
+  if(!aOn&&!(e.down>0)&&GW)wob+=Math.max(-1,Math.min(1,(e._vx||0)/120))*0.045*P.wk;
+  if(GW&&P.wk>0.45&&!(e.down>0)){const st=Math.floor(ph/Math.PI);if(e._st!=null&&st!==e._st&&Math.random()<0.8)for(let q=0;q<2;q++)spk(e.x+rand(-w*0.18,w*0.18),e.y+rand(-2,2),0.02,rand(-10,10)-(e._vx||0)*0.05,rand(-3,1),0.25,Math.random()<0.5?'#5a4a3a':'#3a3026',rand(0.35,0.6),rand(1.6,2.6));e._st=st}
   const breathe=1+0.014*Math.sin(now*2.2+(e.k||0))+(gt==='fly'?0.03*Math.sin(now*9+(e.k||0)):0);
   const x=e.x+lx+P.f*dir*38,y=e.y+ly-(P.y*38)-bob-(e.fly||0)*30;
   /* 그림자 */
-  g.globalAlpha=e.down>0?0.2:0.45;g.fillStyle='#000';g.beginPath();g.ellipse(e.x+lx,e.y+ly+2,w*0.36,w*0.1,0,0,Math.PI*2);g.fill();g.globalAlpha=1;
+  g.globalAlpha=e.down>0?0.2:0.45;g.fillStyle='#000';g.beginPath();g.ellipse(e.x+lx,e.y+ly+2,w*(e.key==='char'?0.24:0.36),w*(e.key==='char'?0.07:0.1),0,0,Math.PI*2);g.fill();g.globalAlpha=1;
   drawAura(g,e,x,y,w,h,dt);rareFx(e,w,h,dt);
   g.save();g.translate(x,y);
   const ENT=SC.ent&&SC.ent.a===e?SC.ent:null;if(ENT){const r=entRise(ENT);if(r<=0){g.restore();return null}g.beginPath();g.rect(-500,-1200,1000,1200+4);g.clip();g.translate(0,(1-r)*h*1.25)}
@@ -2328,7 +2340,7 @@ function sceneDraw(){
   SC.fx.filter(f=>f.k==='ring').forEach(f=>{const k=f.t/f.life;g.strokeStyle=f.col;g.globalAlpha=1-k;g.lineWidth=f.w||3;g.beginPath();g.ellipse(f.x,f.y,8+f.r*k,(8+f.r*k)*0.55,0,0,Math.PI*2);g.stroke();g.globalAlpha=1});
   drawSigils(g);drawEntGround(g);
   /* 악마들: 아래(앞)에 있는 것을 나중에 */
-  const list=[];SC.ms.forEach(a=>list.push({e:a,y:a.y,H:a.key==='char'?88:80,dir:1}));
+  const list=[];SC.ms.forEach(a=>list.push({e:a,y:a.y,H:a.key==='char'?120:80,dir:1}));
   SC.mobs.forEach(m=>list.push({e:m,y:m.y,H:m.boss?170:m.minion?58:m.elite?104:74,dir:-1}));
   list.sort((a,b)=>a.y-b.y);const tops=new Map();list.forEach(o=>{const r=drawActor(g,o.e,o.H,o.dir,dt);if(r)tops.set(o.e,r)});
   if(SC.boss)SC.mobs.forEach(x=>{if(!x.minion)return;g.strokeStyle='rgba(201,160,255,.35)';g.lineWidth=2;g.setLineDash([4,4]);g.beginPath();g.moveTo(SC.boss.x,SC.boss.y-40);g.lineTo(x.x,x.y-20);g.stroke();g.setLineDash([])});
