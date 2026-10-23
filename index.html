@@ -8,7 +8,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=IBM+Plex+Sans+KR:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=UnifrakturMaguntia&family=Nanum+Myeongjo:wght@700;800&family=IBM+Plex+Sans+KR:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: sticky status bar + tabs; one column of panels, monster cards in an auto-fill grid; bottom sheet for details */
 :root{
@@ -571,6 +571,29 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 
 .grim.intro .gsub{color:#E7A33E}.grim.intro .rank{color:#9C8B76;font-size:13px;font-style:italic}
 .grim.intro .gtop img.art{width:120px;height:150px}
+
+/* 층 악마 소개 · 펼친 고서 */
+.sheet.bookmode{background:transparent;border:0;padding:10px max(8px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));max-width:760px}
+.book{display:flex;filter:drop-shadow(0 12px 24px #000);color:#2a1608}
+.bpage{position:relative;background:radial-gradient(ellipse at 30% 20%,#f3e6c4,#e2cc9c 55%,#c9ab72 100%);box-shadow:inset 0 0 50px rgba(90,50,10,.55)}
+.bpage::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(80,50,20,.035) 0 2px,transparent 2px 5px);mix-blend-mode:multiply}
+.bl{flex:1;padding:20px 14px;border-radius:8px 0 0 8px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bl .cap{font:800 12px var(--display);letter-spacing:.3em;color:#8a1410}
+.bl img.art{width:200px;height:210px;object-fit:contain;filter:sepia(.45) contrast(1.05) drop-shadow(0 2px 2px rgba(60,30,10,.5))}
+.bl .sigil{width:84px;height:84px;object-fit:contain;filter:sepia(1) hue-rotate(-20deg) saturate(2) brightness(.55);opacity:.88}
+.bl .scap{font-size:11px;color:#6a5030}
+.bspine{width:12px;background:linear-gradient(90deg,#8a6a3a,#4a3018,#8a6a3a);flex:none}
+.br{flex:1.3;padding:20px 20px 16px;border-radius:0 8px 8px 0;display:flex;flex-direction:column;gap:6px}
+.br .rub{font:800 11px var(--display);letter-spacing:.22em;color:#8a1410}
+.br h3{margin:0;font:800 30px var(--display);color:#2a1608}
+.br .lat{font:italic 400 14px "IM Fell English",var(--display);color:#6a4020}
+.br .gtx{margin:8px 0 0;font:400 14.5px/1.8 var(--display);color:#2a1608}
+.br .gtx::first-letter{font:400 50px/0.85 "UnifrakturMaguntia",var(--display);float:left;margin:4px 8px 0 0;color:#8a1410}
+.br .fn{font-size:10.5px;line-height:1.5;color:#6a5030;border-top:1px solid rgba(90,60,20,.35);padding-top:6px}
+.br .gcard{background:#14100e;color:#E9DCC6;border:1px solid #3a2b23;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.65;margin-top:4px}
+.br .gcard .gh{font-size:10.5px;color:#9C8B76;letter-spacing:.15em}.br .gcard b{color:#E3BE73;font-weight:600}
+@media (max-width:620px){.book{flex-direction:column}.bl{flex-direction:row;flex-wrap:wrap;justify-content:center;border-radius:8px 8px 0 0;padding:12px}.bl .cap{width:100%;text-align:center}
+  .bl img.art{width:130px;height:140px}.bl .sigil{width:70px;height:70px}.bl .scap{display:none}.bspine{width:auto;height:10px;background:linear-gradient(180deg,#8a6a3a,#4a3018,#8a6a3a)}.br{border-radius:0 0 8px 8px}.br h3{font-size:26px}}
 
 </style>
 
@@ -1648,7 +1671,7 @@ function openTeam(slot){
     <div class="grid">${list.map(m=>card(m,S.team[teamSel]===m.id?'sel':'')).join('')}</div>`;
   $('sheet').dataset.kind='team';$('overlay').hidden=false;
 }
-function closeSheet(){$('overlay').hidden=true;renderAll();setTimeout(tryIntro,300)}
+function closeSheet(){$('sheet').classList.remove('bookmode');$('overlay').hidden=true;renderAll();setTimeout(tryIntro,300)}
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
 $('sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -3331,18 +3354,30 @@ function doAwaken(){if((S.top||1)<=NFLOOR)return;const n=awReward();S.awPts=awPt
 const RANK_DESC={'왕':'지옥의 왕. 고에티아에서 가장 높은 계급으로, 태양의 금으로 인장을 만들어 부른다.','공작':'지옥의 공작. 금성의 구리로 인장을 만들어 부른다.','후작':'지옥의 후작. 달의 은으로 인장을 만들어 부른다.','군주':'지옥의 군주(프린스). 목성의 주석으로 인장을 만들어 부른다.','백작':'지옥의 백작. 화성의 구리와 은을 섞어 인장을 만들어 부른다.','총재':'지옥의 총재. 수성의 수은으로 인장을 만들어 부른다.','기사':'지옥의 기사. 납으로 인장을 만들어 부른다.'};
 let introQ=[];
 function floorIntro(f,force){if(f>NFLOOR)return;if(!S.intro)S.intro=[];if(!force){if(S.intro.includes(f))return;S.intro.push(f);save()}if(!introQ.includes(f))introQ.push(f);tryIntro()}
-function tryIntro(){if(!introQ.length||!$('overlay').hidden||SC.chest||SC.chestT>0||!$('reveal').hidden)return;const f=introQ.shift(),k=bossSp(f),sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{},el=elOfSp(k),bs=BOSS_SKILL[st.m];
-  $('sheet').innerHTML=`<div class="grim intro"><div class="gsub">${f}층 · 이 층을 지배하는 악마</div>
-    <div class="gtop">${artHTML(k)}<div><h3>${sp[1]}</h3><div class="muted">『고에티아』 제${no}위 · ${sp[4]}${G?` · ${G[0]} 군단을 거느림`:''}</div></div></div>
-    <p class="rank">${RANK_DESC[sp[4]]||''}</p>
-    ${G?`<p><b>나타나는 모습</b> ${G[1]}</p><p><b>능력</b> ${G[2]}</p>`:''}
-    <hr><div class="ginfo">
-      <div><span>속성</span>${elTag(el)} · 약점 <b style="color:#7FE0FF">${elTag(EL_WEAK[el])}</b> · 내성 ${elTag(el)}</div>
-      <div><span>공격</span>${st.d||''}</div>
-      ${bs?`<div><span>대기술</span>「${bs.n}」 ${bs.d} · 파훼: ${BREAK_HINT[st.m]||''}</div>`:''}
-      ${sp[2]===-2?'<div><span>귀속</span>조합으로만 얻을 수 있는 악마예요</div>':''}
-    </div><div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">맞서기</button></div></div>`;
-  $('sheet').dataset.kind='grim';$('sheet').scrollTop=0;$('overlay').hidden=false}
+/* 72악마 인장(고에티아 원전의 인장 도형) */
+const SIGIL={};  /* 인장 그림도 라이선스 확인 전이라 공개 저장소에는 넣지 않아요 */
+const josa=(w,a,b)=>{const c=w.charCodeAt(w.length-1)-0xAC00;return c>=0&&c<=11171&&c%28?a:b};
+const RANK_W={'왕':'왕','공작':'공작','후작':'후작','군주':'군주','백작':'백작','총재':'총재','기사':'기사'};
+const ROMAN=n=>{const v=[[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];let r='';for(const [a,s] of v)while(n>=a){r+=s;n-=a}return r};
+const LAT={1:'Bael',2:'Agares',3:'Vassago',4:'Samigina',5:'Marbas',6:'Valefor',7:'Amon',8:'Barbatos',9:'Paimon',10:'Buer',11:'Gusion',12:'Sitri',13:'Beleth',14:'Leraje',15:'Eligos',16:'Zepar',17:'Botis',18:'Bathin',19:'Sallos',20:'Purson',21:'Marax',22:'Ipos',23:'Aim',24:'Naberius',25:'Glasya-Labolas',26:'Bune',27:'Ronove',28:'Berith',29:'Astaroth',30:'Forneus',31:'Foras',32:'Asmoday',33:'Gäap',34:'Furfur',35:'Marchosias',36:'Stolas',37:'Phenex',38:'Halphas',39:'Malphas',40:'Räum',41:'Focalor',42:'Vepar',43:'Sabnock',44:'Shax',45:'Viné',46:'Bifrons',47:'Vual',48:'Haagenti',49:'Crocell',50:'Furcas',51:'Balam',52:'Alloces',53:'Camio',54:'Murmur',55:'Orobas',56:'Gremory',57:'Ose',58:'Amy',59:'Orias',60:'Vapula',61:'Zagan',62:'Volac',63:'Andras',64:'Haures',65:'Andrealphus',66:'Cimejes',67:'Amdusias',68:'Belial',69:'Decarabia',70:'Seere',71:'Dantalion',72:'Andromalius'};
+/* 원전 문장: 『고에티아』 각 장의 서술 순서(서열 → 계급 → 나타나는 모습 → 능력 → 군단 수)를 따라 한국어로 옮겼어요 */
+function goetiaText(k){const sp=SPECIES[k],no=sp[5],G=GRIM[no],nm=sp[1],rk=RANK_W[sp[4]]||sp[4];if(!G)return '';
+  return `제${no}의 영(靈)은 ${nm}${josa(nm,'이다','다')}. 그는 위대한 ${rk}${josa(rk,'으로','로')}, ${G[1]} ${G[2]} 그는 ${G[0]} 군단의 영을 다스린다.`}
+function tryIntro(){if(!introQ.length||!$('overlay').hidden||SC.chest||SC.chestT>0||!$('reveal').hidden)return;const f=introQ.shift(),k=bossSp(f),sp=SPECIES[k],no=sp[5],st=STYLE[sp[1]]||{},el=elOfSp(k),bs=BOSS_SKILL[st.m];
+  $('sheet').innerHTML=`<div class="book">
+   <div class="bpage bl"><div class="cap">CAPUT · ${ROMAN(no)}</div>${artHTML(k)}${SIGIL[no]?`<img class="sigil" alt="${sp[1]}의 인장" src="${SIGIL[no]}"><div class="scap">${sp[1]}의 인장</div>`:''}</div>
+   <div class="bspine"></div>
+   <div class="bpage br"><div class="rub">✠ 원전 기록 · ARS GOETIA</div>
+     <h3>${sp[1]}</h3><div class="lat">${LAT[no]||''} · 제${no}위 · ${sp[4]}${GRIM[no]?` · ${GRIM[no][0]} 군단`:''}</div>
+     <p class="gtx">${goetiaText(k)}</p>
+     <div class="fn">¹ 『레메게톤 · 고에티아』 제${no}장 — S. L. MacGregor Mathers 편 · A. Crowley 간행, 1904 (17세기 필사본 Sloane MS 2731 등). ${RANK_DESC[sp[4]]?RANK_DESC[sp[4]].replace(/^지옥의 [^.]+\. /,'')+'':''}</div>
+     <div class="gcard"><div class="gh">⚔ ${f}층 · 게임 속 모습</div>
+       <div><b>속성</b> ${elTag(el)} · <b>약점</b> ${elTag(EL_WEAK[el])} · <b>내성</b> ${elTag(el)}</div>
+       <div><b>공격</b> ${st.d||''}</div>
+       ${bs?`<div><b>주술</b> 「${bs.n}」 ${bs.d}</div>`:''}
+       ${sp[2]===-2?'<div><b>귀속</b> 조합으로만 얻을 수 있어요</div>':''}</div>
+     <div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">맞서기</button></div></div></div>`;
+  $('sheet').dataset.kind='book';$('sheet').classList.add('bookmode');$('sheet').scrollTop=0;$('overlay').hidden=false}
 function openGrim(k){const sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{},el=elOfSp(k),f=floorOf(k),gm=gmOf(k),bs=BOSS_SKILL[st.m],rcs=RECIPES.filter(r=>r.r===k);
   $('sheet').innerHTML=`<div class="grim"><div class="gsub">그리모어 · 제${no}장</div>
     <div class="gtop">${artHTML(k)}<div><h3>${sp[1]}</h3><div class="muted">제${no}위 ${sp[4]} · ${G?G[0]+' 군단':''}</div></div></div>
@@ -3351,7 +3386,7 @@ function openGrim(k){const sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{}
       <div><span>층</span>${f<=56?`${f}층 보스`:`${f}층 보스 · 조합 전용`}</div>
       <div><span>속성</span>${elTag(el)} · 약점 ${elTag(EL_WEAK[el])} · 내성 ${elTag(el)}</div>
       <div><span>공격</span>${MNAME[st.m]||''} — ${st.d||''}</div>
-      ${bs?`<div><span>대기술</span>「${bs.n}」 ${bs.d} · 파훼: ${BREAK_HINT[st.m]||''}</div>`:''}
+      ${bs?`<div><span>주술</span>「${bs.n}」 ${bs.d}</div>`:''}
       ${gm?`<div><span>기믹</span>${GM_INFO[gm][0]} · 파훼: ${GM_INFO[gm][1]}</div>`:''}
       ${rcs.length?`<div><span>조합법</span>${rcs.map(r=>`${SPECIES[r.a][1]} + ${SPECIES[r.b][1]}`).join(' / ')}</div>`:''}
     </div><div class="row"><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div></div>`;
@@ -3488,7 +3523,7 @@ function renderBossBar(force){const b=SC.boss,el=$('bossBar');if(!el)return;
   if(!b||b.hp<=0){el.hidden=true;return}el.hidden=false;
   const sp=SPECIES[b.k],no=sp[5],bs=BOSS_SKILL[b.st.m];
   if(force||el.dataset.k!=String(b.k)){el.dataset.k=b.k;el.querySelector('.bn').innerHTML=`${artHTML(b.k)} ${sp[1]}`;
-    el.querySelector('.bt').textContent=`고에티아 ${no}번 · ${sp[4]} · ${b.st.d}`;const be=elOfSp(b.k);el.querySelector('.bel').innerHTML=`<b>약점 ${elTag(EL_WEAK[be])}</b> · 내성 ${elTag(be)}${b.gm?` · <b class="gmk">${GM_INFO[b.gm][0]}</b>`:''}`;el.querySelector('.bgm').innerHTML=b.gm?`<b class="gmk">기믹 ${GM_INFO[b.gm][0]}</b> ${GM_INFO[b.gm][1]}`:'';el.querySelector('.bs').innerHTML=bs?`<b>대기술 「${bs.n}」</b> ${bs.d}<br><span class="brk">파훼 · ${BREAK_HINT[b.st.m]||''}</span>`:'';el.querySelector('.bcast').textContent=bs?`「${bs.n}」 — ${BREAK_HINT[b.st.m]||''}`:''}
+    el.querySelector('.bt').textContent=`고에티아 ${no}번 · ${sp[4]} · ${b.st.d}`;const be=elOfSp(b.k);el.querySelector('.bel').innerHTML=`<b>약점 ${elTag(EL_WEAK[be])}</b> · 내성 ${elTag(be)}${b.gm?` · <b class="gmk">${GM_INFO[b.gm][0]}</b>`:''}`;el.querySelector('.bgm').innerHTML=b.gm?`<b class="gmk">기믹 ${GM_INFO[b.gm][0]}</b> ${GM_INFO[b.gm][1]}`:'';el.querySelector('.bs').innerHTML=bs?`<b>주술 「${bs.n}」</b> ${bs.d}<br><span class="brk">파훼 · ${BREAK_HINT[b.st.m]||''}</span>`:'';el.querySelector('.bcast').textContent=bs?`「${bs.n}」 — ${BREAK_HINT[b.st.m]||''}`:''}
   el.querySelector('.bh i').style.width=Math.max(0,b.hp/b.max*100)+'%';el.classList.toggle('casting',!!b.act);
   const tm=el.querySelector('.btm');if(tm){const t=Math.max(0,Math.ceil(b.tl||0));tm.textContent=`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`;tm.classList.toggle('low',t<=10)}}
 
