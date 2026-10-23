@@ -1970,11 +1970,11 @@ function sceneStep(dt){
   /* 파티 */
   SC.ms.forEach((a,i)=>{
     a.flash=Math.max(0,a.flash-dt);a.lunge=Math.max(0,a.lunge-dt);a.bob+=dt*(SC.manual&&a.key!=='char'?(Math.hypot(a.vx||0,a.vy||0)>15?9:2):(walk?9:4));
-    if(a.down>0){a.down-=dt;if(a.down<=0)a.hp=a.max;return}
-    if(a.psn>0){a.hp-=a.max*0.015*a.psn*dt;a.psnT-=dt;if(a.psnT<=0){a.psn--;a.psnT=4}if(Math.random()<dt*3*a.psn)spk(a.x+rand(-10,10),a.y-rand(10,40),0.5,0,0,0.8,'#7FE04A',0.6,2.5);if(a.hp<=0){a.down=2;a.psn=0}}
+    if(a.down>0){a.down-=dt;if(a.down<=0)a.hp=a.max*(SC.boss?0.4:1);return}
+    if(a.psn>0){a.hp-=a.max*0.015*a.psn*dt;a.psnT-=dt;if(a.psnT<=0){a.psn--;a.psnT=4}if(Math.random()<dt*3*a.psn)spk(a.x+rand(-10,10),a.y-rand(10,40),0.5,0,0,0.8,'#7FE04A',0.6,2.5);if(a.hp<=0){a.down=downT();a.psn=0}}
     if(a.charm>0){a.charm-=dt;const B=SC.boss;if(B){const dx=B.x-a.x,dy=B.y-a.y,d=Math.hypot(dx,dy)||1;if(d>40){a.x+=dx/d*50*dt;a.y+=dy/d*50*dt}}if(Math.random()<dt*4)spk(a.x+rand(-8,8),a.y-50,1.6,0,0,0.6,'#FF7AB8',0.8,3);a.inR=false;return}
     {const es=SC.tele.length&&!(SC.manual&&a.key==='char')?escapeDir(a):null;if(es){a.x+=es.x*135*dt;a.y+=es.y*135*dt;a.y=Math.max(16,Math.min(SC.H-16,a.y));a.bob+=dt*9;a.inR=false;a.cd=Math.max(a.cd,0.1);return}}
-    a.hp=Math.min(a.max,a.hp+a.max*0.05*dt*(1+SC.ab.regen));
+    a.hp=Math.min(a.max,a.hp+a.max*(SC.boss?0.012:0.05)*dt*(1+SC.ab.regen));
     a.cd-=dt;
     if(SC.focus)a.tgt=SC.focus;
     else if(!a.tgt||a.tgt.hp<=0||!SC.mobs.includes(a.tgt))a.tgt=(SC.boss&&SC.mobs.includes(SC.boss)&&SC.boss.x<SC.W*0.95&&!SC.mobs.some(x=>x.minion)?SC.boss:null)||nearestMob(a.x,a.y,a.kind==='melee'?190:230);
@@ -2006,7 +2006,7 @@ function sceneStep(dt){
   });
   /* 투사체 */
   SC.shots.forEach(s=>{const gone=s.en?(s.t.down>0||!SC.ms.includes(s.t)):s.t.hp<=0;const d=Math.hypot(s.t.x-s.x,s.t.y-s.y);
-    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=2;SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else{SC.lastEl=s.el||null;dmgMob(s.t,Math.round(s.dmg*elemMul(s.el,s.t)),s.crit,s.fx,s.fy);SC.lastEl=null;if(s.crit&&s.src)gradeCrit(s.src,s.t.x,s.t.y)}if(s.pt)shotHit(s)}s.done=1;return}
+    if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=downT();SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else{SC.lastEl=s.el||null;dmgMob(s.t,Math.round(s.dmg*elemMul(s.el,s.t)),s.crit,s.fx,s.fy);SC.lastEl=null;if(s.crit&&s.src)gradeCrit(s.src,s.t.x,s.t.y)}if(s.pt)shotHit(s)}s.done=1;return}
     s.x+=(s.t.x-s.x)/d*s.sp*dt;s.y+=(s.t.y-s.y)/d*s.sp*dt;if(s.pt)shotTrail(s,dt)});
   SC.shots=SC.shots.filter(s=>!s.done);
   /* 적 */
@@ -2015,13 +2015,13 @@ function sceneStep(dt){
     if(!tg)return;m.inR=bd<=18;
     if(m.elite){m.slam-=dt;
       if(m.wind>0){m.wind-=dt;if(m.wind<=0){m.atkT=0;m.atkA=1.05;SC.fx.push({k:'ring',x:m.x,y:m.y,t:0,life:0.3,r:70,col:'#FF5E3A',w:5});if(!RM)SC.shake=8;
-        SC.ms.forEach(a=>{if(a.down<=0&&Math.hypot(a.x-m.x,a.y-m.y)<70){a.hp-=a.max*0.45;a.flash=0.25;if(a.hp<=0)a.down=2}});m.slam=rand(4,6)}return}
+        SC.ms.forEach(a=>{if(a.down<=0&&Math.hypot(a.x-m.x,a.y-m.y)<70){a.hp-=a.max*0.45;a.flash=0.25;if(a.hp<=0)a.down=downT()}});m.slam=rand(4,6)}return}
       if(m.slam<=0&&bd<90){m.wind=0.9;return}}
     if(m.rng==null)m.rng=isRanged(m)&&!m.elite?rand(95,130):0;
     if(m.rng){m.inR=bd<=m.rng+6;if(bd>m.rng){const sl=m.slow>0?0.4:1;m.x+=(tg.x-m.x)/bd*m.sp*sl*dt;m.y+=(tg.y-m.y)/bd*m.sp*sl*dt}
       else{m.cd-=dt;if(m.cd<=0){m.cd=rand(1.3,1.9);m.atkT=0;m.atkA=0.5;atkFx(m,tg,true);fireShot(m,tg,0.05,0,true)}}}
     else if(bd>18){const sl=m.slow>0?0.4:1;m.x+=(tg.x-m.x)/bd*m.sp*sl*dt;m.y+=(tg.y-m.y)/bd*m.sp*sl*dt}
-    else{m.cd-=dt;if(m.cd<=0){m.cd=rand(0.9,1.4);m.atkT=0;m.atkA=m.elite?0.8:0.6;atkFx(m,tg,true);m.lunge=0.12;m.lx=(tg.x-m.x)/bd;m.ly=(tg.y-m.y)/bd;tg.hp-=tg.max*(m.elite?0.12:0.05);tg.flash=0.15;if(tg.hp<=0){tg.down=2;SC.fx.push({k:'num',x:tg.x,y:tg.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}}
+    else{m.cd-=dt;if(m.cd<=0){m.cd=rand(0.9,1.4);m.atkT=0;m.atkA=m.elite?0.8:0.6;atkFx(m,tg,true);m.lunge=0.12;m.lx=(tg.x-m.x)/bd;m.ly=(tg.y-m.y)/bd;tg.hp-=tg.max*(m.elite?0.12:0.05);tg.flash=0.15;if(tg.hp<=0){tg.down=downT();SC.fx.push({k:'num',x:tg.x,y:tg.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}}
   });
   SC.mobs=SC.mobs.filter(m=>{if(m.hp<=0){killMob(m);return false}return m.x>-60});
   SC.fx.forEach(f=>{f.t+=dt;if(f.k==='smoke'){f.h+=f.vh*dt}if(f.k==='spk'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.h=Math.max(0,f.h+f.vh*dt);f.vh-=2.2*dt;f.vx*=0.96;f.vy*=0.96}if(f.k==='p'){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=220*dt}if(f.k==='num')f.y-=30*dt});
@@ -3125,7 +3125,7 @@ function openGrimLast(){$('sheet').innerHTML=`<div class="story"><div class="sub
 const alive=()=>SC.ms.filter(a=>a.down<=0);
 function hurt(a,frac,col,raw){if(!a||a.down>0)return;if(SC.boss&&SC.boss.gm==='poison'){a.psn=Math.min(5,(a.psn||0)+1);a.psnT=4}if(!raw)frac*=(SC.boss&&SC.boss.dm)||1;a.hp-=a.max*frac;a.flash=0.2;
   SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:0.8,txt:'-'+Math.round(frac*100)+'%',col:col||'#FF6B6B',sz:12});
-  if(a.hp<=0){a.down=2;SC.fx.push({k:'num',x:a.x,y:a.y-36,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}
+  if(a.hp<=0){a.down=downT();SC.fx.push({k:'num',x:a.x,y:a.y-36,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}
 /* 예고 도형: 원·부채꼴·띠. inShape로 판정하고, 피할 방향을 돌려줘요 */
 function inShape(T,x,y){
   if(T.s==='circle')return Math.hypot(x-T.x,y-T.y)<=T.r;
@@ -3137,11 +3137,15 @@ function escapeDir(a){if(a._rt==null)a._rt=rand(0.4,0.85);for(const T of SC.tele
   else{ex=a.x-T.x;ey=a.y-T.y;const d=Math.hypot(ex,ey)||1;ex/=d;ey/=d;if(T.s==='cone'){ex=-Math.sin(T.a);ey=Math.cos(T.a);if((a.x-T.x)*ex+(a.y-T.y)*ey<0){ex=-ex;ey=-ey}}}
   return {x:ex,y:ey}}return null}
 function tele(o){o.t=0;SC.tele.push(o);return o}
+/* 보스 위력: 권장 전투력보다 약할수록 가파르게 세져요(1.3배 부족 ≈ 1.7배, 1.6배 ≈ 2.6배, 2배 ≈ 4배, 3배 ≈ 9배 피해).
+   보스전에서 쓰러진 아군은 10초 뒤 체력 40%로 일어나고, 자연 회복도 초당 1.2%로 줄어요 → 모두 쓰러지면 도전 실패. */
+const bossDm=r=>r<=1?Math.max(0.5,r):Math.min(10,r*r);
+const downT=()=>SC.boss?10:2;
 function spawnBoss(){
   const sp=bossSp();
   const st=STYLE[SPECIES[sp][1]]||{m:'chop',f:'blood',d:''};
   const per=Math.max(5,teamPower()/4),ratio=Math.max(0.4,Math.min(8,reqNow()/Math.max(1,teamPower()))),hp=Math.round(per*rand(140,175)*Math.pow(ratio,3));  /* 권장 전투력이면 약 20초, 대기술 2~3번 */
-  const b={gm:gmOf(sp),floor:curFloor(),dm:Math.max(0.5,Math.min(4,ratio)),dm0:Math.max(0.5,Math.min(4,ratio)),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
+  const b={gm:gmOf(sp),floor:curFloor(),dm:bossDm(ratio),dm0:bossDm(ratio),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
   SC.mobs.push(b);SC.boss=b;SC.bossIntro=2.4;SC.tele=[];renderBossBar(true)}
 /* 대기술 시작: 예고를 그리고 act에 진행 상태를 저장해요 */
 function bossSpecial(m,tg){const st=m.st,C=FXCOL[st.f]||FXCOL.blood,dx=tg.x-m.x,dy=tg.y-m.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,a=Math.atan2(dy,dx);
@@ -3218,7 +3222,7 @@ function bossStep(m,dt){
   if(bd>want){m.x+=(tg.x-m.x)/bd*m.sp*sl*dt;m.y+=(tg.y-m.y)/bd*m.sp*sl*dt}else if(m.rng&&bd<want-40){m.x-=(tg.x-m.x)/bd*m.sp*0.6*dt;m.y-=(tg.y-m.y)/bd*m.sp*0.6*dt}
   m.cd-=dt;if(m.cd<=0&&m.inR){m.cd=rand(1.1,1.5)*(m.enr?0.55:1);m.atkT=0;m.atkA=0.9;atkFx(m,tg,false);
     if(m.rng){const vol=m.st.m==='shoot'?ps.slice(0,3):[tg];vol.forEach(p=>fireShot(m,p,0.07,0,true))}
-    else{m.lunge=0.12;m.lx=(tg.x-m.x)/bd;m.ly=(tg.y-m.y)/bd;hurt(tg,0.08)}}
+    else{m.lunge=0.12;m.lx=(tg.x-m.x)/bd;m.ly=(tg.y-m.y)/bd;hurt(tg,0.09)}}
   m.y=Math.max(20,Math.min(SC.H-20,m.y))}
 /* 바닥 예고: 붉게 차오르다 끝나기 직전 번쩍 */
 function drawTele(g,P){SC.tele.forEach(T=>{if(T.hit)return;const k=Math.min(1,T.t/T.dur);const pts=[];
