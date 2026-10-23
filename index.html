@@ -373,12 +373,12 @@ body{font-size:14.5px;letter-spacing:-0.005em}
 /* 상단 */
 .top{background:linear-gradient(180deg,rgba(6,4,4,.88),rgba(6,4,4,0));padding-bottom:18px}
 .top .wrap.hrow{display:flex;align-items:center;gap:8px;padding-block:10px 0;flex-wrap:nowrap}
-.flchip{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(18,13,11,.8);color:var(--ink);font:600 13.5px var(--body);cursor:pointer;min-width:0;max-width:52%;backdrop-filter:blur(6px)}
+.flchip{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(18,13,11,.8);color:var(--ink);font:600 13.5px var(--body);cursor:pointer;min-width:0;max-width:52%;}
 .flchip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .flchip::after{content:"";width:6px;height:6px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg) translateY(-2px);flex:none}
-.powchip{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 10px;border-radius:999px;background:rgba(18,13,11,.8);border:1px solid var(--line);font:600 13px var(--mono);color:var(--muted);white-space:nowrap;backdrop-filter:blur(6px)}
+.powchip{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 10px;border-radius:999px;background:rgba(18,13,11,.8);border:1px solid var(--line);font:600 13px var(--mono);color:var(--muted);white-space:nowrap;}
 .powchip b.ok{color:#8FD9A8}.powchip b.no{color:#FF8A7A}.powchip small{font:500 11.5px var(--mono);color:var(--muted)}
-.goldchip{margin-left:auto;position:relative;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 8px;border-radius:999px;background:rgba(18,13,11,.8);border:1px solid var(--line);backdrop-filter:blur(6px)}
+.goldchip{margin-left:auto;position:relative;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 8px;border-radius:999px;background:rgba(18,13,11,.8);border:1px solid var(--line);}
 .goldchip i{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE7A6,#C9952F 60%,#7A5514);box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 .goldchip b{font:600 14px var(--mono);color:var(--gold);font-variant-numeric:tabular-nums}
 .goldchip em{position:absolute;right:10px;top:100%;font:600 11px var(--mono);font-style:normal;color:var(--gold);opacity:0;pointer-events:none}
@@ -453,7 +453,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .empty{grid-column:1/-1;text-align:center;padding:32px 12px;color:var(--muted);border:1px dashed var(--line2);border-radius:var(--r)}
 .vs b{font-size:20px}
 .sheet{background:var(--bg);border-top:1px solid var(--line2);border-radius:18px 18px 0 0}
-.overlay{background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
+.overlay{background:rgba(0,0,0,.6)}
 .pop{background:var(--surface);border:1px solid var(--line2);box-shadow:0 10px 30px rgba(0,0,0,.6);border-radius:14px}
 @media (prefers-reduced-motion:reduce){.toast.in,.goldchip em.on,.ult:not(:disabled),.bossbar .bcast{animation:none}}
 
@@ -670,6 +670,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
           <div class="setrow"><label for="fltItem">장비 · 이 등급 미만은 자동 분해</label><select id="fltItem"></select></div>
           <div class="setrow"><label for="fltMon">악마 · 이 등급 미만은 자동으로 퇴마</label><select id="fltMon"></select></div>
           <div class="note">분해하거나 퇴마한 만큼 골드를 받아요. SS 이상 악마는 설정과 상관없이 항상 보관해요.</div>
+          <div class="setrow"><label for="hiFps">고화질 · 초당 60번 그리기(발열·배터리 소모 늘어남)</label><input type="checkbox" id="hiFps"></div>
         </div>
         <div class="panel">
           <div class="row"><h2>탐험 기록</h2>
@@ -1851,7 +1852,7 @@ $('team').addEventListener('click',e=>{
   if(b.dataset.id)return openDetail(+b.dataset.id);
   if(b.dataset.empty!=null)return openTeam(+b.dataset.empty);
 });
-$('autoTeam').onclick=autoTeam;$('chests').addEventListener('click',()=>openChest());$('floorChip').onclick=()=>document.querySelector('[data-tab=map]').click();
+$('autoTeam').onclick=autoTeam;$('hiFps').onchange=e=>{S.hiFps=e.target.checked;save();sceneSize()};setTimeout(()=>{$('hiFps').checked=!!(S&&S.hiFps)},0);$('chests').addEventListener('click',()=>openChest());$('floorChip').onclick=()=>document.querySelector('[data-tab=map]').click();
 $('sort').onchange=renderMons;$('elFlt').onchange=renderMons;
 setTimeout(()=>$('elFlt').insertAdjacentHTML('beforeend',Object.keys(FNAME).map(k=>`<option value="${k}">${EL_ICON[k]||''} ${FNAME[k]}</option>`).join('')),0);
 function setFloor(f){if(f<1||f>(S.top||1)||f===curFloor())return;
@@ -1903,7 +1904,7 @@ const SC={ab:{atk:0,exp:0,gold:0,find:0,ifind:0,crit:0,cdr:0,ult:0,boss:0,regen:
 const sceneQ=[];
 function scenePush(text,color,big,sp){sceneQ.push({text,color,big,sp});if(sceneQ.length>8)sceneQ.shift()}
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
-function sceneSize(){const c=$('scene'),b=c.getBoundingClientRect();SC.dpr=Math.min(2,window.devicePixelRatio||1);
+function sceneSize(){const c=$('scene'),b=c.getBoundingClientRect();SC.dpr=Math.min(S&&S.hiFps?2:1.5,window.devicePixelRatio||1);
   /* 화면 전체에 그리되, 전투 마당은 가운데 띠(세로 240~320px)예요. 위아래는 어둠 속 땅 */
   SC.VW=b.width;SC.VH=b.height;SC.W=b.width;SC.H=Math.round(Math.max(240,Math.min(320,b.height*0.4,b.width*0.85)));SC.oy=Math.round((b.height-SC.H)/2);
   c.width=Math.round(b.width*SC.dpr);c.height=Math.round(b.height*SC.dpr)}
@@ -2436,17 +2437,17 @@ function gaitOf(e){if(e.key==='char')return ['robe',0.6,0.5,1];const g=GAIT[SPEC
 const GA={biped:[0.075,0.045,0.022],robe:[0.035,0.018,0.012],quad:[0.06,0.04,0.014],ride:[0.06,0.04,0.016]};
 function drawSpr(g,im,DW,DH,DB,G,ph,wk){const nw=im.naturalWidth,nh=im.naturalHeight,k=DW/nw,ox=-DW/2,oy=-DH+DB,t=G[0];
   if(wk<0.03||!GA[t]&&t!=='slither'){g.drawImage(im,ox,oy,DW,DH);return}
-  if(t==='slither'){const st=3;for(let sy=0;sy<nh;sy+=st){const f=sy/nh,dx=Math.sin(ph*1.6-f*7)*0.035*nw*f*wk;g.drawImage(im,0,sy,nw,Math.min(st+0.6,nh-sy),ox+dx*k,oy+sy*k,DW,(st+0.6)*k)}return}
-  if(t==='robe'){const ly=Math.round(G[1]*nh),st=2,span=nh-ly;g.drawImage(im,0,0,nw,ly+1,ox,oy,DW,(ly+1)*k);
+  if(t==='slither'){const st=5;for(let sy=0;sy<nh;sy+=st){const f=sy/nh,dx=Math.sin(ph*1.6-f*7)*0.035*nw*f*wk;g.drawImage(im,0,sy,nw,Math.min(st+0.6,nh-sy),ox+dx*k,oy+sy*k,DW,(st+0.6)*k)}return}
+  if(t==='robe'){const ly=Math.round(G[1]*nh),st=4,span=nh-ly;g.drawImage(im,0,0,nw,ly+1,ox,oy,DW,(ly+1)*k);
     /* 걸을 때 옷자락이 뒤로 끌리며 물결쳐요: 아래로 갈수록 늦게·크게, 발끝이 나올 때 밑단이 살짝 들려요 */
     for(let sy=ly;sy<nh;sy+=st){const f=(sy-ly)/span,dx=(Math.sin(ph-f*1.6)*0.03+Math.sin(ph*2-f*3)*0.008)*nh*f*wk,dy=-Math.max(0,Math.cos(ph))*0.012*nh*f*f*wk;
-      g.drawImage(im,0,sy,nw,Math.min(st+0.3,nh-sy),ox+dx*k,oy+(sy+dy)*k,DW,(st+0.3)*k)}return}
+      g.drawImage(im,0,sy,nw,Math.min(st+0.5,nh-sy),ox+dx*k,oy+(sy+dy)*k,DW,(st+0.5)*k)}return}
   const A=GA[t],ly=Math.round(G[1]*nh),mx=G[3]?G[2]*nw:Math.min(nw-1,G[2]);
   g.drawImage(im,0,0,nw,ly+1,ox,oy,DW,(ly+1)*k);
-  const st=2,span=nh-ly;
+  const st=4,span=nh-ly;
   for(const side of [0,1]){const x0=side?mx:0,x1=side?nw:mx;if(x1-x0<1)continue;const s=Math.sin(ph+side*Math.PI),lift=Math.max(0,Math.cos(ph+side*Math.PI));
     for(let sy=ly;sy<nh;sy+=st){const f=(sy-ly)/span,dx=s*A[0]*nh*f*wk,dy=-lift*A[1]*nh*f*f*wk;
-      g.drawImage(im,x0,sy,x1-x0,Math.min(st+0.3,nh-sy),ox+(x0+dx)*k,oy+(sy+dy)*k,(x1-x0)*k,(st+0.3)*k)}}}
+      g.drawImage(im,x0,sy,x1-x0,Math.min(st+0.5,nh-sy),ox+(x0+dx)*k,oy+(sy+dy)*k,(x1-x0)*k,(st+0.5)*k)}}}
 /* ===== 공격 동작: 그림을 부위별로 휘게 해서 몸이 실제로 움직이는 것처럼 =====
    그림을 가로 4칸 × 세로 띠로 잘라 칸마다 조금씩 다르게 밀어요. 다리는 땅에 붙여 두고, 상체만 젖혔다 휘두르거나(베기),
    앞발만 들어 올리거나(앞발 들기), 머리만 내밀어 물거나 불을 뿜고(머리), 날개를 접었다 내리치고(날갯짓), 몸을 똬리 틀었다 튕겨요(뱀).
@@ -2548,7 +2549,7 @@ function drawActor(g,e,baseH,dir,dt){const im=sprImg(e);if(!im.complete||!im.nat
   g.scale(sc*Math.sqrt(2-sq)*(AK?1:1-Math.abs(P.tw)*0.18)*(Math.abs(flip)<0.08?0.08:flip)*fl,sc*sq*breathe);
   const VH=GT[3]||!GA[gt]?Math.max(0.45,GT[1]||0.6):GT[1];
   const RL=rigOf(e);
-  const paint=()=>RL?drawRig(g,RL,DW,DH,DB,GT,ph,e.down>0?0:P.wk,e.down>0?0:P.n,e.down>0?0:P.s,fe,now,e):aOn?drawDef(g,im,DW,DH,DB,AK,fe,P.n,P.s,VH,e,DH*SC.dpr):drawSpr(g,im,DW,DH,DB,GT,ph,e.down>0?0:P.wk);
+  const paint=()=>RL?drawRig(g,RL,DW,DH,DB,GT,ph,e.down>0?0:P.wk,e.down>0?0:P.n,e.down>0?0:P.s,fe,now,e):aOn?drawDef(g,im,DW,DH,DB,AK,fe,P.n,P.s,VH,e,Math.min(120,DH*SC.dpr)):drawSpr(g,im,DW,DH,DB,GT,ph,e.down>0?0:P.wk);
   paint();
   if(P.hit>0.05){g.globalCompositeOperation='lighter';g.globalAlpha=0.55*P.hit;paint();g.globalCompositeOperation='source-over'}
   if(e.enr&&!(e.invis>0)){g.globalCompositeOperation='lighter';g.globalAlpha=0.25+0.15*Math.sin(performance.now()/120);g.filter='sepia(1) saturate(6) hue-rotate(-40deg)';paint();g.filter='none';g.globalCompositeOperation='source-over'}
@@ -2613,14 +2614,24 @@ function sceneDraw(){
   if(SC.slowmo){q.save();q.setTransform(SC.dpr,0,0,SC.dpr,0,0);const k=SC.slowmo.t/SC.slowmo.dur;q.globalAlpha=Math.min(1,k*4)*(1-Math.max(0,(k-0.7)/0.3));q.textAlign='center';q.font='800 44px "Nanum Myeongjo",serif';q.fillStyle='#000';q.fillText('격 파',SC.VW/2+2,SC.VH*0.24+2);q.fillStyle='#FFE0A0';q.shadowColor=SC.slowmo.col;q.shadowBlur=20;q.fillText('격 파',SC.VW/2,SC.VH*0.24);q.restore()}
   if(SC.comboShow>0&&SC.combo>=5){const k=Math.min(1,SC.comboShow/0.3);q.globalAlpha=k;q.font=`${22+Math.min(10,SC.combo/5)}px "Nanum Myeongjo",serif`;q.fillStyle='#000';q.fillText(`${SC.combo} 연속 처치!`,SC.W/2+1,-14);q.fillStyle='#FFD166';q.fillText(`${SC.combo} 연속 처치!`,SC.W/2,-15);q.globalAlpha=1}
 }
+/* ===== 발열 줄이기 =====
+   · 그리기는 초당 30번(고화질 켜면 60번), 메뉴·창이 화면을 덮고 있으면 초당 12번
+   · 화면 해상도는 기기 배율 최대 1.5(고화질 2)
+   · 어둠 가림막(CSS 마스크)은 빛 위치가 4px 이상 움직일 때만 다시 그림
+   · 버튼·막대 같은 화면 글자는 값이 바뀔 때만 고침 */
+let frameAcc=0,uiAcc=0;
+function frameGap(){const cover=!$('overlay').hidden||!$('drawer').hidden||!$('reveal').hidden;return cover?1/12:S&&S.hiFps?1/60:1/30}
 function sceneLoop(now){
-  const dt=Math.min(0.05,(now-lastT)/1000);lastT=now;
+  const rdt=Math.min(0.1,(now-lastT)/1000);lastT=now;frameAcc+=rdt;
+  if(frameAcc+0.004<frameGap()){requestAnimationFrame(sceneLoop);return}
+  const dt=Math.min(0.1,frameAcc);frameAcc=0;
   if(!document.hidden){
     if(!SC.W){sceneSize();syncTeam();init3D();size3D()}
     if(SC.W){let tsc=1;if(SC.slowmo){const k=SC.slowmo.t/SC.slowmo.dur;tsc=k<1?0.18+0.82*k*k:1;SC.slowmo.t+=dt;if(k>=1)SC.slowmo=null}if(SC.hs>0)SC.hs-=dt;else sceneStep(dt*tsc);if(R3.on)render3D(dt);else sceneDraw()}
-    tickSkills(dt*(S.fast?3:1));
-    const u=$('ultBtn');u.style.setProperty('--p',Math.round(SC.ult*100)+'%');u.disabled=SC.ult<1;u.textContent=SC.ult<1?`필살기 ${Math.round(SC.ult*100)}%`:'필살기!';
-    $('hudKills').textContent=`처치 ${fmt(S.kills||0)}`;renderBossBar();
+    uiAcc+=dt;const skDt=dt*(S.fast?3:1);
+    if(uiAcc>=0.1){tickSkills(uiAcc*(S.fast?3:1));uiAcc=0;
+      const u=$('ultBtn'),pc=Math.round(SC.ult*100);if(u._pc!==pc){u._pc=pc;u.style.setProperty('--p',pc+'%');u.disabled=SC.ult<1;u.textContent=SC.ult<1?`필살기 ${pc}%`:'필살기!'}
+      renderBossBar()}
   }
   requestAnimationFrame(sceneLoop)}
 requestAnimationFrame(sceneLoop);
@@ -3633,10 +3644,10 @@ function render3D(dt){
 /* 시야: 소환사 주변만 밝고 나머지는 어둠. 반지름은 화면 크기에 맞춰요 */
 const LR={r0:0,r1:0};
 function lightAt(x,y){const m=Math.min(SC.VW,SC.H*1.15);LR.r0=m*0.36;LR.r1=m*0.88;
-  const d=$('dark');d.style.setProperty('--lx',x.toFixed(0)+'px');d.style.setProperty('--ly',y.toFixed(0)+'px');
+  x=Math.round(x/4)*4;y=Math.round(y/4)*4;const d=$('dark');if(d._lx===x&&d._ly===y&&d._m===m)return;d._lx=x;d._ly=y;d._m=m;d.style.setProperty('--lx',x.toFixed(0)+'px');d.style.setProperty('--ly',y.toFixed(0)+'px');
   d.style.setProperty('--r0',LR.r0.toFixed(0)+'px');d.style.setProperty('--r1',LR.r1.toFixed(0)+'px')}
 /* 보스는 스스로 불길한 빛을 내서 어둠 속에서도 보여요 */
-function bossLight(p){const d=$('dark');if(!p){d.style.setProperty('--bx','-999px');return}const r=Math.min(SC.VW,SC.H*1.15);
+function bossLight(p){const d=$('dark');if(!p){if(d._bx!==-999){d._bx=-999;d.style.setProperty('--bx','-999px')}return}const r=Math.min(SC.VW,SC.H*1.15);
   d.style.setProperty('--bx',p.x.toFixed(0)+'px');d.style.setProperty('--by',p.y.toFixed(0)+'px');d.style.setProperty('--br0',(r*0.16).toFixed(0)+'px');d.style.setProperty('--br1',(r*0.42).toFixed(0)+'px')}
 function overlay3D(){
   const c=$('scene'),g=c.getContext('2d');g.setTransform(SC.dpr,0,0,SC.dpr,0,0);g.clearRect(0,0,SC.VW,SC.VH);g.textAlign='center';g.textBaseline='middle';
