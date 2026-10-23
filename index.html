@@ -1844,7 +1844,7 @@ function hexMob(m,sec){m.slow=Math.max(m.slow||0,sec);m.vuln=Math.max(m.vuln||0,
 function tryBreak(m){if(m.invis>0){m.invis=0;SC.fx.push({k:'num',x:m.x,y:m.y-90,t:0,life:1.2,txt:'드러남!',col:'#FFF2B0',sz:15})}
   if(SC.ms.some(a=>a.charm>0)){SC.ms.forEach(a=>a.charm=0);SC.fx.push({k:'num',x:m.x,y:m.y-70,t:0,life:1.2,txt:'매혹 해제',col:'#FF7AB8',sz:14})}
   const A=m.act;if(!A)return;const lead=A.T&&A.T.length?A.T[0].dur:0.6;if(A.t>=lead||A.done)return;
-  SC.tele=SC.tele.filter(T=>!(A.T||[]).includes(T));m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.stagger=2;m.sk=rand(5,7);
+  SC.tele=SC.tele.filter(T=>!(A.T||[]).includes(T));m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.stagger=2;m.sk=rand(4,5.5);
   SC.fx.push({k:'num',x:m.x,y:m.y-80,t:0,life:1.6,txt:'파훼!',col:'#F2C24A',sz:20},{k:'ring',x:m.x,y:m.y,t:0,life:0.6,r:90,col:'#F2C24A',w:6});if(!RM)SC.shake=8;addLog(`${SPECIES[m.k][1]}의 대기술을 파훼했어요!`,true)}
 function castSkill(a,manual){
   if(!a||a.down>0)return false;const sk=skillOf(a);if((SC.skcd[a.key]||0)>0)return false;
@@ -3132,11 +3132,13 @@ function inShape(T,x,y){
   if(T.s==='cone'){const dx=x-T.x,dy=y-T.y,d=Math.hypot(dx,dy);if(d>T.r)return false;let da=Math.atan2(dy,dx)-T.a;da=Math.atan2(Math.sin(da),Math.cos(da));return Math.abs(da)<=T.ang/2||d<14}
   if(T.s==='line'){const vx=T.x1-T.x,vy=T.y1-T.y,L=Math.hypot(vx,vy)||1,ux=vx/L,uy=vy/L,px=x-T.x,py=y-T.y,along=px*ux+py*uy,perp=Math.abs(-px*uy+py*ux);return along>=-10&&along<=L+10&&perp<=T.w/2}
   return false}
-function escapeDir(a){if(a._rt==null)a._rt=rand(0.4,0.85);for(const T of SC.tele){if(T.t<a._rt||T.t>=T.dur-0.05||!inShape(T,a.x,a.y))continue;  /* 자동 회피는 반응이 늦어요(0.4~0.85초) */
+function escapeDir(a){if(a._rt==null)a._rt=rand(0.4,0.8);for(const T of SC.tele){if(T.t<a._rt||T.t>=T.dur-0.05||!inShape(T,a.x,a.y))continue;  /* 자동 회피는 반응이 늦어요(0.4~0.8초) */
   let ex,ey;if(T.s==='line'){const vx=T.x1-T.x,vy=T.y1-T.y,L=Math.hypot(vx,vy)||1;ex=-vy/L;ey=vx/L;if((a.x-T.x)*ex+(a.y-T.y)*ey<0){ex=-ex;ey=-ey}}
   else{ex=a.x-T.x;ey=a.y-T.y;const d=Math.hypot(ex,ey)||1;ex/=d;ey/=d;if(T.s==='cone'){ex=-Math.sin(T.a);ey=Math.cos(T.a);if((a.x-T.x)*ex+(a.y-T.y)*ey<0){ex=-ex;ey=-ey}}}
   return {x:ex,y:ey}}return null}
-function tele(o){o.t=0;SC.tele.push(o);return o}
+/* 대기술 강화: 예고 시간 ×0.8(최소 0.55초), 범위 ×1.2. 덮치기·급강하·순간이동 예고는 끝나기 직전까지 표적을 따라와요(가만히 있으면 맞아요) */
+const SKD={dur:0.8,size:1.2};
+function tele(o){o.t=0;o.dur=Math.max(0.55,o.dur*SKD.dur);if(o.r)o.r*=o.s==='cone'?1.12:SKD.size;if(o.w)o.w*=SKD.size;SC.tele.push(o);return o}
 /* 보스 위력: 권장 전투력보다 약할수록 가파르게 세져요(1.3배 부족 ≈ 1.7배, 1.6배 ≈ 2.6배, 2배 ≈ 4배, 3배 ≈ 9배 피해).
    보스전에서 쓰러진 아군은 10초 뒤 체력 40%로 일어나고, 자연 회복도 초당 1.2%로 줄어요 → 모두 쓰러지면 도전 실패. */
 const bossDm=r=>r<=1?Math.max(0.5,r):Math.min(10,r*r);
@@ -3145,7 +3147,7 @@ function spawnBoss(){
   const sp=bossSp();
   const st=STYLE[SPECIES[sp][1]]||{m:'chop',f:'blood',d:''};
   const per=Math.max(5,teamPower()/4),ratio=Math.max(0.4,Math.min(8,reqNow()/Math.max(1,teamPower()))),hp=Math.round(per*rand(140,175)*Math.pow(ratio,3));  /* 권장 전투력이면 약 20초, 대기술 2~3번 */
-  const b={gm:gmOf(sp),floor:curFloor(),dm:bossDm(ratio),dm0:bossDm(ratio),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(4,6),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
+  const b={gm:gmOf(sp),floor:curFloor(),dm:bossDm(ratio),dm0:bossDm(ratio),tl:BOSS_TIME,boss:1,x:SC.W+50,y:SC.H/2+rand(-20,20),hp,max:hp,sp:44,k:sp,hit:0,cd:1.6,sk:rand(3,4.5),kx:0,ky:0,elite:0,slam:0,wind:0,st,rng:RANGED_M.has(st.m)?rand(140,170):0,act:null,fly:0,vanish:0};
   SC.mobs.push(b);SC.boss=b;SC.bossIntro=2.4;SC.tele=[];renderBossBar(true)}
 /* 대기술 시작: 예고를 그리고 act에 진행 상태를 저장해요 */
 function bossSpecial(m,tg){const st=m.st,C=FXCOL[st.f]||FXCOL.blood,dx=tg.x-m.x,dy=tg.y-m.y,d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,a=Math.atan2(dy,dx);
@@ -3155,9 +3157,9 @@ function bossSpecial(m,tg){const st=m.st,C=FXCOL[st.f]||FXCOL.blood,dx=tg.x-m.x,
     case 'chop':T.push(tele({s:'cone',x:m.x,y:m.y,a,ang:1.7,r:105,dur:1.0,dmg:0.3}));break;
     case 'thrust':T.push(tele({s:'line',x:m.x,y:m.y,x1:m.x+ux*230,y1:m.y+uy*230,w:34,dur:0.9,dmg:0.3}));act.dash={x:m.x+ux*200,y:m.y+uy*200};break;
     case 'charge':T.push(tele({s:'line',x:m.x,y:m.y,x1:m.x+ux*260,y1:m.y+uy*260,w:46,dur:1.1,dmg:0.35}));act.dash={x:m.x+ux*230,y:m.y+uy*230};break;
-    case 'pounce':T.push(tele({s:'circle',x:tg.x,y:tg.y,r:52,dur:1.0,dmg:0.35}));act.leap={x:tg.x,y:tg.y,x0:m.x,y0:m.y};break;
-    case 'swoop':T.push(tele({s:'circle',x:tg.x,y:tg.y,r:58,dur:1.3,dmg:0.35}));act.leap={x:tg.x,y:tg.y,x0:m.x,y0:m.y,fly:1};act.dur=1.4;break;
-    case 'blink':T.push(tele({s:'circle',x:tg.x,y:tg.y,r:44,dur:0.8,dmg:0.35}));act.blink={x:tg.x-ux*10,y:tg.y-uy*10};act.dur=0.9;break;
+    case 'pounce':T.push(tele({s:'circle',x:tg.x,y:tg.y,r:52,dur:1.0,dmg:0.35,track:tg}));act.leap={x:tg.x,y:tg.y,x0:m.x,y0:m.y};break;
+    case 'swoop':T.push(tele({s:'circle',x:tg.x,y:tg.y,r:58,dur:1.3,dmg:0.35,track:tg}));act.leap={x:tg.x,y:tg.y,x0:m.x,y0:m.y,fly:1};act.dur=1.4;break;
+    case 'blink':T.push(tele({s:'circle',x:tg.x,y:tg.y,r:44,dur:0.8,dmg:0.35,track:tg}));act.blink={x:tg.x-ux*10,y:tg.y-uy*10};act.dur=0.9;break;
     case 'rear':T.push(tele({s:'circle',x:m.x+ux*40,y:m.y+uy*40,r:72,dur:1.0,dmg:0.3}));break;
     case 'stomp':T.push(tele({s:'circle',x:m.x,y:m.y,r:115,dur:1.2,dmg:0.3}));act.dur=1.3;break;
     case 'roar':T.push(tele({s:'circle',x:m.x,y:m.y,r:160,dur:1.1,dmg:0.2,push:1}));break;
@@ -3168,6 +3170,12 @@ function bossSpecial(m,tg){const st=m.st,C=FXCOL[st.f]||FXCOL.blood,dx=tg.x-m.x,
     case 'spin':act.dur=2.6;act.spin=1;SC.fx.push({k:'ring',x:m.x,y:m.y,t:0,life:0.5,r:50,col:C[0],w:5});break;
     case 'strike':act.dur=1.3;act.bites=[0.5,0.8,1.1];break;
     case 'dash':{const ps=alive();let px=m.x,py=m.y;act.path=[];ps.forEach(p=>{const nx=p.x+(p.x-px)*0.3,ny=p.y+(p.y-py)*0.3;T.push(tele({s:'line',x:px,y:py,x1:nx,y1:ny,w:30,dur:1.0,dmg:0.2}));act.path.push({x:nx,y:ny});px=nx;py=ny});act.dur=1.6;break}}
+  /* 체력 50% 이하(2단계): 원형 예고는 다른 아군 발밑에도 하나씩, 직선·부채꼴은 양옆으로 갈라져 하나 더 생겨요 */
+  if(m.hp<m.max*0.5&&T.length&&T.length<4){const ex=[];const al=alive();
+    T.slice().forEach(o=>{if(o.s==='circle'&&!o.rain&&!o.magic){al.filter(p=>p!==tg).slice(0,2).forEach(p=>ex.push(tele({s:'circle',x:p.x,y:p.y,r:o.r/SKD.size*0.85,dur:o.dur/SKD.dur+0.25,dmg:o.dmg*0.8,track:p})))}
+      else if(o.s==='line'&&!o.surge){const L=Math.hypot(o.x1-o.x,o.y1-o.y),a0=Math.atan2(o.y1-o.y,o.x1-o.x)+(Math.random()<0.5?0.45:-0.45);ex.push(tele({s:'line',x:o.x,y:o.y,x1:o.x+Math.cos(a0)*L,y1:o.y+Math.sin(a0)*L,w:o.w/SKD.size,dur:o.dur/SKD.dur+0.3,dmg:o.dmg*0.8}))}
+      else if(o.s==='cone'){ex.push(tele({s:'cone',x:o.x,y:o.y,a:o.a+Math.PI,ang:o.ang*0.8,r:o.r/1.12*0.8,dur:o.dur/SKD.dur+0.35,dmg:o.dmg*0.7}))}});
+    T.push(...ex);if(ex.length)SC.fx.push({k:'num',x:m.x,y:m.y-80,t:0,life:1.2,txt:'분노한 일격!',col:'#FF5A3A',sz:14})}
   act.T=T;act.ai=Math.random()<0.35;m.act=act}  /* 자동 모드에서 35% 확률로 소환사가 인장으로 파훼를 시도 */
 /* 예고가 끝나면 판정 + 속성 효과 */
 /* ===== 대기술은 치명적: 정통으로(예고의 안쪽) 맞으면 권장 전투력보다 10% 강해도 쓰러져요 =====
@@ -3213,8 +3221,8 @@ function bossStep(m,dt){
     if(A.spin){m.atkT=(A.t%0.4);m.atkA=0.8;const sp=70;m.x+=(tg.x-m.x)/(bd||1)*sp*dt;m.y+=(tg.y-m.y)/(bd||1)*sp*dt;A.tick=(A.tick||0)-dt;
       if(A.tick<=0){A.tick=0.4;SC.fx.push({k:'whirl',x:m.x,y:m.y,t:0,life:0.4,r:46,col:C[0],c2:C[1],ux:1,uy:0});alive().forEach(p=>{if(Math.hypot(p.x-m.x,p.y-m.y)<70)hurt(p,0.07)})}}
     if(A.bites){A.bites=A.bites.filter(bt=>{if(A.t<bt)return true;m.atkT=0;m.atkA=1;const p=m.tg;m.x+=(p.x-m.x)*0.5;m.y+=(p.y-m.y)*0.5;atkFx(m,p,false);if(Math.hypot(p.x-m.x,p.y-m.y)<75)hurt(p,0.1);return false})}
-    if(A.T)A.T.forEach(T=>{T.t+=dt;if(!T.hit&&T.t>=T.dur){T.hit=1;teleHit(T,m);if(!A.done){A.done=1;m.atkT=0;m.atkA=1.1;m.vanish=0}}});
-    if(A.t>=A.dur){m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.sk=rand(5,7.5)*(m.enr?0.6:1);m.cd=1;SC.tele=SC.tele.filter(T=>!A.T.includes(T))}
+    if(A.T)A.T.forEach(T=>{T.t+=dt;if(T.track&&T.t<T.dur*0.65&&!(T.track.down>0)){const dx=T.track.x-T.x,dy=T.track.y-T.y,d=Math.hypot(dx,dy);if(d>1){const v=Math.min(d,150*dt);T.x+=dx/d*v;T.y+=dy/d*v}}if(!T.hit&&T.t>=T.dur){T.hit=1;teleHit(T,m);if(!A.done){A.done=1;m.atkT=0;m.atkA=1.1;m.vanish=0}}});
+    if(A.t>=A.dur){m.act=null;m.fly=0;m.vanish=0;m.wind=0;m.sk=rand(3.6,5.2)*(m.enr?0.6:1)*(m.hp<m.max*0.5?0.8:1);m.cd=1;SC.tele=SC.tele.filter(T=>!A.T.includes(T))}
     m.y=Math.max(20,Math.min(SC.H-20,m.y));return}
   /* 평소: 다가가거나(근접) 거리를 두고(원거리) 기본 공격, 쿨이 차면 대기술 */
   m.sk-=dt;if(m.sk<=0&&bd<260&&!SC.bossIntro){bossSpecial(m,tg);return}
