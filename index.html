@@ -541,6 +541,14 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .reveal.flash::after{background:radial-gradient(circle at 50% 45%,var(--rc),transparent 60%)}
 .reveal.burst .rvsig{opacity:.22}
 
+.rvcard .em.ic{font-size:110px;line-height:1.1;filter:drop-shadow(0 0 18px var(--rc)) sepia(.4)}
+.ch1 .chr .dim{color:#9C8B76;font-size:12px}
+.ch1 .chr .grade{font-size:11px;padding:0 5px;vertical-align:1px}
+
+.chests.gob .chest1 img{filter:sepia(1) saturate(2.6) hue-rotate(2deg) brightness(1.15) drop-shadow(0 0 14px rgba(255,200,80,.7))}
+.chests.gob .ch1 .cht{color:#FFE08A}
+.chests.gob .ch1 .cht em{animation:none!important;color:#FFD86A!important;text-shadow:0 0 14px #FFB830,0 2px 4px #000}
+
 </style>
 
 <div class="scene" id="sceneBox">
@@ -697,7 +705,15 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 
     <section id="view-gear" hidden>
       <div style="display:flex;flex-direction:column;gap:12px">
-        <div class="panel">
+        <div class="seg" id="gearMode"><button data-gm="bag" aria-pressed="true">장비</button><button data-gm="fuse" aria-pressed="false">장비 합성</button></div>
+        <div class="panel" id="ifusePanel" hidden>
+          <h2>장비 합성</h2>
+          <details class="help"><summary>설명</summary><p>장비 2~4개와 골드를 넣으면 평균 등급의 새 장비가 나와요. 재료가 많을수록 등급이 오를 확률(대성공)이 커져요. 부위는 재료 중 가장 많은 부위를 따라가고, 새 장비는 Lv 1·미감정으로 나와요. 장착 중인 장비는 재료로 쓸 수 없어요.</p></details>
+          <div class="fslots" id="ifslots"></div>
+          <div class="preview" id="ifprev"></div>
+          <div class="row"><button class="btn primary" id="ifBtn">합성하기</button><button class="btn" id="ifAuto">자동 선택</button><button class="btn" id="ifClear">선택 해제</button></div>
+        </div>
+        <div class="panel" id="gearEqPanel">
           <h2>소환사 장비</h2>
           <details class="help"><summary>설명</summary><p>탐험 중 약 12분에 1개꼴로 발견돼요. 새 장비는 <b>미감정</b> 상태라 숨은 부가 능력치가 있어요. 난이도가 높을수록 등급과 능력치가 좋아지고, 장착한 장비의 전투력은 소환사에게 더해져요. 장비도 레벨업할 때마다 성장률이 바뀌어 등급이 오르내려요.</p></details>
           <div class="gear3" id="gearEq"></div>
@@ -1280,20 +1296,8 @@ function explore(){
   let changed=false;S.map=zoneOf(f);
   if(conquered()){}
   /* 층 돌파는 전투 화면에서 그 층 보스를 쓰러뜨려야 해요(clearFloor). 전투력 제한은 없어요 */
-  if(spForFloor()!=null&&Math.random()<FIND_RATE*(1+affixBonus().find)){
-    if(S.mons.length>=invMax())addLog('보관함이 가득 찼어요. 합성하거나 퇴마하세요.');
-    else{const m=makeMonster(wildP(eff()),spForFloor(),tag);
-      if(!keepMon(m)){const g=releaseGold(m);S.gold+=g;scenePush(`${nm(m)} ${gname(m.grade)} → +${fmt(g)}G`,'#8C8276',false,m.sp);}
-      else{S.mons.push(m);scenePush(`귀속! ${nm(m)} ${gname(m.grade)}`,RAR(m.grade),m.grade>=6,m.sp);pushFeed(`${nm(m)} ${mb(m)}`,m.grade>=6?'hot':'');addLog(`${nm(m)} 발견 · ${gname(m.grade)}등급`,m.grade>=5);if(m.grade>=7)toast(`${gname(m.grade)}등급 ${nm(m)} 귀속!`);changed=true}}
-  }
-  if(Math.random()<ITEM_RATE*(1+dexBonus().item+affixBonus().ifind)){
-    if(S.items.length>=MAXITEMS)addLog('장비 가방이 가득 차서 장비를 놓쳤어요.');
-    else{const it=makeItem(d,S.map);
-      if(!keepItem(it)){const g=itemSell(it);S.gold+=g;scenePush(`${it.name} ${gname(it.grade)} 분해 +${fmt(g)}G`,'#8C8276');}
-      else{S.items.push(it);scenePush(`${it.name} ${gname(it.grade)}`,RAR(it.grade),true);pushFeed(`${it.name} ${mb(it)}`,'hot');addLog(`장비 발견! ${it.name} · ${gname(it.grade)}등급 (+${fmt(ipw(it))})`,true);toast(`장비 발견: ${it.name} ${gname(it.grade)}등급`);changed=true}}
-  }
+  /* 악마 귀속과 장비 발견은 이제 보스 상자에서만 나와요(화면이 덜 어지럽게) */
   const x=expPerTick()*manualMul();lastExp=x;lastGold=gps()*manualMul()*TICK_MS/1000;
-  if(Math.random()<0.5)scenePush(`+${fmt(lastGold)}G`,'#E9C46A');
   S.team.forEach(id=>{const m=id!=null&&byId(id);if(m&&gainExp(m,x))changed=true});
   if(gainCharExp(x))changed=true;
   return changed;
@@ -1313,7 +1317,7 @@ function renderExplore(){
   $('req').textContent=conquered()?'—':fmt(req);
   $('gps').innerHTML=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;
   $('stageNote').textContent=(conquered()?'클리어한 층이에요. 머물면서 악마와 장비를 계속 모을 수 있어요. ':`전투 화면에서 이 층 보스를 ${BOSS_TIME}초 안에 쓰러뜨리면 클리어하고 다음 층으로 올라가요. 권장 전투력 ${fmt(req)}보다 약하면 보스가 단단하고 아프게 때려서, 시간 초과나 전멸로 실패하기 쉬워요. `)
-    +`${SPECIES[b][2]===-2?'조합 전용 보스 층이라 악마가 귀속되지 않아요(장비·골드·경험치는 그대로). ':`이 층에서는 보스 ${SPECIES[b][1]}만 귀속돼요. `}악마는 평균 약 ${Math.round(TICK_MS/1000/FIND_RATE)}초, 장비는 약 ${Math.round(TICK_MS/1000/ITEM_RATE/60)}분에 1개 발견돼요.`;
+    +`${SPECIES[b][2]===-2?'조합 전용 보스 층이라 악마가 귀속되지 않아요(장비·골드·경험치는 그대로). ':`보스 상자에서 ${SPECIES[b][1]}이(가) 귀속될 수 있어요. `}악마와 장비는 보스를 쓰러뜨리면 떨어지는 상자에서만 나와요.`;
   renderFloors();
   $('prog').style.width=(S.prog*100)+'%';$('hudProg').style.width=(conquered()?100:S.prog*100)+'%';
   $('hudPow').innerHTML=`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.5 4H20v5.5L10 19.5 4.5 14z"/><path d="M7 17l-3 3"/></svg><b class="${conquered()||tp>=req?'ok':'no'}">${fmt(tp)}</b><small>/ ${conquered()?'✓':fmt(req)}</small>`;
@@ -1427,8 +1431,30 @@ function renderGear(){
   $('gearNote').textContent=`${S.items.length} / ${MAXITEMS} · 장비 전투력 +${ifmt(gearPower())}`;
   {const B=affixBonus(),ks=Object.keys(B).filter(k=>B[k]>0);$('gearAff').innerHTML=ks.length?'장착 부가 능력 합계 · '+ks.map(k=>`${AFFIX[k].n} ${AFFIX[k].neg?'−':'+'}${(B[k]*100).toFixed(1)}${AFFIX[k].u}`).join(' · '):'장착한 장비의 부가 능력이 없어요. 장비를 감정해 보세요.'}
   const a=[...S.items].sort((x,y)=>y.grade-x.grade||y.pw-x.pw);
-  $('gearGrid').innerHTML=a.length?a.map(itemCard).join(''):'<div class="muted">아직 장비가 없어요.</div>';
+  const F=gearMode==='fuse';$('ifusePanel').hidden=!F;$('gearEqPanel').hidden=F;document.querySelectorAll('#gearMode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.gm===gearMode));
+  if(F){renderIFuse();const L=a.filter(it=>!S.equip.includes(it.id));$('gearGrid').innerHTML=L.length?L.map(it=>itemCard(it).replace('class="card','class="card'+(ifSel.includes(it.id)?' sel':''))).join(''):'<div class="empty">합성할 장비가 없어요</div>';return}
+  $('gearGrid').innerHTML=a.length?a.map(itemCard).join(''):'<div class="empty">아직 장비가 없어요. 보스 상자에서 나와요.</div>';
 }
+/* ===== 장비 합성: 2~4개 → 평균 등급(+대성공) 새 장비 ===== */
+let gearMode='bag',ifSel=[];
+function ifPreview(){const its=ifSel.map(itemById).filter(Boolean);if(its.length<2)return null;const n=its.length,avg=its.reduce((a,x)=>a+x.grade,0)/n,base=Math.min(TOP,Math.round(avg));
+  const cnt={};its.forEach(x=>cnt[x.slot]=(cnt[x.slot]||0)+1);const mx=Math.max(...Object.values(cnt)),slots=Object.keys(cnt).filter(k=>cnt[k]===mx).map(Number);
+  return {its,n,base,up1:0.12+0.06*(n-2),up2:0.03*(n-1),slots,cost:Math.round(its.reduce((a,x)=>a+itemSell(x),0)*1.5)}}
+function renderIFuse(){const p=ifPreview();
+  $('ifslots').innerHTML=[0,1,2,3].map(i=>{const it=itemById(ifSel[i]);return it?`<button class="slot filled" data-ifrm="${it.id}"><span class="em">${SLOTS[it.slot].e}</span><span class="nm">${mb(it)} ${it.name}</span><span class="pw">Lv${it.lv}</span></button>`:`<div class="slot"><span class="em" style="opacity:.35">＋</span><span class="nm muted">재료 ${i+1}</span><span class="pw">&nbsp;</span></div>`}).join('');
+  $('ifprev').innerHTML=p?`결과 <b>${gname(p.base)}</b> 등급 ${p.slots.map(k=>SLOTS[k].n).join('/')} · 대성공 ${Math.round(p.up1*100)}% (+1) · 초대성공 ${Math.round(p.up2*100)}% (+2) · 비용 <b class="num">${fmt(p.cost)}G</b>`:'<span class="muted">아래에서 장비를 2개 이상 골라주세요.</span>';
+  $('ifBtn').disabled=!p||S.gold<p.cost}
+function doIFuse(){const p=ifPreview();if(!p)return;if(S.gold<p.cost)return toast(`골드가 부족해요 (${fmt(p.cost)}G 필요)`);S.gold-=p.cost;
+  let g=p.base,r=Math.random(),jump=0;if(r<p.up2)jump=2;else if(r<p.up2+p.up1)jump=1;g=Math.min(TOP,g+jump);
+  S.items=S.items.filter(x=>!ifSel.includes(x.id));const sl=anyOf(p.slots),it=makeItem(S.diff,S.map,g);it.slot=sl;it.name=`${MAPS[it.map].adj} ${SLOTS[sl].w}`;it.isNew=true;S.items.push(it);ifSel=[];
+  addLog(`장비 합성으로 ${it.name} 탄생 · ${gname(it.grade)}등급${jump?' (대성공)':''}`,jump>0||it.grade>=5);save();renderAll();
+  fuseReveal({item:it,grade:it.grade,bonus:''},jump,false)}
+function ifAuto(){const free=S.items.filter(x=>!S.equip.includes(x.id)&&x.grade<TOP);const by={};free.forEach(x=>(by[x.grade]=by[x.grade]||[]).push(x));
+  const g=Object.keys(by).map(Number).filter(k=>by[k].length>=2).sort((a,b)=>a-b)[0];if(g==null)return toast('같은 등급 장비가 2개 이상 있어야 해요');
+  ifSel=by[g].sort((a,b)=>a.slot-b.slot||a.pw-b.pw).slice(0,4).map(x=>x.id);renderGear()}
+$('gearMode').addEventListener('click',e=>{const b=e.target.closest('[data-gm]');if(!b)return;gearMode=b.dataset.gm;renderGear()});
+$('ifBtn').onclick=doIFuse;$('ifAuto').onclick=ifAuto;$('ifClear').onclick=()=>{ifSel=[];renderGear()};
+$('ifslots').addEventListener('click',e=>{const b=e.target.closest('[data-ifrm]');if(!b)return;ifSel=ifSel.filter(x=>x!==+b.dataset.ifrm);renderGear()});
 /* 조합법 즉시 합성: 재료 두 종류를 모두 가지고 있으면 바로 합성해요.
    재료 고르기: 팀에 없는 악마 우선, 그중 등급이 높은 악마 (결과 등급 = 재료 평균). 두 번 눌러 확정. */
 let qfArm=-1;
@@ -1768,7 +1794,8 @@ $('dexGrid').addEventListener('click',e=>{const c=e.target.closest('[data-grim]'
 $('dexGrid').addEventListener('keydown',e=>{if(e.key==='Enter'){const c=e.target.closest('[data-grim]');if(c)openGrim(+c.dataset.grim)}});
 $('grimLast').onclick=()=>openGrimLast();
 $('monGrid').addEventListener('click',e=>{const b=e.target.closest('.card');if(b)openDetail(+b.dataset.id)});
-$('gearGrid').addEventListener('click',e=>{const b=e.target.closest('[data-item]');if(b)openItem(+b.dataset.item)});
+$('gearGrid').addEventListener('click',e=>{const b=e.target.closest('[data-item]');if(!b)return;const id=+b.dataset.item;
+  if(gearMode==='fuse'){if(ifSel.includes(id))ifSel=ifSel.filter(x=>x!==id);else if(ifSel.length<4)ifSel.push(id);else toast('재료는 4개까지예요');renderGear();return}openItem(id)});
 $('gearEq').addEventListener('click',e=>{const b=e.target.closest('[data-item]');if(b)openItem(+b.dataset.item)});
 $('team').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -1811,6 +1838,7 @@ const popQ=[];let popT=null;
 function popup(m,before,spurt){
   if(popQ.length>=6)popQ.shift();
   const up=m.grade>before, chg=m.grade!==before;
+  if(!chg)return;  /* 화면이 어지럽지 않게: 급성장은 기록에만, 등급이 바뀔 때만 팝업 */
   popQ.push(`<span class="em">${em(m)}</span><div><div class="pt">${nm(m)} Lv ${m.lv}${chg?(up?' · 등급 상승!':' · 등급 하락'):' · 급성장!'}</div>
     ${chg?`<div>${badge(before)} → ${badge(m.grade)}${m.grade>TOP&&up?` <b class="upc">각성 ★${m.grade-TOP} · 능력치 +${Math.round((STAR_BONUS[m.grade-TOP]-1)*100)}%</b>`:''}</div>`:''}
     ${spurt.length?`<div class="upc">${spurt.map(c=>`${LABEL[c.k]} +${c.pct}%`).join(' · ')} 급성장</div>`:''}</div>`);
@@ -1868,7 +1896,7 @@ function clearFloor(f){if(cleared(f))return false;const rw=Math.round(floorReq(f
   save();renderTop();renderExplore();return true}
 
 /* ===================== 흥미 요소 4종 =====================
-   1) 황금 도둑 라움: 보스전 중 드물게(평균 90초에 한 번) 금빛 까마귀 악마가 나타나 12초 동안 도망쳐요. 잡으면 골드·장비·높은 등급 악마가 쏟아지고, 놓치면 사라져요.
+   1) 황금 도둑 라움: 보스전 중 드물게(평균 90초에 한 번) 금빛 까마귀 악마가 나타나 12초 동안 도망쳐요. 잡으면 가장 높은 등급(전설)의 '황금 악마 상자'를 확정으로 얻고, 놓치면 사라져요.
    2) 보스 상자: 보스를 쓰러뜨리면 상자 하나가 떨어지고, 빛이 등급 단계(평범 45% · 희귀 35% · 영웅 15% · 전설 5%)까지 오르다 열려요.
    3) 합성 대박 연출: 인장이 돌며 빛이 흰색→파랑→보라→금색→무지개로 단계별로 올라가고, 결과 등급에서 멈춰 터져요. 누르면 넘겨요.
    4) 보스 처치 슬로모션: 마지막 일격에 시간이 느려지고 보스 쪽으로 확대되며, 번쩍임과 함께 산산조각 나요. */
@@ -1883,19 +1911,23 @@ function gobStep(m,dt){m.life-=dt;m.hit=Math.max(0,m.hit-dt);m.x+=m.kx;m.y+=m.ky
 function spawnGob(){const k=SPECIES.findIndex(x=>x[5]===GOB_NO);if(k<0)return;const per=Math.max(5,teamPower()/4),hp=Math.round(per*rand(26,34));
   const m={gob:1,k,x:SC.W-30,y:rand(40,SC.H-40),hp,max:hp,sp:78,life:12,hit:0,cd:9,kx:0,ky:0,elite:0,slam:0,wind:0,st:{m:'swoop',f:'gold'}};SC.mobs.push(m);SC.gob=m;
   SC.fx.push({k:'ring',x:m.x,y:m.y,t:0,life:0.7,r:70,col:'#FFD166',w:4});toast('✦ 황금 도둑 라움이 나타났다! 12초 안에 잡으세요');if(!RM)SC.shake=Math.max(SC.shake,4)}
-function gobLoot(m){SC.gob=null;const gold=Math.round(gps()*90+floorReq(curFloor())*0.25);S.gold+=gold;const got=[`+${fmt(gold)}G`];
-  if(S.items.length<MAXITEMS){const it=makeItem(S.diff,S.map,Math.min(TOP,floorD(curFloor())*2+2+(Math.random()<0.3?1:0)));S.items.push(it);got.push(`${it.name} ${gname(it.grade)}`)}
-  if(S.mons.length<invMax()){const pool=FLOORS.slice(0,Math.min(56,curFloor()+6)).filter(k=>SPECIES[k][2]!==-2),g=Math.min(TOP,Math.max(3,rollCapture()+2));const mm=makeMonster(rand(TH[g]+3,TH[g+1]-3),anyOf(pool),'황금 도둑');S.mons.push(mm);got.push(`${nm(mm)} ${gname(mm.grade)}`);if(!S.seen.includes(mm.sp))S.seen.push(mm.sp)}
-  if(!RM)SC.shake=10;SC.fx.push({k:'ring',x:m.x,y:m.y,t:0,life:0.9,r:140,col:'#FFE08A',w:6},{k:'num',x:m.x,y:m.y-70,t:0,life:2,txt:'황금 도둑 처치!',col:'#FFE08A',sz:20});
-  for(let i=0;i<40;i++)SC.drops.push({x:m.x+rand(-60,60),y:m.y+rand(-30,30),vy:-rand(80,200),t:rand(-0.3,0),txt:'●',col:'#FFD166',coin:true});
-  got.forEach((t,i)=>SC.drops.push({x:m.x+(i-1)*48,y:m.y-10,vy:-140,t:-i*0.15,txt:t,col:'#FFE08A',big:true}));
-  addLog(`황금 도둑 처치! ${got.join(' · ')}`,true);save()}
+/* 황금 도둑을 잡으면 '황금 악마 상자'를 확정으로 얻어요: 상자 중 가장 높은 등급(전설) + 금빛 상자. 다른 상자가 열리는 중이면 이어서 열려요 */
+function gobLoot(m){SC.gob=null;if(!RM)SC.shake=10;SC.fx.push({k:'ring',x:m.x,y:m.y,t:0,life:0.9,r:140,col:'#FFE08A',w:6},{k:'num',x:m.x,y:m.y-70,t:0,life:2,txt:'황금 도둑 처치!',col:'#FFE08A',sz:20});
+  for(let i=0;i<30;i++)SC.drops.push({x:m.x+rand(-60,60),y:m.y+rand(-30,30),vy:-rand(80,200),t:rand(-0.3,0),txt:'●',col:'#FFD166',coin:true});
+  addLog('황금 도둑 처치! 황금 악마 상자를 얻었어요',true);
+  const T=CHEST_T.length-1;if(SC.chest||SC.chestT>0){(SC.chestQ=SC.chestQ||[]).push([T,'황금 악마 상자'])}else setTimeout(()=>openChests(T,'황금 악마 상자'),600)}
 /* ---- 보스 상자 ---- */
 const CHEST_T=[{n:'평범한 상자',c:'#A89C8C',p:45},{n:'희귀한 상자',c:'#5486D8',p:35},{n:'영웅의 상자',c:'#9A6AD8',p:15},{n:'전설의 상자',c:'#E9B830',p:5}];
 function chestRoll(){let x=Math.random()*100;for(let i=3;i>0;i--){if(x<CHEST_T[i].p)return i;x-=CHEST_T[i].p}return 0}
-function chestContent(t){const G=gps(),d=floorD(curFloor()),o={t,gold:Math.round(G*[25,55,100,200][t]+floorReq(curFloor())*[0.05,0.1,0.2,0.4][t])};
-  if(t>=1)o.item=Math.min(TOP,d*2+[0,1,2,4][t]);if(t>=2&&Math.random()<(t===3?1:0.5))o.mon=Math.min(TOP,Math.max(2,rollCapture()+(t===3?4:2)));return o}
-function chestText(o){const a=[`${fmt(o.gold)}G`];if(o.item!=null)a.push(`장비 ${gname(o.item)}`);if(o.mon!=null)a.push(`악마 ${gname(o.mon)}`);return a.join(' · ')}
+/* 상자 내용(보스 처치마다 하나): 골드 + 확률로 악마 귀속(이 층 보스 종류, 조합 전용 층이면 일반 악마) + 확률로 장비.
+   악마: 평범 35% · 희귀 60% · 영웅 100%(+1등급) · 전설 100%(+2~4등급) — 평균 약 45초에 1마리(예전 탐험 발견과 비슷)
+   장비: 평범 0% · 희귀 8% · 영웅 35%(+1) · 전설 100%(+2) — 평균 약 3분에 1개. 악마 발견·장비 발견 부가 능력과 도감 보상이 확률을 올려요. */
+function chestContent(t){const G=gps(),o={t,gold:Math.round(G*[25,55,100,200][t]+floorReq(curFloor())*[0.05,0.1,0.2,0.4][t])};
+  const fm=1+affixBonus().find,fi=1+dexBonus().item+affixBonus().ifind;
+  if(Math.random()<Math.min(1,[0.35,0.6,1,1][t]*fm))o.mon=Math.min(TOP,rollCapture()+[0,0,1,2+Math.floor(Math.random()*3)][t]);
+  if(Math.random()<Math.min(1,[0,0.08,0.35,1][t]*fi))o.item=t>=2?Math.min(TOP,floorD(curFloor())*2+[0,0,1,2][t]+Math.floor(Math.pow(Math.random(),2.2)*3)):-1;
+  return o}
+function chestText(o){const a=[`${fmt(o.gold)}G`];if(o.item!=null)a.push('장비');if(o.mon!=null)a.push(`악마 ${gname(o.mon)}`);return a.join(' · ')}
 /* 상자 하나가 떨어지고, 틈새로 새어 나오는 빛이 흰색 → 파랑 → 보라 → 금색 순서로 단계가 오르다 상자 등급에서 멈춰 열려요.
    좋은 상자일수록 단계가 길고 흔들림·빛줄기·불꽃이 커져요(전설은 금빛 빛기둥과 무지개 테두리). 누르면 바로 열려요. */
 const CH_COL=['#E8D8B8','#6AA8E8','#B47AE8','#FFC24A'];
@@ -1905,22 +1937,28 @@ const PROP_IMG={body:'data:image/webp;base64,UklGRpQgAABXRUJQVlA4WAoAAAAQAAAAAwE
 function embers(el,n,spread,rise,big){for(let i=0;i<n;i++){const p=document.createElement('i');p.className='emb'+(big?' big':'');const sz=(big?4:2.5)+Math.random()*(big?7:4);
     p.style.cssText=`--x:${((Math.random()*2-1)*spread).toFixed(0)}px;--y:${(-(rise*0.5+Math.random()*rise)).toFixed(0)}px;--sw:${((Math.random()*2-1)*18).toFixed(0)}px;--d:${(0.9+Math.random()*1.1).toFixed(2)}s;--s:${sz.toFixed(1)}px;animation-delay:${(Math.random()*0.25).toFixed(2)}s`;el.appendChild(p);setTimeout(()=>p.remove(),2600)}}
 function smoke(el,n){for(let i=0;i<n;i++){const p=document.createElement('i');p.className='smk';p.style.cssText=`--x:${((Math.random()*2-1)*70).toFixed(0)}px;--y:${(-(30+Math.random()*80)).toFixed(0)}px;--d:${(1.4+Math.random()*1.2).toFixed(2)}s;--s:${(50+Math.random()*60).toFixed(0)}px`;el.appendChild(p);setTimeout(()=>p.remove(),3000)}}
-function openChests(){const box=$('chests');if(!box)return;const o=chestContent(chestRoll());SC.chest={o,opened:false};
+function openChests(ft,name){const box=$('chests');if(!box)return;const o=chestContent(ft!=null?ft:chestRoll());if(name)o.name=name;SC.chest={o,opened:false};
   box.innerHTML=`<div class="ch1" data-t="0"><div class="rays"></div><div class="glowb"></div><div class="chest1"><img class="cbody" alt="" src="${PROP_IMG.body}"><span class="inner"></span><img class="clid" alt="악마 상자" src="${PROP_IMG.lid}"><span class="gap"></span></div><div class="cht">무엇이 들었을까…</div><div class="chr"></div></div>`;smoke(box.querySelector('.ch1'),4);
-  box.hidden=false;box.className='chests one';let st=0;
+  box.hidden=false;box.className='chests one'+(o.name?' gob':'');let st=0;
   const set=t=>{const el=box.querySelector('.ch1');el.dataset.t=t;el.style.setProperty('--cc',CH_COL[t]);el.classList.remove('pulse');void el.offsetWidth;el.classList.add('pulse');
     embers(el,5+t*7,50+t*25,60+t*40,false);if(t>=2)smoke(el,2)};
   const step=()=>{if(SC.chest!==S2)return;set(st);if(st>=o.t){S2.tm=setTimeout(()=>openChest(),550+o.t*150);return}st++;S2.tm=setTimeout(step,480+st*120)};
   const S2=SC.chest;S2.tm=setTimeout(step,350)}
+function chestGive(o,got){
+  if(o.mon!=null){const sp=spForFloor()!=null?spForFloor():anyOf(FLOORS.slice(0,Math.min(56,curFloor()+6)).filter(k=>SPECIES[k][2]!==-2));
+    if(S.mons.length>=invMax())got.push('<span class="dim">보관함이 가득 차 악마를 놓쳤어요</span>');
+    else{const mm=makeMonster(rand(Math.max(P_MIN,TH[o.mon])+2,TH[o.mon+1]-2),sp,`${curFloor()}층 상자`);if(!S.seen.includes(mm.sp)){S.seen.push(mm.sp)}
+      if(keepMon(mm)){S.mons.push(mm);got.push(`귀속 · ${nm(mm)} ${mb(mm)}`);addLog(`상자에서 ${nm(mm)} 귀속 · ${gname(mm.grade)}등급`,mm.grade>=5)}else{const g=releaseGold(mm);S.gold+=g;got.push(`<span class="dim">${nm(mm)} ${gname(mm.grade)} 퇴마 +${fmt(g)}G</span>`)}}}
+  if(o.item!=null){if(S.items.length>=MAXITEMS){S.gold+=Math.round(o.gold*0.5);got.push('<span class="dim">장비 가방이 가득 차 골드로</span>')}
+    else{const it=o.item<0?makeItem(S.diff,S.map):makeItem(S.diff,S.map,o.item);if(keepItem(it)){S.items.push(it);got.push(`장비 · ${it.name} ${mb(it)}`)}else{const g=itemSell(it);S.gold+=g;got.push(`<span class="dim">${it.name} ${gname(it.grade)} 분해 +${fmt(g)}G</span>`)}}}}
 function openChest(){const S2=SC.chest;if(!S2||S2.opened)return;S2.opened=true;clearTimeout(S2.tm);const box=$('chests'),el=box.querySelector('.ch1'),o=S2.o;
   el.dataset.t=o.t;el.style.setProperty('--cc',CH_COL[o.t]);
   S.gold+=o.gold;const got=[`+${fmt(o.gold)}G`];
-  if(o.item!=null){if(S.items.length<MAXITEMS){const it=makeItem(S.diff,S.map,o.item);S.items.push(it);got.push(`${it.name} ${gname(it.grade)}`)}else{S.gold+=Math.round(o.gold*0.5);got.push('장비 가방이 가득 차 골드로')}}
-  if(o.mon!=null){if(S.mons.length<invMax()){const pool=FLOORS.slice(0,Math.min(56,curFloor()+6)).filter(k=>SPECIES[k][2]!==-2);const mm=makeMonster(rand(TH[o.mon]+3,TH[o.mon+1]-3),anyOf(pool),'보물 상자');S.mons.push(mm);if(!S.seen.includes(mm.sp))S.seen.push(mm.sp);got.push(`${nm(mm)} ${gname(mm.grade)}`)}else got.push('보관함이 가득 차 악마를 놓쳤어요')}
-  el.classList.add('open');el.querySelector('.cht').innerHTML=`<em>${CHEST_T[o.t].n}</em>`;el.querySelector('.chr').innerHTML=got.join('<br>');
+  chestGive(o,got);
+  el.classList.add('open');el.querySelector('.cht').innerHTML=`<em>${o.name||CHEST_T[o.t].n}</em>`;el.querySelector('.chr').innerHTML=got.join('<br>');
   embers(el,16+o.t*16,70+o.t*40,90+o.t*60,true);smoke(el,3+o.t*2);
-  if(o.t>=2&&!RM)SC.shake=6+o.t*3;addLog(`${CHEST_T[o.t].n}: ${got.join(' · ')}`,o.t>=2);save();renderTop();
-  setTimeout(()=>{box.hidden=true;SC.chest=null},2200+o.t*500)}
+  if(o.t>=2&&!RM)SC.shake=6+o.t*3;addLog(`${o.name||CHEST_T[o.t].n}: ${got.join(' · ')}`,o.t>=2);save();renderTop();
+  setTimeout(()=>{box.hidden=true;SC.chest=null;const q=(SC.chestQ||[]).shift();if(q)setTimeout(()=>openChests(q[0],q[1]),300)},2200+o.t*500)}
 /* ---- 합성 대박 연출 ---- */
 const REV_TIER=g=>g>=9?4:g>=8?3:g>=6?2:g>=4?1:0;const REV_COL=['#E9E2D6','#5AA8FF','#B46AFF','#FFC83A','rainbow'];
 function fuseReveal(m,jump,rare){const el=$('reveal');if(!el)return;const top=Math.max(REV_TIER(m.grade),rare?3:0);let st=0,done=false;
@@ -1928,14 +1966,13 @@ function fuseReveal(m,jump,rare){const el=$('reveal');if(!el)return;const top=Ma
   el.hidden=false;el.className='reveal';const sig=el.querySelector('.rvsig');
   const setT=t=>{const c=REV_COL[t];el.dataset.t=t;sig.style.color=c==='rainbow'?'#FFF':c;el.style.setProperty('--rc',c==='rainbow'?'#FFE08A':c);el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');const fx=el.querySelector('.rvfx');if(fx){embers(fx,6+t*6,90,120+t*30,false);if(t>=2)smoke(fx,2)}};
   const show=()=>{if(done)return;done=true;clearTimeout(tm);setT(top);el.classList.add('burst');const card=el.querySelector('.rvcard');{const fx=el.querySelector('.rvfx');if(fx){embers(fx,20+top*14,140,200,true);smoke(fx,4)}}
-    card.innerHTML=`<span class="em">${em(m)}</span><div class="rvg">${mb(m)}</div><h3>${nm(m)}</h3><div class="rvm">${rare?'희귀 조합 성공!':jump>=2?'초대성공!':jump?'대성공!':'합성 완료'}${m.bonus?' · '+m.bonus:''}</div>`;card.hidden=false;el.querySelector('.rvskip').textContent='누르면 닫기'};
+    card.innerHTML=m.item?`<span class="em ic">${SLOTS[m.item.slot].e}</span><div class="rvg">${mb(m.item)}</div><h3>${m.item.name}</h3><div class="rvm">${jump>=2?'초대성공!':jump?'대성공!':'합성 완료'} · 미감정</div>`:`<span class="em">${em(m)}</span><div class="rvg">${mb(m)}</div><h3>${nm(m)}</h3><div class="rvm">${rare?'희귀 조합 성공!':jump>=2?'초대성공!':jump?'대성공!':'합성 완료'}${m.bonus?' · '+m.bonus:''}</div>`;card.hidden=false;el.querySelector('.rvskip').textContent='누르면 닫기'};
   let tm;const step=()=>{setT(st);if(st>=top){tm=setTimeout(show,500);return}st++;tm=setTimeout(step,420+st*90)};step();
   el.onclick=()=>{if(!done)show();else{el.hidden=true;el.onclick=null}}}
-function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor)clearFloor(mob.floor);if(mob.boss)trySealBoss(mob);
+function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor)clearFloor(mob.floor);
   if(mob.boss){SC.slowmo={t:0,dur:1.5,x:mob.x,y:mob.y,col:(FXCOL[mob.st.f]||FXCOL.blood)[0]};SC.chestT=1.7;for(let i=0;i<46;i++)SC.fx.push({k:'p',x:mob.x+rand(-30,30),y:mob.y-rand(0,90),vx:rand(-220,220),vy:rand(-260,40),t:0,life:rand(0.8,1.4),col:Math.random()<0.5?SC.slowmo.col:'#1a0e0a'});SC.mobs.forEach(x=>{if(x.minion||x.gob)x.hp=x.gob?x.hp:0});SC.ms.forEach(a=>{a.charm=0;a.psn=0});S.bossKills=(S.bossKills||0)+1;checkPromo();SC.boss=null;SC.bossT=2.2;SC.tele=[];if(!RM)SC.shake=12;burst3D(mob);burst3D(mob);
     SC.fx.push({k:'ring',x:mob.x,y:mob.y,t:0,life:0.8,r:120,col:'#FFD166',w:6},{k:'num',x:mob.x,y:mob.y-70,t:0,life:1.6,txt:`${SPECIES[mob.k][1]} 퇴치!`,col:'#FFD166',sz:18});
-    const qs=sceneQ.splice(0,5);if(!qs.length)qs.push({text:`+${fmt(Math.round(gps()*3))}G`,color:'#E9C46A'});
-    qs.forEach((q,i)=>SC.drops.push({x:mob.x+(i-(qs.length-1)/2)*34,y:mob.y+(i%2?14:-6),vy:-120,t:-i*0.12,txt:q.text,col:q.color,big:q.big}));
+    sceneQ.length=0;
     for(let i=0;i<10;i++)SC.drops.push({x:mob.x+rand(-40,40),y:mob.y+rand(-20,20),vy:-90,t:0,txt:'●',col:'#E9C46A',coin:true});renderBossBar();return}
   SC.combo=SC.comboT>0?SC.combo+1:1;SC.comboT=1.6;if(SC.combo>=5)SC.comboShow=0.9;
   for(let i=0;i<(mob.elite?18:8);i++)SC.fx.push({k:'p',x:mob.x,y:mob.y,vx:rand(-90,90),vy:rand(-110,10),t:0,life:rand(0.4,0.7),col:mob.elite?'#FF8A4C':(Math.random()<0.5?'#8A2B1E':'#C0392B')});
@@ -2095,7 +2132,7 @@ function sceneStep(dt){
   SC.ab=affixBonus();SC.ult=Math.min(1,SC.ult+dt/25*(1+SC.ab.ult));
   SC.comboT-=dt;SC.comboShow-=dt;SC.hsCd=Math.max(0,(SC.hsCd||0)-dt);entStep(dt);SC.shake=Math.max(0,SC.shake-dt*30);
   /* 보스: 한 번에 한 마리. 쓰러뜨리면 잠시 전진한 뒤 다음 보스 */
-  if(SC.chestT>0){SC.chestT-=dt;if(SC.chestT<=0)openChests()}
+  if(SC.chestT>0){SC.chestT-=dt;if(SC.chestT<=0){if(SC.chest){(SC.chestQ=SC.chestQ||[]).push([null,null])}else openChests()}}
   if(SC.boss&&!SC.gob&&!SC.bossIntro&&!SC.boss.act&&Math.random()<dt/90)spawnGob();
   if(!SC.boss||!SC.mobs.includes(SC.boss)){SC.boss=null;if(!SC.chest&&!(SC.chestT>0))SC.bossT-=dt;if(SC.bossT<=0&&!SC.mobs.length)spawnBoss()}
   if(SC.bossIntro>0)SC.bossIntro=Math.max(0,SC.bossIntro-dt);
@@ -3591,7 +3628,7 @@ function offline(){
   const cups=gainCharExp(ox);
   const ni=Math.floor(sec/(TICK_MS/1000)*ITEM_RATE*(1+dexBonus().item+affixBonus().ifind)+Math.random());
   for(let i=0;i<ni&&S.items.length<MAXITEMS;i++){const it=makeItem(S.diff,S.map);if(keepItem(it)){S.items.push(it);items++}else S.gold+=itemSell(it)}
-  addLog(`자리를 비운 ${Math.round(sec/60)}분 동안 ${fmt(g)}G, 악마 ${found}마리${items?`, 장비 ${items}개`:''}를 얻었어요${freed?` · ${freed}마리는 설정에 따라 퇴마함`:''}${ups?` · 악마 총 ${ups}레벨 성장`:''}${cups?` · 소환사 ${cups}레벨 성장`:''}`,true);
+  addLog(`자리를 비운 ${Math.round(sec/60)}분 동안(상자 약 ${Math.round(sec/45)}개분) ${fmt(g)}G, 악마 ${found}마리${items?`, 장비 ${items}개`:''}를 얻었어요${freed?` · ${freed}마리는 설정에 따라 퇴마함`:''}${ups?` · 악마 총 ${ups}레벨 성장`:''}${cups?` · 소환사 ${cups}레벨 성장`:''}`,true);
   setTimeout(()=>toast(`오프라인 보상: ${fmt(g)}G · 악마 ${found}마리${items?` · 장비 ${items}개`:''}`),300);
 }
 if(load())offline();else newGame();
