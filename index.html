@@ -569,6 +569,9 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .chests.gob .chest1 .clid>img,.chests.gob .chest1>img.cbody{filter:sepia(1) saturate(2.4) brightness(1.15) drop-shadow(0 0 14px rgba(255,200,80,.7))}
 .chests.gob .chest1 .medal img{filter:grayscale(1) sepia(1) saturate(2.2) contrast(1.4) brightness(.95) drop-shadow(1px 1px 0 #000)}
 
+.grim.intro .gsub{color:#E7A33E}.grim.intro .rank{color:#9C8B76;font-size:13px;font-style:italic}
+.grim.intro .gtop img.art{width:120px;height:150px}
+
 </style>
 
 <div class="scene" id="sceneBox">
@@ -633,7 +636,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
           <label class="speed"><input type="checkbox" id="autoClimb"> 보스를 격파하면 자동으로 다음 층으로</label>
           <div class="abyss" id="abyss" hidden></div>
           <div class="floors" id="floors"></div>
-          <div class="row"><button class="btn" id="storyBtn">지금까지의 이야기</button></div>
+          <div class="row"><button class="btn" id="storyBtn">이 층 악마 소개 보기</button></div>
         </div>
       </div>
     </section>
@@ -1279,7 +1282,7 @@ function newGame(){
   [80,95,120].forEach((p,i)=>{const m=makeMonster(p,[0,2,4][i],'시작');m.isNew=false;S.mons.push(m);S.team[i]=m.id});
   for(let i=0;i<4;i++){const m=makeMonster(wildP(1),FLOORS[i%2],'1층');m.isNew=false;S.mons.push(m)}
   giveStarterItem();
-  addLog('솔로몬의 인장 반지가 빛났어요. 첫 번째 악마를 찾아 나섭니다.');S.story={seen:[]};setTimeout(()=>{queueStory('prologue');queueStory('ch0')},300);
+  addLog('솔로몬의 인장 반지가 빛났어요. 첫 번째 악마를 찾아 나섭니다.');S.story={seen:[]};S.intro=[];setTimeout(()=>floorIntro(1),600);
 }
 function addLog(text,hi){const d=new Date();S.log.unshift({t:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,text,hi:!!hi});S.log.length=Math.min(S.log.length,40)}
 function save(){S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -1302,7 +1305,7 @@ function load(){
     S.items.forEach((it,k)=>{if(it.lv==null){const n=makeItem(it.d,it.map,it.grade);n.id=it.id;n.slot=it.slot;n.name=it.name;n.isNew=false;S.items[k]=n}});
     S.mons.forEach(m=>finish(m));S.items.forEach(it=>{if(it.sc)itemFinish(it)});
     S.team=S.team.map(id=>id!=null&&byId(id)?id:null);S.equip=S.equip.map(id=>id!=null&&itemById(id)?id:null);
-    if(!S.story){S.story={seen:[]};setTimeout(()=>{queueStory('prologue');for(let z=0;z<=zoneOf(Math.min(S.top,NFLOOR));z++)queueStory('ch'+z)},300)}
+    if(!S.story)S.story={seen:[]};if(!S.intro){S.intro=[];for(let f=1;f<curFloor();f++)S.intro.push(f)}setTimeout(()=>floorIntro(curFloor()),800);
     checkUnlock(0);return true}
   catch(e){return false}
 }
@@ -1645,7 +1648,7 @@ function openTeam(slot){
     <div class="grid">${list.map(m=>card(m,S.team[teamSel]===m.id?'sel':'')).join('')}</div>`;
   $('sheet').dataset.kind='team';$('overlay').hidden=false;
 }
-function closeSheet(){$('overlay').hidden=true;renderAll();setTimeout(showNextStory,250)}
+function closeSheet(){$('overlay').hidden=true;renderAll();setTimeout(tryIntro,300)}
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
 $('sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -1829,7 +1832,7 @@ $('autoTeam').onclick=autoTeam;$('chests').addEventListener('click',()=>openChes
 $('sort').onchange=renderMons;$('elFlt').onchange=renderMons;
 setTimeout(()=>$('elFlt').insertAdjacentHTML('beforeend',Object.keys(FNAME).map(k=>`<option value="${k}">${EL_ICON[k]||''} ${FNAME[k]}</option>`).join('')),0);
 function setFloor(f){if(f<1||f>(S.top||1)||f===curFloor())return;
-  S.floor=f;S.map=zoneOf(f);S.prog=0;S.blocked=false;if(SC.boss){SC.mobs=SC.mobs.filter(m=>m!==SC.boss);SC.boss=null;SC.bossT=0.6;SC.tele=[]}
+  S.floor=f;S.map=zoneOf(f);S.prog=0;S.blocked=false;setTimeout(()=>floorIntro(f),400);if(SC.boss){SC.mobs=SC.mobs.filter(m=>m!==SC.boss);SC.boss=null;SC.bossT=0.6;SC.tele=[]}
   addLog(`${f}층으로 이동했어요 · 보스 ${SPECIES[bossSp(f)][1]}`);save();renderAll()}
 $('floorPrev').onclick=()=>setFloor(curFloor()-1);
 $('floorNext').onclick=()=>setFloor(curFloor()+1);
@@ -1912,7 +1915,7 @@ function clearFloor(f){if(cleared(f))return false;const rw=Math.round(floorReq(f
   if(f===NFLOOR){addLog('72층 정복! 솔로몬의 인장이 모든 악마를 굴복시켰어요',true);queueStory('clear'+zoneOf(f))}
   else if(zoneOf(f+1)!==zoneOf(f)){queueStory('clear'+zoneOf(f));queueStory('ch'+zoneOf(f+1))}
   if(f===NFLOOR){addLog('심연이 열렸어요! 73층부터 끝없이 이어지고, 언제든 인장 각성을 할 수 있어요',true)}
-  if(S.autoClimb!==false){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0}
+  if(S.autoClimb!==false){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;floorIntro(S.floor)}
   save();renderTop();renderExplore();return true}
 
 /* ===================== 흥미 요소 4종 =====================
@@ -1978,7 +1981,7 @@ function openChest(){const S2=SC.chest;if(!S2||S2.opened)return;S2.opened=true;c
   el.classList.add('open');el.querySelector('.cht').innerHTML=`<em>${o.name||CHEST_T[o.t].n}</em>`;el.querySelector('.chr').innerHTML=got.join('<br>');
   embers(el,16+o.t*16,70+o.t*40,90+o.t*60,true);smoke(el,3+o.t*2);
   if(o.t>=2&&!RM)SC.shake=6+o.t*3;addLog(`${o.name||CHEST_T[o.t].n}: ${got.join(' · ')}`,o.t>=2);save();renderTop();
-  setTimeout(()=>{box.hidden=true;SC.chest=null;const q=(SC.chestQ||[]).shift();if(q)setTimeout(()=>openChests(q[0],q[1]),300)},2200+o.t*500)}
+  setTimeout(()=>{box.hidden=true;SC.chest=null;setTimeout(tryIntro,400);const q=(SC.chestQ||[]).shift();if(q)setTimeout(()=>openChests(q[0],q[1]),300)},2200+o.t*500)}
 /* ---- 합성 대박 연출 ---- */
 const REV_TIER=g=>g>=9?4:g>=8?3:g>=6?2:g>=4?1:0;const REV_COL=['#E9E2D6','#5AA8FF','#B46AFF','#FFC83A','rainbow'];
 function fuseReveal(m,jump,rare){const el=$('reveal');if(!el)return;const top=Math.max(REV_TIER(m.grade),rare?3:0);let st=0,done=false;
@@ -2017,7 +2020,7 @@ function setManual(on){SC.manual=on;SC.trail=[{x:SC.lead?SC.lead.x:0,y:SC.lead?S
   SC.inp={x:0,y:0};SC.joy=null;SC.focus=null;$('hudMode').textContent=on?'수동 · 경험치·골드 +25%':'';
   if(on)toast('화면을 끌어 이동, 적을 눌러 집중 공격, 왼쪽 아래 스킬(1~4키). 경험치·골드 +25%')}
 $('modeBtn').onclick=()=>setManual(!SC.manual);
-$('storyBtn').onclick=()=>openStoryLog();
+$('storyBtn').onclick=()=>floorIntro(curFloor(),true);
 function scenePt(e){const b=$('scene').getBoundingClientRect();return {x:e.clientX-b.left,y:e.clientY-b.top}}
 function pickMob(px,py){let best=null,bd=40;SC.mobs.forEach(m=>{const p=R3.on?proj3(m.x,m.y,0.6):{x:m.x,y:m.y+SC.oy};const d=Math.hypot(p.x-px,p.y-py);if(d<bd){bd=d;best=m}});return best}
 $('sceneBox').addEventListener('pointerdown',e=>{if(!SC.manual||e.target.closest('button'))return;const p=scenePt(e);SC.joy={ox:p.x,oy:p.y,dx:0,dy:0,id:e.pointerId,moved:false};
@@ -2116,7 +2119,8 @@ const STORY={
       c:`판데모니움의 성문이 열렸다. 이제 남은 것은 아홉 왕. 두 악마의 힘을 엮는 조합의 의식으로 왕들을 하나씩 귀속시켜라. 마지막은 벨리알이다.`}],
   ending:{t:'종장 · 다시 닫힌 그릇',x:`불의 전차가 멈추고, 두 천사의 얼굴을 한 왕이 인장 앞에 무릎 꿇었다.\n"솔로몬의 아이야, 너도 결국 우리의 힘을 빌려 여기까지 왔구나."\n\n벨리알의 웃음과 함께 반지가 마지막으로 빛났다. 깨진 그릇의 조각들이 다시 하나로 모인다.\n\n그러나 반지 안쪽에 새로운 균열이 하나 생겼다. 봉인은 영원하지 않다. 그리고 당신은, 이제 일흔두 악마의 힘을 지닌 유일한 사람이다.\n\n— 계속해서 남은 악마를 귀속시키고, 더 높은 퇴마사 계급에 도전하세요.`}};
 const storyQ=[];
-function queueStory(key){if(!S.story)S.story={seen:[]};if(S.story.seen.includes(key))return;S.story.seen.push(key);storyQ.push(key);save();setTimeout(showNextStory,400)}
+function queueStory(key){return;  /* 만든 이야기는 쓰지 않아요: 대신 층에 처음 도착하면 그 층 악마를 『고에티아』대로 소개해요 */
+  if(!S.story)S.story={seen:[]};if(S.story.seen.includes(key))return;S.story.seen.push(key);storyQ.push(key);save();setTimeout(showNextStory,400)}
 function storyEntry(key){if(key==='prologue'||key==='ending')return STORY[key];const m=key.match(/^(ch|clear)(\d)$/);const c=STORY.ch[+m[2]];return m[1]==='ch'?{t:c.t,x:c.i}:{t:c.t+' · 완료',x:c.c}}
 function showNextStory(){if(!storyQ.length||!$('overlay').hidden)return;const e=storyEntry(storyQ.shift());
   $('sheet').innerHTML=`<div class="story"><div class="sub">이야기</div><h3>${e.t}</h3>${e.x.split('\n').map(l=>l?`<p>${l}</p>`:'').join('')}</div>
@@ -3322,6 +3326,23 @@ const awReward=()=>1+Math.max(0,Math.floor(((S.top||1)-73)/10));
 function doAwaken(){if((S.top||1)<=NFLOOR)return;const n=awReward();S.awPts=awPts()+n;S.awaken=(S.awaken||0)+1;S.floor=1;S.top=1;S.map=0;
   SC.mobs=[];SC.boss=null;SC.bossT=1;SC.tele=[];addLog(`인장 각성! 각성 인장 +${n} (총 ${S.awPts}) · 1층부터 다시`,true);toast(`인장 각성 · 영구 보너스 상승`);save();renderAll()}
 /* ===== 7. 그리모어 ===== */
+/* ===== 층 악마 소개: 각 층에 처음 도착하면 그 층 보스 악마를 『레메게톤 · 고에티아』의 기록대로 소개해요 =====
+   서열·계급·군단 수·나타나는 모습·능력(그리모어 기록)과 전투에서의 특징(속성·약점·대기술)을 한 장에. 상자나 다른 창이 열려 있으면 닫힌 뒤에 떠요. */
+const RANK_DESC={'왕':'지옥의 왕. 고에티아에서 가장 높은 계급으로, 태양의 금으로 인장을 만들어 부른다.','공작':'지옥의 공작. 금성의 구리로 인장을 만들어 부른다.','후작':'지옥의 후작. 달의 은으로 인장을 만들어 부른다.','군주':'지옥의 군주(프린스). 목성의 주석으로 인장을 만들어 부른다.','백작':'지옥의 백작. 화성의 구리와 은을 섞어 인장을 만들어 부른다.','총재':'지옥의 총재. 수성의 수은으로 인장을 만들어 부른다.','기사':'지옥의 기사. 납으로 인장을 만들어 부른다.'};
+let introQ=[];
+function floorIntro(f,force){if(f>NFLOOR)return;if(!S.intro)S.intro=[];if(!force){if(S.intro.includes(f))return;S.intro.push(f);save()}if(!introQ.includes(f))introQ.push(f);tryIntro()}
+function tryIntro(){if(!introQ.length||!$('overlay').hidden||SC.chest||SC.chestT>0||!$('reveal').hidden)return;const f=introQ.shift(),k=bossSp(f),sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{},el=elOfSp(k),bs=BOSS_SKILL[st.m];
+  $('sheet').innerHTML=`<div class="grim intro"><div class="gsub">${f}층 · 이 층을 지배하는 악마</div>
+    <div class="gtop">${artHTML(k)}<div><h3>${sp[1]}</h3><div class="muted">『고에티아』 제${no}위 · ${sp[4]}${G?` · ${G[0]} 군단을 거느림`:''}</div></div></div>
+    <p class="rank">${RANK_DESC[sp[4]]||''}</p>
+    ${G?`<p><b>나타나는 모습</b> ${G[1]}</p><p><b>능력</b> ${G[2]}</p>`:''}
+    <hr><div class="ginfo">
+      <div><span>속성</span>${elTag(el)} · 약점 <b style="color:#7FE0FF">${elTag(EL_WEAK[el])}</b> · 내성 ${elTag(el)}</div>
+      <div><span>공격</span>${st.d||''}</div>
+      ${bs?`<div><span>대기술</span>「${bs.n}」 ${bs.d} · 파훼: ${BREAK_HINT[st.m]||''}</div>`:''}
+      ${sp[2]===-2?'<div><span>귀속</span>조합으로만 얻을 수 있는 악마예요</div>':''}
+    </div><div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">맞서기</button></div></div>`;
+  $('sheet').dataset.kind='grim';$('sheet').scrollTop=0;$('overlay').hidden=false}
 function openGrim(k){const sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{},el=elOfSp(k),f=floorOf(k),gm=gmOf(k),bs=BOSS_SKILL[st.m],rcs=RECIPES.filter(r=>r.r===k);
   $('sheet').innerHTML=`<div class="grim"><div class="gsub">그리모어 · 제${no}장</div>
     <div class="gtop">${artHTML(k)}<div><h3>${sp[1]}</h3><div class="muted">제${no}위 ${sp[4]} · ${G?G[0]+' 군단':''}</div></div></div>
