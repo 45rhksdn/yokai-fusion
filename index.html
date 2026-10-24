@@ -363,7 +363,7 @@ body::before{display:none}
 #dbody .wrap{padding-block:12px 24px}
 body.drawer-open .scene .skills,body.drawer-open .scene .ult,body.drawer-open .scene .modebtn{visibility:hidden}
 .overlay{z-index:30}
-.toast{bottom:calc(var(--menuH) + env(safe-area-inset-bottom,0px) + 84px);z-index:35}
+.toast{bottom:calc(var(--menuH) + env(safe-area-inset-bottom,0px) + 84px);z-index:60}
 .pop{top:calc(env(safe-area-inset-top,0px) + 112px)}
 /* ===================== UI 2 · 깔끔하고 단순하게 =====================
    원칙: 전투 화면 위에는 꼭 필요한 것만(층·전투력·골드 / 보스 이름·체력·시간·약점 / 스킬·필살기·메뉴).
@@ -636,6 +636,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .tbtns{display:flex;flex-direction:column;gap:10px;width:min(260px,80vw)}
 .tbtn{height:50px;border-radius:12px;border:1px solid var(--line2);background:rgba(20,14,12,.9);color:var(--ink);font:700 17px var(--display);letter-spacing:.1em;cursor:pointer}
 .tbtn.primary{background:linear-gradient(180deg,#B3261E,#6e1410);border-color:#D0412F;color:#FFF1E6;box-shadow:0 0 18px rgba(179,38,30,.45)}
+.tbtn.arm{background:#5a1410;border-color:#E8604C;color:#FFE1D6;font-size:14px;letter-spacing:0}.tbtn.busy{opacity:.7;pointer-events:none}
 .tbtn:disabled{opacity:.35;cursor:default}
 .tbtn:not(:disabled):hover{filter:brightness(1.15)}
 .tstats{margin-top:16px;font-size:13px;color:#9C8B76}.tstats b{color:#E3BE73}
@@ -1376,7 +1377,8 @@ try{const m=JSON.parse(localStorage.getItem(META_KEY)||'null');if(m)META=Object.
 const RUN={on:false};
 function metaSync(){if(!S)return;META.seen=[...new Set([...(META.seen||[]),...(S.seen||[])])];META.recipes=[...new Set([...(META.recipes||[]),...(S.recipes||[])])];META.intro=[...new Set([...(META.intro||[]),...(S.intro||[])])];META.best=Math.max(META.best||0,(S.top||1)-1);META.hiFps=!!S.hiFps;if(S.flt)META.flt=S.flt}
 function hasRun(){try{return !!localStorage.getItem(KEY)}catch(e){return false}}
-function showTitle(){RUN.on=false;$('title').hidden=false;$('tContinue').disabled=!hasRun();
+function showTitle(){RUN.on=false;$('title').hidden=false;$('tContinue').disabled=!hasRun();{const h=hasRun();$('tStart').textContent=h?'새로 시작하기':'시작하기';$('tStart').classList.toggle('primary',!h);$('tContinue').classList.toggle('primary',h);$('tStart').classList.remove('arm','busy');$('tContinue').classList.remove('busy');$('tContinue').textContent='이어하기';
+  const tb=$('title').querySelector('.tbtns');if(h&&tb.firstElementChild!==$('tContinue'))tb.insertBefore($('tContinue'),$('tStart'));if(!h&&tb.firstElementChild!==$('tStart'))tb.insertBefore($('tStart'),$('tContinue'))}
   $('tStats').innerHTML=META.runs?`${META.bestScore?`최고 점수 <b>${fmt(META.bestScore)}</b> · `:''}최고 <b>${META.best}층</b> · ${META.runs}판 도전 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72`:'일흔두 악마가 72층의 탑에서 기다려요';
   document.body.classList.add('titled')}
 function enterRun(){$('title').hidden=true;document.body.classList.remove('titled');RUN.on=true;SC.mobs=[];SC.boss=null;SC.bossT=1.2;SC.tele=[];SC.chest=null;SC.chestT=0;$('chests').hidden=true;
@@ -1976,7 +1978,11 @@ $('team').addEventListener('click',e=>{
   if(b.dataset.id)return openDetail(+b.dataset.id);
   if(b.dataset.empty!=null)return openTeam(+b.dataset.empty);
 });
-$('tStart').onclick=startRun;$('tContinue').onclick=continueRun;$('tSet').onclick=openSettings;$('autoTeam').onclick=autoTeam;$('hiFps').onchange=e=>{S.hiFps=e.target.checked;save();sceneSize()};setTimeout(()=>{$('hiFps').checked=!!(S&&S.hiFps)},0);$('chests').addEventListener('click',()=>openChest());$('floorChip').onclick=()=>document.querySelector('[data-tab=map]').click();
+/* 누르는 즉시 반응: 버튼에 '불러오는 중'을 보여준 뒤 다음 화면 그리기에서 시작 */
+const tGo=(b,fn)=>{if(b.classList.contains('busy'))return;b.classList.add('busy');b.textContent='불러오는 중…';requestAnimationFrame(()=>requestAnimationFrame(()=>{try{fn()}finally{b.classList.remove('busy')}}))};
+$('tStart').onclick=()=>{const b=$('tStart');if(hasRun()&&!b.classList.contains('arm')){b.classList.add('arm');b.textContent='지금 판을 지우고 새로 시작? 한 번 더';clearTimeout(b._t);b._t=setTimeout(()=>{b.classList.remove('arm');b.textContent='새로 시작하기'},3500);return}
+  clearTimeout(b._t);b.classList.remove('arm');newArm=Date.now();tGo(b,startRun)};
+$('tContinue').onclick=()=>tGo($('tContinue'),continueRun);$('tSet').onclick=openSettings;$('autoTeam').onclick=autoTeam;$('hiFps').onchange=e=>{S.hiFps=e.target.checked;save();sceneSize()};setTimeout(()=>{$('hiFps').checked=!!(S&&S.hiFps)},0);$('chests').addEventListener('click',()=>openChest());$('floorChip').onclick=()=>document.querySelector('[data-tab=map]').click();
 $('sort').onchange=renderMons;$('elFlt').onchange=renderMons;
 setTimeout(()=>$('elFlt').insertAdjacentHTML('beforeend',Object.keys(FNAME).map(k=>`<option value="${k}">${EL_ICON[k]||''} ${FNAME[k]}</option>`).join('')),0);
 function setFloor(f){if(f!==curFloor())toast('한 판은 1층부터 차례로 올라가요');return;
