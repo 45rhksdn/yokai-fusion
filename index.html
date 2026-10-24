@@ -619,6 +619,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .fnext .row{display:flex;justify-content:space-between}.fnext b{font-variant-numeric:tabular-nums}.fnext .hint{font-size:12px;margin-top:2px}
 .fnext.ok b,.fnext.ok .hint{color:#7FD08A}.fnext.warn b,.fnext.warn .hint{color:#E7C27A}.fnext.bad b,.fnext.bad .hint{color:#E8604C}
 .fpick .btn small{display:block;font-size:10.5px;opacity:.75;font-weight:400;margin-top:2px}.fpick .btn{flex:1;padding:10px 8px}.fpick .row:last-child{gap:8px}
+.fpick .fsave{display:block;width:100%;margin-top:10px;padding:9px}.fpick .fsave.done{color:#7FD08A;border-color:#3d6b45}
 .skmini .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF5A3A;margin-left:3px;vertical-align:2px}
 .scene .skills{right:10px}
 
@@ -1378,7 +1379,7 @@ function showTitle(){RUN.on=false;$('title').hidden=false;$('tContinue').disable
   $('tStats').innerHTML=META.runs?`${META.bestScore?`최고 점수 <b>${fmt(META.bestScore)}</b> · `:''}최고 <b>${META.best}층</b> · ${META.runs}판 도전 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72`:'일흔두 악마가 72층의 탑에서 기다려요';
   document.body.classList.add('titled')}
 function enterRun(){$('title').hidden=true;document.body.classList.remove('titled');RUN.on=true;SC.mobs=[];SC.boss=null;SC.bossT=1.2;SC.tele=[];SC.chest=null;SC.chestT=0;$('chests').hidden=true;
-  skBarKey='';syncTeam();checkPromo();S.promoShow=0;renderAll();save();setTimeout(()=>floorIntro(curFloor()),500)}
+  skBarKey='';syncTeam();checkPromo();S.promoShow=0;SC.pick=S.pick||0;renderAll();save();setTimeout(()=>floorIntro(curFloor()),500)}
 function startRun(){if(hasRun()&&!confirmNew())return;newGame();S.seen=[...META.seen];S.recipes=[...META.recipes];S.intro=[...META.intro];S.hiFps=META.hiFps;S.flt=META.flt||S.flt;S.mons.forEach(m=>{if(!S.seen.includes(m.sp))S.seen.push(m.sp)});META.runs=(META.runs||0)+1;enterRun()}
 let newArm=0;function confirmNew(){if(Date.now()-newArm<3000)return true;newArm=Date.now();toast('진행 중인 판이 있어요 · 한 번 더 누르면 새로 시작해요');return false}
 function continueRun(){if(!load())return toast('이어할 판이 없어요');enterRun()}
@@ -1399,7 +1400,7 @@ function runOver(win,why){if(!RUN.on)return;metaSync();if(win)META.wins=(META.wi
     <div class="row"><button class="btn" data-act="totitle">타이틀로</button><button class="btn primary" data-act="again" style="margin-left:auto">다시 도전</button></div></div>`;
   $('sheet').dataset.kind='runend';$('overlay').hidden=false;SC.mobs=[];SC.boss=null;SC.tele=[]}
 function fallBack(why){const f=curFloor();metaSync();S.deaths=(S.deaths||0)+1;RUN.on=false;SC.mobs=[];SC.boss=null;SC.tele=[];SC.skcd={};
-  S.floor=1;S.top=1;S.map=zoneOf(1);S.prog=0;save();try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}
+  S.pick=0;S.floor=1;S.top=1;S.map=zoneOf(1);S.prog=0;save();try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}
   $('sheet').innerHTML=`<div class="runend"><div class="sub">쓰러졌어요</div><h3>${f}층에서 쓰러졌어요</h3><p class="muted">${why||''}</p>
     <div class="rstats"><div><b>${f}</b><small>쓰러진 층</small></div><div><b>${META.best}</b><small>최고 기록</small></div><div><b>Lv ${S.charLv}</b><small>소환사</small></div><div><b>${S.mons.length}</b><small>귀속한 악마</small></div></div>
     <p class="note">악마·장비·골드·레벨·스킬은 그대로 두고 1층부터 다시 올라가요. 다시 깨는 층에서도 보상을 받아요.</p>
@@ -1411,11 +1412,12 @@ function openFloorPick(){const f=SC.pick,n=f+1,tp=teamPower(),rq=floorReq(n),r=t
     <div class="fnext ${cls}"><div class="row"><span>${n}층 보스 · ${SPECIES[bossSp(n)][1]}</span></div>
       <div class="row"><span>권장 전투력</span><b>${fmt(rq)}</b></div><div class="row"><span>내 팀 전투력</span><b>${fmt(tp)}</b></div>
       <div class="hint">${r>=1?'충분해요. 도전해볼 만해요':r>=0.75?'조금 부족해요. 장비·합성으로 보강하면 좋아요':'많이 부족해요. 이 층을 반복해 키우는 걸 권해요'}</div></div>
-    <div class="row"><button class="btn" data-fp="stay">${f}층 반복<small>골드·경험치 일부 · 상자</small></button><button class="btn primary" data-fp="next" style="margin-left:auto">${n}층 도전<small>오르면 되돌아갈 수 없어요</small></button></div></div>`;
+    <div class="row"><button class="btn" data-fp="stay">${f}층 반복<small>골드·경험치 일부 · 상자</small></button><button class="btn primary" data-fp="next" style="margin-left:auto">${n}층 도전<small>오르면 되돌아갈 수 없어요</small></button></div>
+    <button class="btn fsave" data-fp="save">저장하기</button></div>`;
   $('sheet').dataset.kind='fpick';$('overlay').hidden=false}
-function pickFloor(next){const f=SC.pick;SC.pick=0;$('sheet').dataset.kind='';$('overlay').hidden=true;SC.bossT=1.2;
+function pickFloor(next){const f=SC.pick;SC.pick=0;S.pick=0;$('sheet').dataset.kind='';$('overlay').hidden=true;SC.bossT=1.2;
   if(next&&f){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;floorIntro(S.floor)}save();renderAll()}
-$('sheet').addEventListener('click',e=>{const b=e.target.closest('[data-fp]');if(b&&$('sheet').dataset.kind==='fpick')pickFloor(b.dataset.fp==='next')});
+$('sheet').addEventListener('click',e=>{const b=e.target.closest('[data-fp]');if(b&&$('sheet').dataset.kind==='fpick'){e.stopImmediatePropagation();if(b.dataset.fp==='save'){save();metaSync();try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}setTimeout(()=>{b.textContent=`✓ 저장했어요 · ${new Date().toTimeString().slice(0,5)}`;b.classList.add('done')},0);return toast('저장했어요. 타이틀의 이어하기로 이 층부터 계속할 수 있어요')}pickFloor(b.dataset.fp==='next')}});
 function openSettings(){const S0=S||{};$('sheet').innerHTML=`<div class="row"><h3>설정</h3></div>
    <div class="setrow"><label for="sHi">고화질 · 초당 60번 그리기(발열·배터리 소모 늘어남)</label><input type="checkbox" id="sHi" ${META.hiFps?'checked':''}></div>
    <div class="setrow"><span>기록</span><span class="muted">최고 ${META.best}층 · ${META.runs}판 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72</span></div>${(META.scores||[]).length?`<div class="setrow"><span>점수 순위</span><span class="muted">${META.scores.map((x,i)=>`${i+1}위 ${fmt(x.t)}점(쓰러짐 ${x.d}회)`).join(' · ')}</span></div>`:''}
@@ -2135,7 +2137,7 @@ function fuseReveal(m,jump,rare){const el=$('reveal');if(!el)return;const top=Ma
   el.onclick=()=>{if(!done)show();else{el.hidden=true;el.onclick=null}}}
 function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor){S.clrT=S.clrT||{};S.clrT[mob.floor]=Math.max(0,BOSS_TIME-(mob.tl||0));
     if(cleared(mob.floor)){const rw=Math.round(floorReq(mob.floor)*0.25);S.gold+=rw;const x=expPerTick()*2;S.team.forEach(id=>{const m=id!=null&&byId(id);if(m)gainExp(m,x)});gainCharExp(x);checkPromo();toast(`${mob.floor}층 반복 처치 · +${fmt(rw)}G`)}
-    else clearFloor(mob.floor);if(RUN.on&&mob.floor<NFLOOR)SC.pick=mob.floor}
+    else clearFloor(mob.floor);if(RUN.on&&mob.floor<NFLOOR){SC.pick=mob.floor;S.pick=mob.floor;save()}}
   if(mob.boss){SC.chestBoss=mob.k;SC.slowmo={t:0,dur:1.5,x:mob.x,y:mob.y,col:(FXCOL[mob.st.f]||FXCOL.blood)[0]};SC.chestT=1.7;for(let i=0;i<46;i++)SC.fx.push({k:'p',x:mob.x+rand(-30,30),y:mob.y-rand(0,90),vx:rand(-220,220),vy:rand(-260,40),t:0,life:rand(0.8,1.4),col:Math.random()<0.5?SC.slowmo.col:'#1a0e0a'});SC.mobs.forEach(x=>{if(x.minion||x.gob)x.hp=x.gob?x.hp:0});SC.ms.forEach(a=>{a.charm=0;a.psn=0});S.bossKills=(S.bossKills||0)+1;checkPromo();SC.boss=null;SC.bossT=2.2;SC.tele=[];if(!RM)SC.shake=12;burst3D(mob);burst3D(mob);
     SC.fx.push({k:'ring',x:mob.x,y:mob.y,t:0,life:0.8,r:120,col:'#FFD166',w:6},{k:'num',x:mob.x,y:mob.y-70,t:0,life:1.6,txt:`${SPECIES[mob.k][1]} 퇴치!`,col:'#FFD166',sz:18});
     sceneQ.length=0;
@@ -2261,7 +2263,7 @@ function castSkill(a,manual,slot){slot=slot||0;const ck=a&&a.key==='char'&&slot?
     else if(sk.t==='seal'){R(t.x,t.y,95,3.0*(1+0.2*(sl-1)),1.6);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.7,r:95,col:sk.col,w:7});SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.45,r:60,col:'#FFF2C8',w:3});if(!RM)SC.shake=7}
     else if(sk.t==='flame'){R(t.x,t.y,60,2.6);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.5,r:60,col:sk.col,w:6})}
     else if(sk.t==='quake'){R(a.x,a.y,95,2.2);SC.fx.push({k:'ring',x:a.x,y:a.y,t:0,life:0.55,r:95,col:sk.col,w:6});if(!RM)SC.shake=6}
-    else if(sk.t==='bolt'){SC.shots.push({x:a.x,y:a.y-6,t,sp:420,dmg:Math.round(pw*3.6),crit:1,col:sk.col,fx:a.x,fy:a.y,big:1})}
+    else if(sk.t==='bolt'){smite(a,t,Math.round(pw*3.6),1,1);SC.fx.push({k:'bolt',x:t.x,y:t.y,t:0,life:0.22,col:'#BFE6FF',seed:Math.random()*1000})}
     else if(sk.t==='hex'){SC.mobs.forEach(m=>{if(Math.hypot(m.x-t.x,m.y-t.y)<100)hexMob(m,4)});R(t.x,t.y,100,1.0);SC.fx.push({k:'ring',x:t.x,y:t.y,t:0,life:0.6,r:100,col:sk.col,w:5})}
     else if(sk.t==='strike'){const x0=a.x,y0=a.y,d=Math.hypot(t.x-a.x,t.y-a.y)||1;if(a.key!=='char'){a.x=t.x-(t.x-a.x)/d*16;a.y=t.y-(t.y-a.y)/d*16}
       dmgMob(t,Math.round(pw*4.2),2,x0,y0);R(t.x,t.y,40,1.2);SC.fx.push({k:'slash',x:t.x,y:t.y,a:Math.atan2(t.y-y0,t.x-x0),t:0,life:0.25})}}
@@ -2418,6 +2420,9 @@ function sceneStep(dt){
         fireShot(a,t,Math.max(1,Math.round(a.pw*rand(0.8,1.2)*(crit?2:1)*rageMul(a))),crit,false)}
     }
   });
+  /* 인장 타격(아군 원거리) */
+  if(SC.hits&&SC.hits.length){SC.hits.forEach(h=>{h.d-=dt;if(h.d>0)return;h.done=1;if(h.t.hp<=0||!SC.mobs.includes(h.t))return;
+    SC.lastEl=h.el||null;dmgMob(h.t,Math.round(h.dmg*elemMul(h.el,h.t)),h.crit,h.fx,h.fy);SC.lastEl=null;if(h.crit&&h.src&&h.src.key)gradeCrit(h.src,h.t.x,h.t.y);smiteFx(h)});SC.hits=SC.hits.filter(h=>!h.done)}
   /* 투사체 */
   SC.shots.forEach(s=>{const gone=s.en?(s.t.down>0||!SC.ms.includes(s.t)):s.t.hp<=0;const d=Math.hypot(s.t.x-s.x,s.t.y-s.y);
     if(d<10||gone){if(!gone){if(s.en){s.t.hp-=s.t.max*s.dmg*((SC.boss&&SC.boss.dm)||1);s.t.flash=0.15;if(s.t.hp<=0){s.t.down=downT(s.t);SC.fx.push({k:'num',x:s.t.x,y:s.t.y-24,t:0,life:1,txt:'쓰러짐',col:'#FF6B6B',sz:12})}}else{SC.lastEl=s.el||null;dmgMob(s.t,Math.round(s.dmg*elemMul(s.el,s.t)),s.crit,s.fx,s.fy);SC.lastEl=null;if(s.crit&&s.src)gradeCrit(s.src,s.t.x,s.t.y)}if(s.pt)shotHit(s)}s.done=1;return}
@@ -3361,7 +3366,14 @@ function atkFx(e,t,mob){const st=styleOf(e),C=FXCOL[st.f]||FXCOL.blood;if(mob&&M
 /* 투사체: 원거리 악마는 고에티아 묘사에 맞는 탄을 쏴요
    활(shoot)=포물선 화살 · 주문(cast)=속성 구슬(소환사는 회전하는 인장) · 숨결(breath)=큰 불덩이/독덩이/그림자 덩이 · 포효(roar)=날아가며 퍼지는 음파 고리 */
 function shotKind(e){const st=styleOf(e);if(e.key==='char')return 'seal';return st.m==='shoot'?'arrow':st.m==='roar'?'sonic':st.m==='breath'?'blob':'orb'}
-function fireShot(e,t,dmg,crit,en){const st=styleOf(e),C=FXCOL[st.f]||FXCOL.gold,pt=shotKind(e);
+/* 아군 원거리(소환사·원거리 악마)는 탄을 날리지 않고, 대상 몸에 고에티아 인장이 새겨지며 터져요 */
+function smite(e,t,dmg,crit,big){const st=styleOf(e),pt=shotKind(e);(SC.hits=SC.hits||[]).push({t,dmg,crit,el:e.key==='char'?'gold':st.f,pt,src:e,fx:e.x,fy:e.y,big:big||crit,d:0.13})}
+function smiteFx(h){const t=h.t,C=FXCOL[h.el]||FXCOL.gold,hh=t.boss?2.7:1.0,big=h.big?1:0;
+  const n=SC.fx.reduce((a,f)=>a+(f.k==='smite'),0);if(n>10&&!big)return;
+  SC.fx.push({k:'smite',x:t.x+rand(-12,12),y:t.y,h:hh+rand(-0.5,0.5),t:0,life:big?0.62:0.42,col:C[0],c2:C[1],seal:h.pt==='seal'?1:0,arrow:h.pt==='arrow'?1:0,big,rot:rand(0,6.28),r:(t.boss?24:16)*(big?1.45:1),ux:t.x-h.fx,uy:t.y-h.fy});
+  const d=Math.hypot(t.x-h.fx,t.y-h.fy)||1;elemBits(h.el==='feather'?'blood':h.el,t.x,t.y,(t.x-h.fx)/d,(t.y-h.fy)/d,big?1:0.55,big);
+  if(big&&!RM)SC.shake=Math.max(SC.shake,3)}
+function fireShot(e,t,dmg,crit,en){if(!en)return smite(e,t,dmg,crit);const st=styleOf(e),C=FXCOL[st.f]||FXCOL.gold,pt=shotKind(e);
   const sp=pt==='arrow'?460:pt==='sonic'?300:pt==='blob'?260:330;
   SC.shots.push({x:e.x+8,y:e.y,t,sp,dmg,crit,col:C[0],c2:C[1],el:st.f,pt,en:en?1:0,src:en?null:e,fx:e.x,fy:e.y,d0:Math.max(30,Math.hypot(t.x-e.x,t.y-e.y)),big:crit})}
 function shotTrail(s,dt){s.tr=(s.tr||0)+dt;const iv=s.pt==='blob'?0.025:s.pt==='orb'||s.pt==='seal'?0.04:s.pt==='arrow'&&(s.el==='poison'||s.el==='fire')?0.05:1;
@@ -3729,6 +3741,22 @@ function pose3D(o,e,dt){const U=o.userData.U,P=o.userData.P;if(!U)return;e.atkT=
     P.scale.set(sc*(2-sq)**0.5,sc*sq,sc*(2-sq)**0.5)}}
 /* 동작별 모양 효과 그리기 (3D는 투영 좌표, 2D는 그대로) */
 const SHAPE={
+  smite:(g,f,k,P)=>{const c=P(f.x,f.y,f.h),R=f.r,a0=f.rot+k*(f.seal?1.4:-1.1),inK=Math.min(1,k/0.18),out=Math.max(0,(k-0.18)/0.82);
+    const sc=(f.big?1.35:1.25)-(f.big?0.35:0.25)*ease(inK),r=R*sc,al=k<0.18?inK:1-out*out;
+    g.save();g.translate(c.x,c.y);g.lineCap='round';g.lineJoin='round';
+    const fl=Math.max(0,1-k/0.35),gr=g.createRadialGradient(0,0,0,0,0,r*1.25);gr.addColorStop(0,'rgba(255,240,215,0.85)');gr.addColorStop(0.3,f.col);gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.globalAlpha=Math.min(1,fl*1.1)*(f.big?0.75:0.5);g.fillStyle=gr;g.beginPath();g.arc(0,0,r*1.25,0,6.283);g.fill();
+    g.globalAlpha=al;g.rotate(a0);g.scale(1,0.86);
+    for(const [w,col] of [[3.2,f.c2],[1.3,f.col]]){g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.arc(0,0,r,0,6.283);g.stroke();g.beginPath();g.arc(0,0,r*0.72,0,6.283);g.stroke()}
+    g.strokeStyle=f.col;g.lineWidth=1.4;const nT=f.big?16:12;for(let i=0;i<nT;i++){const a=i/nT*6.283,l=i%2?0.08:0.16;g.beginPath();g.moveTo(Math.cos(a)*r*0.74,Math.sin(a)*r*0.74);g.lineTo(Math.cos(a)*r*(0.74+l),Math.sin(a)*r*(0.74+l));g.stroke()}
+    const rr=r*0.68;g.lineWidth=f.big?2:1.4;g.strokeStyle=f.col;g.beginPath();
+    if(f.seal){for(const o of [0,1])for(let i=0;i<=3;i++){const A=-Math.PI/2+o*Math.PI+i*2*Math.PI/3;i?g.lineTo(Math.cos(A)*rr,Math.sin(A)*rr):g.moveTo(Math.cos(A)*rr,Math.sin(A)*rr)}}
+    else for(let i=0;i<=5;i++){const A=-Math.PI/2+i*4*Math.PI/5;i?g.lineTo(Math.cos(A)*rr,Math.sin(A)*rr):g.moveTo(Math.cos(A)*rr,Math.sin(A)*rr)}
+    g.globalAlpha=al*Math.min(1,k*5);g.stroke();g.restore();
+    g.save();g.translate(c.x,c.y);g.lineCap='round';g.globalAlpha=Math.max(0,1-k*1.6);const d=Math.hypot(f.ux,f.uy)||1,ux=f.ux/d,uy=f.uy/d;
+    if(f.arrow){for(const [w,col] of [[5,f.col],[1.6,'#FFFFFF']]){g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.moveTo(-ux*r*1.9,-uy*r*1.1);g.lineTo(ux*r*(0.6+k*1.6),uy*r*(0.4+k));g.stroke()}}
+    const nR=f.big?8:5;for(let i=0;i<nR;i++){const A=f.rot*3+i/nR*6.283,L=r*(1.05+0.9*ease(Math.min(1,k*2.4)))*(i%2?0.7:1);g.strokeStyle=i%2?f.c2:f.col;g.lineWidth=f.big?2:1.2;g.beginPath();g.moveTo(Math.cos(A)*r*0.35,Math.sin(A)*r*0.3);g.lineTo(Math.cos(A)*L,Math.sin(A)*L*0.86);g.stroke()}
+    g.restore()},
   arc:(g,f,k,P)=>{const c=P(f.x,f.y,f.h),q=P(f.x+f.ux*20,f.y+f.uy*20,f.h),a=Math.atan2(q.y-c.y,q.x-c.x),R=30*f.sz;g.globalAlpha=1-k;g.lineCap='round';
     for(const [w,col] of [[9,f.col],[3,'#FFFFFF']]){g.strokeStyle=col;g.lineWidth=w*(1-k*0.6);g.beginPath();g.arc(c.x-Math.cos(a)*R*0.6,c.y-Math.sin(a)*R*0.6,R,a-1.3+k*0.9,a+0.3+k*0.9);g.stroke()}},
   line:(g,f,k,P)=>{const a=P(f.x0,f.y0,f.h0),b=P(f.x,f.y,f.h),e=Math.min(1,k*3),s=Math.max(0,k*1.6-0.4);g.globalAlpha=1-k*0.8;g.lineCap='round';
