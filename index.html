@@ -614,6 +614,29 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .skmini .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF5A3A;margin-left:3px;vertical-align:2px}
 .scene .skills{right:10px}
 
+/* 타이틀 */
+.title{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#050303}
+.title[hidden]{display:none}
+.title .tbg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(120,10,10,.35),transparent 60%),radial-gradient(circle at 50% 42%,transparent 0 28%,rgba(0,0,0,.9) 70%)}
+.title .tbg::before{content:"";position:absolute;left:50%;top:40%;width:min(80vw,420px);height:min(80vw,420px);transform:translate(-50%,-50%);background:var(--sigil) center/contain no-repeat;opacity:.18;animation:rvspin 60s linear infinite;filter:sepia(1) brightness(.9)}
+.title .tin{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px}
+.title .tsub{font:600 12px var(--display);letter-spacing:.5em;color:#8a1410}
+.title h1{margin:0;font:800 44px var(--display);color:#E7C27A;text-shadow:0 0 24px rgba(179,38,30,.7),0 2px 4px #000}
+.title .tdesc{margin:0 0 18px;color:#9C8B76;font-size:14px}
+.tbtns{display:flex;flex-direction:column;gap:10px;width:min(260px,80vw)}
+.tbtn{height:50px;border-radius:12px;border:1px solid var(--line2);background:rgba(20,14,12,.9);color:var(--ink);font:700 17px var(--display);letter-spacing:.1em;cursor:pointer}
+.tbtn.primary{background:linear-gradient(180deg,#B3261E,#6e1410);border-color:#D0412F;color:#FFF1E6;box-shadow:0 0 18px rgba(179,38,30,.45)}
+.tbtn:disabled{opacity:.35;cursor:default}
+.tbtn:not(:disabled):hover{filter:brightness(1.15)}
+.tstats{margin-top:16px;font-size:13px;color:#9C8B76}.tstats b{color:#E3BE73}
+body.titled .top,body.titled .menu,body.titled .scene .skills,body.titled .scene .modebtn,body.titled #bossBar{visibility:hidden}
+/* 한 판 종료 */
+.runend{display:flex;flex-direction:column;gap:8px;text-align:center}
+.runend .sub{font:600 12px var(--display);letter-spacing:.4em;color:#B3261E}.runend.win .sub{color:#E7C27A}
+.runend h3{margin:0;font:800 24px var(--display);color:#E7C27A}
+.rstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.rstats div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 4px}.rstats b{display:block;font:700 18px var(--mono);color:var(--ink)}.rstats small{font-size:11px;color:var(--muted)}
+
 </style>
 
 <div class="scene" id="sceneBox">
@@ -674,7 +697,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
             <div class="slabel"><span class="sub">층</span><b id="floorName"></b><small id="floorInfo"></small></div>
             <button class="arrow" id="floorNext" aria-label="위층">›</button>
           </div>
-          <label class="speed"><input type="checkbox" id="autoClimb"> 보스를 격파하면 자동으로 다음 층으로</label>
+          <label class="speed" hidden><input type="checkbox" id="autoClimb"></label><div class="note">한 판 진행: 보스를 쓰러뜨리면 다음 층으로 올라가요. 지나온 층의 소개는 아래에서 다시 볼 수 있어요.</div>
           <div class="abyss" id="abyss" hidden></div>
           <div class="floors" id="floors"></div>
           <div class="row"><button class="btn" id="storyBtn">이 층 악마 소개 보기</button></div>
@@ -793,6 +816,10 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 </div>
 
 <div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="title" id="title" hidden><div class="tbg"></div><div class="tin">
+  <div class="tsub">SIGILLUM SALOMONIS</div><h1>솔로몬의 인장</h1><p class="tdesc">일흔두 악마, 일흔두 층. 쓰러지면 처음부터.</p>
+  <div class="tbtns"><button class="tbtn primary" id="tStart">시작하기</button><button class="tbtn" id="tContinue">이어하기</button><button class="tbtn" id="tSet">설정</button></div>
+  <div class="tstats" id="tStats"></div></div></div>
 <div class="chests" id="chests" hidden></div>
 <div class="reveal" id="reveal" hidden></div>
 <div class="toast" id="toast" hidden></div>
@@ -901,10 +928,9 @@ const rankOf=()=>S.rank||0;
 /* 소환사 그림(시안 2 · 반지빛 어둠): 승급 9단계. f=전체 그림, b=부위를 떼어낸 몸통, p=부위(머리 끄덕, 반지 낀 손, 홀) */
 const CRIG={};  /* 소환사 그림도 원본 판화에서 가공한 것이라 공개 저장소에는 넣지 않아요(없으면 직접 그린 SVG로 보여요) */
 function solSrc(r){r=r==null?rankOf():r;return CRIG[r]?CRIG[r].f:'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(solomonSVG(r))))}
-function promoState(){const r=rankOf();if(r>=SOL_STAGES.length-1)return null;const q=PROMO[r+1];
-  const best={};S.mons.forEach(m=>{if(m.grade>=q.g&&(!best[m.sp]||best[m.sp].grade<m.grade))best[m.sp]=m});
-  const sps=Object.values(best).sort((a,b)=>b.grade-a.grade).slice(0,3);const kills=S.bossKills||0;
-  return {to:r+1,q,sps,kills,ok:sps.length>=3&&kills>=q.b}}
+/* 승급은 소환사 레벨로: Lv 4·8·12·16·20·25·30·35에 한 단계씩 */
+const PROMO_LV=[0,4,8,12,16,20,25,30,35];
+function promoState(){const r=rankOf();if(r>=SOL_STAGES.length-1)return null;const need=PROMO_LV[r+1];return {to:r+1,need,lv:S.charLv,ok:S.charLv>=need}}
 function doPromote(){const P=promoState();if(!P||!P.ok)return;S.rank=P.to;SPRI[0]=null;save();
   addLog(`승급! ${SOL_STAGES[S.rank].n}`,true);
   $('sheet').innerHTML=`<div class="promo"><div class="sub">승급</div><img alt="${SOL_STAGES[S.rank].n}" src="${solSrc()}"><h3>${SOL_STAGES[S.rank].n}</h3><p>${SOL_STAGES[S.rank].d}</p>
@@ -1099,7 +1125,7 @@ const stageReq=(E,d)=>Math.round(40*Math.pow(1+(E-1)*0.25,1.3)*(1+Math.max(0,E-6
 /* 층별 요구 전투력: 기준점 사이를 지수(로그 선형)로 이어요.
    목표 팀(악마 3 + 소환사, 장비 보너스 포함 대략): 10층 D등급 30레벨 · 20층 C~B · 30층 A 100레벨 · 40층 S · 50층 SS · 56층 SR · 64층 SSR · 72층 SSR 각성 + 조합 악마 */
 const REQ_PTS=[[1,60],[5,250],[10,600],[20,1300],[30,2200],[40,3300],[50,4800],[56,6000],[64,9000],[72,15000]];
-const floorReq=f=>{if(f>72)return Math.round(15000*Math.pow(1.07,f-72));for(let i=1;i<REQ_PTS.length;i++){const [f0,r0]=REQ_PTS[i-1],[f1,r1]=REQ_PTS[i];if(f<=f1){const t=(f-f0)/(f1-f0);return Math.round(r0*Math.pow(r1/r0,t))}}return REQ_PTS[REQ_PTS.length-1][1]};
+const floorReq=f=>{if(f<=72)return Math.round((200+17*f)*(0.75+0.6*(f-1)/71));if(f>72)return Math.round(15000*Math.pow(1.07,f-72));for(let i=1;i<REQ_PTS.length;i++){const [f0,r0]=REQ_PTS[i-1],[f1,r1]=REQ_PTS[i];if(f<=f1){const t=(f-f0)/(f1-f0);return Math.round(r0*Math.pow(r1/r0,t))}}return REQ_PTS[REQ_PTS.length-1][1]};
 const reqNow=()=>floorReq(curFloor());
 const gps=()=>(1+0.1*TL('wis5'))*teamPower()/20*(1+(eff()-1)*0.08)*(1+dexBonus().gold+affixBonus().gold)*mapBonus()*awGain();
 const lvCost=m=>Math.round(8*Math.pow(m.lv,1.35)*(1+m.grade*0.15));
@@ -1294,7 +1320,7 @@ function levelUpItem(it){
    난이도마다 30%씩 더해져 마스터 화산 20단계는 약 347 (약 35배) */
 const expNeed=lv=>Math.round(10*(100+24*Math.pow(lv,1.62)));
 const expAt=(E,d)=>10*(1+0.25*(E-1))*(1+0.004*Math.max(0,E-1)*0.6);
-const expPerTick=()=>(1+0.05*TL('wis1'))*expAt(eff(),S.diff)*(1+dexBonus().exp+affixBonus().exp)*mapBonus()*awGain();
+const expPerTick=()=>6*(1+0.05*TL('wis1'))*expAt(eff(),S.diff)*(1+dexBonus().exp+affixBonus().exp)*mapBonus()*awGain();
 function gainExp(m,x,quiet){
   if(m.lv>=MAXLV)return 0;
   m.exp=(m.exp||0)+x;let ups=0;
@@ -1324,10 +1350,41 @@ function newGame(){
   [80,95,120].forEach((p,i)=>{const m=makeMonster(p,[0,2,4][i],'시작');m.isNew=false;S.mons.push(m);S.team[i]=m.id});
   for(let i=0;i<4;i++){const m=makeMonster(wildP(1),FLOORS[i%2],'1층');m.isNew=false;S.mons.push(m)}
   giveStarterItem();
-  addLog('솔로몬의 인장 반지가 빛났어요. 첫 번째 악마를 찾아 나섭니다.');S.story={seen:[]};S.intro=[];setTimeout(()=>floorIntro(1),600);
+  addLog('새로운 판을 시작해요. 1층부터 72층까지, 쓰러지면 처음부터예요.');S.story={seen:[]};S.intro=[];
 }
 function addLog(text,hi){const d=new Date();S.log.unshift({t:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,text,hi:!!hi});S.log.length=Math.min(S.log.length,40)}
-function save(){S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){if(!S||!RUN.on)return;S.last=Date.now();metaSync();try{localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}}
+/* ===================== 로그라이크 한 판 =====================
+   타이틀(시작하기·이어하기·설정) → 1층부터 72층까지 차례로 보스와 싸워요. 쓰러지거나 시간이 다 되면 그 판은 끝(저장 삭제).
+   한 판이 끝나도 남는 것(영구 기록): 도감에 오른 악마, 알아낸 조합법, 읽은 층 소개, 최고 층, 판 수·정복 수, 설정. */
+const META_KEY=KEY+'-meta';let META={seen:[],recipes:[],intro:[],best:0,runs:0,wins:0,hiFps:false,flt:{mon:0,item:0}};
+try{const m=JSON.parse(localStorage.getItem(META_KEY)||'null');if(m)META=Object.assign(META,m)}catch(e){}
+const RUN={on:false};
+function metaSync(){if(!S)return;META.seen=[...new Set([...(META.seen||[]),...(S.seen||[])])];META.recipes=[...new Set([...(META.recipes||[]),...(S.recipes||[])])];META.intro=[...new Set([...(META.intro||[]),...(S.intro||[])])];META.best=Math.max(META.best||0,(S.top||1)-1);META.hiFps=!!S.hiFps;if(S.flt)META.flt=S.flt}
+function hasRun(){try{return !!localStorage.getItem(KEY)}catch(e){return false}}
+function showTitle(){RUN.on=false;$('title').hidden=false;$('tContinue').disabled=!hasRun();
+  $('tStats').innerHTML=META.runs?`최고 <b>${META.best}층</b> · ${META.runs}판 도전 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72`:'일흔두 악마가 72층의 탑에서 기다려요';
+  document.body.classList.add('titled')}
+function enterRun(){$('title').hidden=true;document.body.classList.remove('titled');RUN.on=true;SC.mobs=[];SC.boss=null;SC.bossT=1.2;SC.tele=[];SC.chest=null;SC.chestT=0;$('chests').hidden=true;
+  skBarKey='';syncTeam();renderAll();save();setTimeout(()=>floorIntro(curFloor()),500)}
+function startRun(){if(hasRun()&&!confirmNew())return;newGame();S.seen=[...META.seen];S.recipes=[...META.recipes];S.intro=[...META.intro];S.hiFps=META.hiFps;S.flt=META.flt||S.flt;S.mons.forEach(m=>{if(!S.seen.includes(m.sp))S.seen.push(m.sp)});META.runs=(META.runs||0)+1;enterRun()}
+let newArm=0;function confirmNew(){if(Date.now()-newArm<3000)return true;newArm=Date.now();toast('진행 중인 판이 있어요 · 한 번 더 누르면 새로 시작해요');return false}
+function continueRun(){if(!load())return toast('이어할 판이 없어요');enterRun()}
+function runOver(win,why){if(!RUN.on)return;metaSync();if(win)META.wins=(META.wins||0)+1;const f=curFloor(),got=S.mons.length;RUN.on=false;
+  try{localStorage.removeItem(KEY);localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}
+  $('sheet').innerHTML=`<div class="runend ${win?'win':''}"><div class="sub">${win?'72층 정복':'한 판 종료'}</div><h3>${win?'일흔두 악마를 모두 굴복시켰어요':`${f}층에서 쓰러졌어요`}</h3>
+    <p class="muted">${win?'솔로몬의 인장이 다시 완전해졌어요.':why||''}</p>
+    <div class="rstats"><div><b>${win?72:f-1}</b><small>돌파한 층</small></div><div><b>${META.best}</b><small>최고 기록</small></div><div><b>Lv ${S.charLv}</b><small>소환사</small></div><div><b>${got}</b><small>귀속한 악마</small></div></div>
+    <p class="note">도감 ${META.seen.length}/72 · 조합법과 층 소개 기록은 다음 판에도 남아요.</p>
+    <div class="row"><button class="btn" data-act="totitle">타이틀로</button><button class="btn primary" data-act="again" style="margin-left:auto">다시 도전</button></div></div>`;
+  $('sheet').dataset.kind='runend';$('overlay').hidden=false;SC.mobs=[];SC.boss=null;SC.tele=[]}
+function openSettings(){const S0=S||{};$('sheet').innerHTML=`<div class="row"><h3>설정</h3></div>
+   <div class="setrow"><label for="sHi">고화질 · 초당 60번 그리기(발열·배터리 소모 늘어남)</label><input type="checkbox" id="sHi" ${META.hiFps?'checked':''}></div>
+   <div class="setrow"><span>기록</span><span class="muted">최고 ${META.best}층 · ${META.runs}판 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72</span></div>
+   <div class="row"><button class="btn danger" data-act="wipe">모든 기록 지우기</button><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;
+  $('sheet').dataset.kind='settings';$('overlay').hidden=false;$('sHi').onchange=e=>{META.hiFps=e.target.checked;if(S)S.hiFps=META.hiFps;try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(x){}sceneSize()}}
+let wipeArm=0;
+function RUN_BOOT(){S=null;const tb=document.querySelector('.title .tbg');if(tb)tb.style.setProperty('--sigil',`url(${PROP_IMG.sigil})`);showTitle()}
 function load(){
   try{const s=localStorage.getItem(KEY);if(!s)return false;S=JSON.parse(s);
     if(!S.st){S.st=DIFFS.map((_,d)=>d===0?(S.stages||MAPS.map((_,i)=>i?0:1)):MAPS.map(()=>0));delete S.stages}
@@ -1347,7 +1404,7 @@ function load(){
     S.items.forEach((it,k)=>{if(it.lv==null){const n=makeItem(it.d,it.map,it.grade);n.id=it.id;n.slot=it.slot;n.name=it.name;n.isNew=false;S.items[k]=n}});
     S.mons.forEach(m=>finish(m));S.items.forEach(it=>{if(it.sc)itemFinish(it)});
     S.team=S.team.map(id=>id!=null&&byId(id)?id:null);S.equip=S.equip.map(id=>id!=null&&itemById(id)?id:null);
-    if(!S.story)S.story={seen:[]};if(!S.intro){S.intro=[];for(let f=1;f<curFloor();f++)S.intro.push(f)}setTimeout(()=>floorIntro(curFloor()),800);
+    if(!S.story)S.story={seen:[]};if(!S.intro)S.intro=[];
     checkUnlock(0);return true}
   catch(e){return false}
 }
@@ -1669,11 +1726,10 @@ function openChar(){
 function promoHTML(){const P=promoState(),r=rankOf();
   const steps=SOL_STAGES.map((st,i)=>`<div class="pstep ${i<=r?'done':''} ${i===r?'cur':''}"><img alt="${st.n}" src="${solSrc(i)}"><small>${st.n}</small></div>`).join('');
   if(!P)return `<div class="promobox"><b>승급</b> · 최고 단계 「${SOL_STAGES[r].n}」에 올랐어요<div class="psteps">${steps}</div></div>`;
-  const okS=P.sps.length>=3,okB=P.kills>=P.q.b;
+  const okL=P.ok;
   return `<div class="promobox"><div class="row"><b>승급</b><span class="muted">다음: 「${SOL_STAGES[P.to].n}」 · 기본 전투력 ×${(1+0.3*P.to).toFixed(1)}</span></div>
     <div class="psteps">${steps}</div>
-    <div class="preq ${okS?'ok':''}">${okS?'✓':'○'} 서로 다른 악마 3종을 ${gname(P.q.g)} 등급 이상 보유 · ${P.sps.length}/3 ${P.sps.map(m=>`${artHTML(m.sp)}${nm(m)} ${mb(m)}`).join(' ')}</div>
-    <div class="preq ${okB?'ok':''}">${okB?'✓':'○'} 보스 처치 ${fmt(P.kills)} / ${fmt(P.q.b)}</div>
+    <div class="preq ${okL?'ok':''}">${okL?'✓':'○'} 소환사 Lv ${P.need} 이상 · 지금 Lv ${P.lv}</div>
     <div class="row"><button class="btn primary" data-act="promote" ${P.ok?'':'disabled'}>${P.ok?'승급하기':'조건을 채우면 승급할 수 있어요'}</button></div></div>`}
 let teamSel=0;
 function openTeam(slot){
@@ -1690,7 +1746,7 @@ function openTeam(slot){
     <div class="grid">${list.map(m=>card(m,S.team[teamSel]===m.id?'sel':'')).join('')}</div>`;
   $('sheet').dataset.kind='team';$('overlay').hidden=false;
 }
-function closeSheet(){$('sheet').classList.remove('bookmode');$('overlay').hidden=true;renderAll();setTimeout(tryIntro,300)}
+function closeSheet(){if($('sheet').dataset.kind==='runend'){$('overlay').hidden=true;return showTitle()}$('sheet').classList.remove('bookmode');$('overlay').hidden=true;if(!RUN.on){return}renderAll();setTimeout(tryIntro,300)}
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
 $('sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -1701,6 +1757,9 @@ $('sheet').addEventListener('click',e=>{
     if(act==='pickclear'){pickSel.clear();return openPick()}if(act==='pickok')return applyPick();return}
   if($('sheet').dataset.kind==='char'&&act==='promote'){doPromote();return}
   if($('sheet').dataset.kind==='char'){
+    if(act==='totitle'){$('overlay').hidden=true;return showTitle()}
+    if(act==='again'){$('overlay').hidden=true;return startRun()}
+    if(act==='wipe'){if(Date.now()-wipeArm>3000){wipeArm=Date.now();return toast('한 번 더 누르면 모든 기록을 지워요')}try{localStorage.removeItem(KEY);localStorage.removeItem(META_KEY)}catch(e){}META={seen:[],recipes:[],intro:[],best:0,runs:0,wins:0,hiFps:false,flt:{mon:0,item:0}};$('overlay').hidden=true;return showTitle()}
     if(act==='gear'){$('overlay').hidden=true;return goTab('gear')}
     if(act==='tree')return openTree();
     renderTop();renderExplore();return openChar();
@@ -1871,10 +1930,10 @@ $('team').addEventListener('click',e=>{
   if(b.dataset.id)return openDetail(+b.dataset.id);
   if(b.dataset.empty!=null)return openTeam(+b.dataset.empty);
 });
-$('autoTeam').onclick=autoTeam;$('hiFps').onchange=e=>{S.hiFps=e.target.checked;save();sceneSize()};setTimeout(()=>{$('hiFps').checked=!!(S&&S.hiFps)},0);$('chests').addEventListener('click',()=>openChest());$('floorChip').onclick=()=>document.querySelector('[data-tab=map]').click();
+$('tStart').onclick=startRun;$('tContinue').onclick=continueRun;$('tSet').onclick=openSettings;$('autoTeam').onclick=autoTeam;$('hiFps').onchange=e=>{S.hiFps=e.target.checked;save();sceneSize()};setTimeout(()=>{$('hiFps').checked=!!(S&&S.hiFps)},0);$('chests').addEventListener('click',()=>openChest());$('floorChip').onclick=()=>document.querySelector('[data-tab=map]').click();
 $('sort').onchange=renderMons;$('elFlt').onchange=renderMons;
 setTimeout(()=>$('elFlt').insertAdjacentHTML('beforeend',Object.keys(FNAME).map(k=>`<option value="${k}">${EL_ICON[k]||''} ${FNAME[k]}</option>`).join('')),0);
-function setFloor(f){if(f<1||f>(S.top||1)||f===curFloor())return;
+function setFloor(f){if(f!==curFloor())toast('한 판은 1층부터 차례로 올라가요');return;
   S.floor=f;S.map=zoneOf(f);S.prog=0;S.blocked=false;setTimeout(()=>floorIntro(f),400);if(SC.boss){SC.mobs=SC.mobs.filter(m=>m!==SC.boss);SC.boss=null;SC.bossT=0.6;SC.tele=[]}
   addLog(`${f}층으로 이동했어요 · 보스 ${SPECIES[bossSp(f)][1]}`);save();renderAll()}
 $('floorPrev').onclick=()=>setFloor(curFloor()-1);
@@ -1954,11 +2013,12 @@ function dmgMob(mob,d,crit,fromX,fromY){if(mob.vuln>0)d=Math.round(d*1.3);if(mob
   SC.fx.push({k:'num',x:mob.x+rand(-8,8),y:mob.y-16,t:0,life:0.85,txt:fmt(d)+(crit?'!':'')+(em>1?'▲':em<1?'▼':''),col:em>1?'#7FE0FF':em<1?'#9A8A7A':crit?'#FFD166':'#F1E6D6',sz:crit||em>1?17:12})}
 /* 층 보스를 쓰러뜨리면 그 층 클리어 → 다음 층이 열리고, 자동 등반이면 바로 올라가요 */
 function clearFloor(f){if(cleared(f))return false;const rw=Math.round(floorReq(f)*0.5);S.gold+=rw;S.top=f+1;
+  {const x=expPerTick()*4;S.team.forEach(id=>{const m=id!=null&&byId(id);if(m)gainExp(m,x)});gainCharExp(x);checkPromo()}  /* 보스 처치 보너스 경험치 */
   addLog(`${f}층 클리어! 보스 ${SPECIES[bossSp(f)][1]} 격파 · +${fmt(rw)}G`,true);toast(`${f}층 클리어!`);
-  if(f===NFLOOR){addLog('72층 정복! 솔로몬의 인장이 모든 악마를 굴복시켰어요',true);queueStory('clear'+zoneOf(f))}
+  if(f===NFLOOR){addLog('72층 정복! 솔로몬의 인장이 모든 악마를 굴복시켰어요',true);setTimeout(()=>runOver(true),3500)}
   else if(zoneOf(f+1)!==zoneOf(f)){queueStory('clear'+zoneOf(f));queueStory('ch'+zoneOf(f+1))}
   if(f===NFLOOR){addLog('심연이 열렸어요! 73층부터 끝없이 이어지고, 언제든 인장 각성을 할 수 있어요',true)}
-  if(S.autoClimb!==false){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;floorIntro(S.floor)}
+  if(f<NFLOOR){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;floorIntro(S.floor)}
   save();renderTop();renderExplore();return true}
 
 /* ===================== 흥미 요소 4종 =====================
@@ -2013,7 +2073,7 @@ function openChests(ft,name){const box=$('chests');if(!box)return;const bk=name?
 function chestGive(o,got){
   if(o.mon!=null){const sp=spForFloor()!=null?spForFloor():anyOf(FLOORS.slice(0,Math.min(56,curFloor()+6)).filter(k=>SPECIES[k][2]!==-2));
     if(S.mons.length>=invMax())got.push('<span class="dim">보관함이 가득 차 악마를 놓쳤어요</span>');
-    else{const mm=makeMonster(rand(Math.max(P_MIN,TH[o.mon])+2,TH[o.mon+1]-2),sp,`${curFloor()}층 상자`);if(!S.seen.includes(mm.sp)){S.seen.push(mm.sp)}
+    else{const mm=makeMonster(rand(Math.max(P_MIN,TH[o.mon])+2,TH[o.mon+1]-2),sp,`${curFloor()}층 상자`);{const tl=Math.min(MAXLV-1,Math.round(curFloor()*1.3));let need=0;for(let L=1;L<tl;L++)need+=expNeed(L);gainExp(mm,need,true)}if(!S.seen.includes(mm.sp)){S.seen.push(mm.sp)}
       if(keepMon(mm)){S.mons.push(mm);got.push(`귀속 · ${nm(mm)} ${mb(mm)}`);addLog(`상자에서 ${nm(mm)} 귀속 · ${gname(mm.grade)}등급`,mm.grade>=5)}else{const g=releaseGold(mm);S.gold+=g;got.push(`<span class="dim">${nm(mm)} ${gname(mm.grade)} 퇴마 +${fmt(g)}G</span>`)}}}
   if(o.item!=null){if(S.items.length>=MAXITEMS){S.gold+=Math.round(o.gold*0.5);got.push('<span class="dim">장비 가방이 가득 차 골드로</span>')}
     else{const it=o.item<0?makeItem(S.diff,S.map):makeItem(S.diff,S.map,o.item);if(keepItem(it)){S.items.push(it);got.push(`장비 · ${it.name} ${mb(it)}`)}else{const g=itemSell(it);S.gold+=g;got.push(`<span class="dim">${it.name} ${gname(it.grade)} 분해 +${fmt(g)}G</span>`)}}}}
@@ -2700,7 +2760,7 @@ function sceneLoop(now){
   const rdt=Math.min(0.1,(now-lastT)/1000);lastT=now;frameAcc+=rdt;
   if(frameAcc+0.004<frameGap()){requestAnimationFrame(sceneLoop);return}
   const dt=Math.min(0.1,frameAcc);frameAcc=0;
-  if(!document.hidden){
+  if(!document.hidden&&RUN.on){
     if(!SC.W){sceneSize();syncTeam();init3D();size3D()}
     if(SC.W){let tsc=1;if(SC.slowmo){const k=SC.slowmo.t/SC.slowmo.dur;tsc=k<1?0.18+0.82*k*k:1;SC.slowmo.t+=dt;if(k>=1)SC.slowmo=null}if(SC.hs>0)SC.hs-=dt;else sceneStep(dt*tsc);if(R3.on)render3D(dt);else sceneDraw()}
     uiAcc+=dt;const skDt=dt*(S.fast?3:1);
@@ -3554,7 +3614,7 @@ function teleHit(T,m){const st=m.st,C=FXCOL[st.f]||FXCOL.blood;
   if(st.f==='bolt')SC.fx.push({k:'bolt',x:cx,y:cy,t:0,life:0.25,col:C[0],seed:Math.random()*1000});
   if(st.m==='stomp'||st.m==='rear')SC.fx.push({k:'crack',x:T.x,y:T.y,t:0,life:0.7,seed:Math.random()*1000,r:T.r*0.8,col:C[0]});
   elemBits(st.f,cx,cy,Math.cos(T.a||0),Math.sin(T.a||0),1.2,true);if(!RM)SC.shake=Math.max(SC.shake,T.dmg>=0.3?7:4)}
-function bossFail(m,why){reviveAll();m.hp=m.max;m.tl=BOSS_TIME;m.enr=0;m.invis=0;m.xt=null;SC.mobs.forEach(x=>{if(x.minion)x.hp=0});m.dm=m.dm0||m.dm;SC.ms.forEach(a=>{a.charm=0;a.psn=0});m.act=null;m.fly=0;m.vanish=0;m.wind=0;SC.tele=[];
+function bossFail(m,why){if(RUN.on){return runOver(false,why)}reviveAll();m.hp=m.max;m.tl=BOSS_TIME;m.enr=0;m.invis=0;m.xt=null;SC.mobs.forEach(x=>{if(x.minion)x.hp=0});m.dm=m.dm0||m.dm;SC.ms.forEach(a=>{a.charm=0;a.psn=0});m.act=null;m.fly=0;m.vanish=0;m.wind=0;SC.tele=[];
   SC.fx.push({k:'num',x:m.x,y:m.y-70,t:0,life:2,txt:`도전 실패 · ${why}`,col:'#FF6B6B',sz:16});addLog(`${curFloor()}층 보스에게 ${why} · 다시 도전해요`);
   SC.ms.forEach(a=>{a.down=0;a.hp=a.max})}
 function bossStep(m,dt){
@@ -3792,17 +3852,17 @@ function offline(){
   addLog(`자리를 비운 ${Math.round(sec/60)}분 동안(상자 약 ${Math.round(sec/45)}개분) ${fmt(g)}G, 악마 ${found}마리${items?`, 장비 ${items}개`:''}를 얻었어요${freed?` · ${freed}마리는 설정에 따라 퇴마함`:''}${ups?` · 악마 총 ${ups}레벨 성장`:''}${cups?` · 소환사 ${cups}레벨 성장`:''}`,true);
   setTimeout(()=>toast(`오프라인 보상: ${fmt(g)}G · 악마 ${found}마리${items?` · 장비 ${items}개`:''}`),300);
 }
-if(load())offline();else newGame();
-renderAll();save();
+RUN_BOOT();
 let prev=performance.now(), saveAcc=0;
 setInterval(()=>{
+  if(!RUN.on||!S||!SC.boss){prev=performance.now();return}
   const now=performance.now(), dt=Math.min(1000,now-prev)*(S.fast?5:1);prev=now;
   S.gold+=gps()*manualMul()*dt/1000;S.prog+=dt/TICK_MS;
   if(S.prog>=1){S.prog=0;if(explore())renderAll();else{renderExplore();renderStrip()}}
   renderTop();$('prog').style.width=(S.prog*100)+'%';$('gps').innerHTML=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;
   saveAcc+=dt;if(saveAcc>3000){saveAcc=0;save()}
 },100);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{offline();prev=performance.now();renderAll()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(RUN.on)save()}else{prev=performance.now();if(RUN.on)renderAll()}});
 </script>
 
 </html>
