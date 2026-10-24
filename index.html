@@ -620,6 +620,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .fnext.ok b,.fnext.ok .hint{color:#7FD08A}.fnext.warn b,.fnext.warn .hint{color:#E7C27A}.fnext.bad b,.fnext.bad .hint{color:#E8604C}
 .fpick .btn small{display:block;font-size:10.5px;opacity:.75;font-weight:400;margin-top:2px}.fpick .btn{flex:1;padding:10px 8px}.fpick .row:last-child{gap:8px}
 .fpick .fsave{display:block;width:100%;margin-top:10px;padding:9px}.fpick .fsave.done{color:#7FD08A;border-color:#3d6b45}
+.fallbtns{display:flex;flex-direction:column;gap:8px;margin-top:12px}.fallbtns .btn{width:100%;padding:10px;display:flex;justify-content:space-between;align-items:center}.fallbtns .btn small{font-size:11px;opacity:.7;font-weight:400}
 .skmini .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF5A3A;margin-left:3px;vertical-align:2px}
 .scene .skills{right:10px}
 
@@ -943,7 +944,7 @@ function promoState(){const r=rankOf();if(r>=SOL_STAGES.length-1)return null;con
 function showPromo(){S.promoShow=0;
   $('sheet').innerHTML=`<div class="promo"><div class="sub">승급</div><img alt="${SOL_STAGES[S.rank].n}" src="${solSrc()}"><h3>${SOL_STAGES[S.rank].n}</h3><p>${SOL_STAGES[S.rank].d}</p>
     <p class="muted">소환사 기본 전투력 ×${(1+0.3*S.rank).toFixed(1)}</p><div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">계속</button></div></div>`;
-  $('sheet').dataset.kind='char';$('overlay').hidden=false;renderTop();renderExplore()}
+  $('sheet').dataset.kind='char';$('sheet').classList.remove('bookmode');$('overlay').hidden=false;renderTop();renderExplore()}
 /* 레벨이 조건에 닿으면 자동 승급. 연출 창은 전투가 끝난 뒤(층 선택 전) 보여줘요 */
 function checkPromo(){if(!S)return;let P=promoState(),up=0;while(P&&P.ok){S.rank=P.to;up=1;addLog(`승급! ${SOL_STAGES[S.rank].n} (소환사 Lv ${P.need})`,true);P=promoState()}
   if(!up)return;SPRI[0]=null;S.promoShow=1;skBarKey='';toast(`승급! ${SOL_STAGES[S.rank].n} · 기본 전투력 ×${(1+0.3*S.rank).toFixed(1)}`);
@@ -1398,14 +1399,16 @@ function runOver(win,why){if(!RUN.on)return;metaSync();if(win)META.wins=(META.wi
       <div class="row"><span>보스 처치 시간 보너스 · ${sc.nt}층</span><b>${fmt(sc.tb)}</b></div><div class="row tot"><span>최종 점수${sc.total>=META.bestScore?' · 최고 기록!':''}</span><b>${fmt(sc.total)}</b></div></div>`:''}
     <p class="note">도감 ${META.seen.length}/72 · 조합법과 층 소개 기록은 다음 판에도 남아요.</p>
     <div class="row"><button class="btn" data-act="totitle">타이틀로</button><button class="btn primary" data-act="again" style="margin-left:auto">다시 도전</button></div></div>`;
-  $('sheet').dataset.kind='runend';$('overlay').hidden=false;SC.mobs=[];SC.boss=null;SC.tele=[]}
-function fallBack(why){const f=curFloor();metaSync();S.deaths=(S.deaths||0)+1;RUN.on=false;SC.mobs=[];SC.boss=null;SC.tele=[];SC.skcd={};
-  S.pick=0;S.floor=1;S.top=1;S.map=zoneOf(1);S.prog=0;save();try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}
+  $('sheet').dataset.kind='runend';$('sheet').classList.remove('bookmode');$('overlay').hidden=false;SC.mobs=[];SC.boss=null;SC.tele=[]}
+function fallBack(why){const f=curFloor();metaSync();S.deaths=(S.deaths||0)+1;SC.mobs=[];SC.boss=null;SC.tele=[];SC.skcd={};SC.hits=[];
+  S.pick=0;S.floor=1;S.top=1;S.map=zoneOf(1);S.prog=0;save();RUN.on=false;try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}
   $('sheet').innerHTML=`<div class="runend"><div class="sub">쓰러졌어요</div><h3>${f}층에서 쓰러졌어요</h3><p class="muted">${why||''}</p>
     <div class="rstats"><div><b>${f}</b><small>쓰러진 층</small></div><div><b>${META.best}</b><small>최고 기록</small></div><div><b>Lv ${S.charLv}</b><small>소환사</small></div><div><b>${S.mons.length}</b><small>귀속한 악마</small></div></div>
     <p class="note">악마·장비·골드·레벨·스킬은 그대로 두고 1층부터 다시 올라가요. 다시 깨는 층에서도 보상을 받아요.</p>
-    <div class="row"><button class="btn" data-act="totitle">타이틀로</button><button class="btn primary" data-act="retry" style="margin-left:auto">1층부터 다시</button></div></div>`;
-  $('sheet').dataset.kind='fall';$('overlay').hidden=false}
+    <div class="fallbtns"><button class="btn primary" data-act="retry">이어하기<small>가진 그대로 1층부터</small></button>
+      <button class="btn" data-act="fresh">처음부터<small>모두 지우고 새 판</small></button>
+      <button class="btn" data-act="totitle">초기 화면으로<small>저장돼 있어요</small></button></div></div>`;
+  $('sheet').dataset.kind='fall';$('sheet').classList.remove('bookmode');$('overlay').hidden=false}
 /* 층 클리어 후: 이 층 반복 / 다음 층 도전 */
 function openFloorPick(){const f=SC.pick,n=f+1,tp=teamPower(),rq=floorReq(n),r=tp/rq,cls=r>=1?'ok':r>=0.75?'warn':'bad';
   $('sheet').innerHTML=`<div class="fpick"><div class="sub">${f}층 클리어</div><h3>다음엔 어디로 갈까요?</h3>
@@ -1414,7 +1417,7 @@ function openFloorPick(){const f=SC.pick,n=f+1,tp=teamPower(),rq=floorReq(n),r=t
       <div class="hint">${r>=1?'충분해요. 도전해볼 만해요':r>=0.75?'조금 부족해요. 장비·합성으로 보강하면 좋아요':'많이 부족해요. 이 층을 반복해 키우는 걸 권해요'}</div></div>
     <div class="row"><button class="btn" data-fp="stay">${f}층 반복<small>골드·경험치 일부 · 상자</small></button><button class="btn primary" data-fp="next" style="margin-left:auto">${n}층 도전<small>오르면 되돌아갈 수 없어요</small></button></div>
     <button class="btn fsave" data-fp="save">저장하기</button></div>`;
-  $('sheet').dataset.kind='fpick';$('overlay').hidden=false}
+  $('sheet').dataset.kind='fpick';$('sheet').classList.remove('bookmode');$('overlay').hidden=false}
 function pickFloor(next){const f=SC.pick;SC.pick=0;S.pick=0;$('sheet').dataset.kind='';$('overlay').hidden=true;SC.bossT=1.2;
   if(next&&f){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;floorIntro(S.floor)}save();renderAll()}
 $('sheet').addEventListener('click',e=>{const b=e.target.closest('[data-fp]');if(b&&$('sheet').dataset.kind==='fpick'){e.stopImmediatePropagation();if(b.dataset.fp==='save'){save();metaSync();try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}setTimeout(()=>{b.textContent=`✓ 저장했어요 · ${new Date().toTimeString().slice(0,5)}`;b.classList.add('done')},0);return toast('저장했어요. 타이틀의 이어하기로 이 층부터 계속할 수 있어요')}pickFloor(b.dataset.fp==='next')}});
@@ -1422,7 +1425,7 @@ function openSettings(){const S0=S||{};$('sheet').innerHTML=`<div class="row"><h
    <div class="setrow"><label for="sHi">고화질 · 초당 60번 그리기(발열·배터리 소모 늘어남)</label><input type="checkbox" id="sHi" ${META.hiFps?'checked':''}></div>
    <div class="setrow"><span>기록</span><span class="muted">최고 ${META.best}층 · ${META.runs}판 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72</span></div>${(META.scores||[]).length?`<div class="setrow"><span>점수 순위</span><span class="muted">${META.scores.map((x,i)=>`${i+1}위 ${fmt(x.t)}점(쓰러짐 ${x.d}회)`).join(' · ')}</span></div>`:''}
    <div class="row"><button class="btn danger" data-act="wipe">모든 기록 지우기</button><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;
-  $('sheet').dataset.kind='settings';$('overlay').hidden=false;$('sHi').onchange=e=>{META.hiFps=e.target.checked;if(S)S.hiFps=META.hiFps;try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(x){}sceneSize()}}
+  $('sheet').dataset.kind='settings';$('sheet').classList.remove('bookmode');$('overlay').hidden=false;$('sHi').onchange=e=>{META.hiFps=e.target.checked;if(S)S.hiFps=META.hiFps;try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(x){}sceneSize()}}
 let wipeArm=0;
 function RUN_BOOT(){S=null;const tb=document.querySelector('.title .tbg');if(tb)tb.style.setProperty('--sigil',`url(${PROP_IMG.sigil})`);showTitle()}
 function load(){
@@ -1466,11 +1469,11 @@ function explore(){
 }
 
 /* ---------- render ---------- */
+const uiC={};function setT(id,v){v=String(v);if(uiC[id]!==v){uiC[id]=v;$(id).textContent=v}}
 function renderTop(){
-  {const g0=+($('gold').dataset.v||S.gold),dg=S.gold-g0;$('gold').textContent=fmt(S.gold);$('gold').dataset.v=S.gold;if(dg>0){const d=$('goldDelta');d.textContent='+'+fmt(dg);d.classList.remove('on');void d.offsetWidth;d.classList.add('on')}}
-  $('stageTop').textContent=`${curFloor()}층 · ${SPECIES[bossSp()][1]}${conquered()?' ✓':''}`;
-  $('monCount').textContent=S.mons.length;
-  $('gearCount').textContent=S.items.length||'';
+  {const gt=fmt(S.gold);if(gt!==uiC.gold){uiC.gold=gt;$('gold').textContent=gt}const now=performance.now();
+   if(uiC.gv==null)uiC.gv=S.gold;if(now-(uiC.gT||0)>1200){const dg=S.gold-uiC.gv;uiC.gv=S.gold;uiC.gT=now;if(dg>=1){const d=$('goldDelta');d.textContent='+'+fmt(dg);d.classList.remove('on');void d.offsetWidth;d.classList.add('on')}}}
+  setT('stageTop',`${curFloor()}층 · ${SPECIES[bossSp()][1]}${conquered()?' ✓':''}`);setT('monCount',S.mons.length);setT('gearCount',S.items.length||'');
 }
 function renderExplore(){
   const f=curFloor(),tp=teamPower(),req=reqNow(),b=bossSp(f),B=STYLE[SPECIES[b][1]]||{};
@@ -1709,7 +1712,7 @@ function openDetail(id,fromTeam){
       ${detailFromTeam?'<button class="btn" data-act="back" style="margin-left:auto">← 팀 편성</button>':'<button class="btn" data-act="close" style="margin-left:auto">닫기</button>'}
     </div>`;
   $('sheet').scrollTop=0;
-  $('sheet').dataset.kind='mon';$('sheet').dataset.id=id;$('overlay').hidden=false;
+  $('sheet').dataset.kind='mon';$('sheet').classList.remove('bookmode');$('sheet').dataset.id=id;$('overlay').hidden=false;
 }
 function openItem(id){
   const it=itemById(id);if(!it)return;it.isNew=false;armed=false;
@@ -1741,7 +1744,7 @@ function openItem(id){
       <button class="btn danger" data-act="sell" ${eq?'disabled':''}>분해 (+${fmt(itemSell(it))}G)</button>
       <button class="btn" data-act="close" style="margin-left:auto">닫기</button>
     </div>`;
-  $('sheet').dataset.kind='item';$('sheet').dataset.id=id;$('overlay').hidden=false;
+  $('sheet').dataset.kind='item';$('sheet').classList.remove('bookmode');$('sheet').dataset.id=id;$('overlay').hidden=false;
 }
 function openChar(){
   const need=expNeed(S.charLv), xp=S.charExp||0, mins=Math.ceil((need-xp)/expPerTick()*TICK_MS/60000);
@@ -1761,7 +1764,7 @@ function openChar(){
       <button class="btn" data-act="gear">장비 관리</button><button class="btn" data-act="tree">스킬 트리${tFree()?` · ${tFree()}점`:""}</button>
       <button class="btn" data-act="close" style="margin-left:auto">닫기</button>
     </div>`;
-  $('sheet').scrollTop=0;$('sheet').dataset.kind='char';$('overlay').hidden=false;
+  $('sheet').scrollTop=0;$('sheet').dataset.kind='char';$('sheet').classList.remove('bookmode');$('overlay').hidden=false;
 }
 function promoHTML(){const P=promoState(),r=rankOf();
   const steps=SOL_STAGES.map((st,i)=>`<div class="pstep ${i<=r?'done':''} ${i===r?'cur':''}"><img alt="${st.n}" src="${solSrc(i)}"><small>${st.n}</small></div>`).join('');
@@ -1784,7 +1787,7 @@ function openTeam(slot){
     <div class="row"><button class="btn" data-act="clear" ${S.team[teamSel]==null?'disabled':''}>${teamSel+1}번 자리 비우기</button>
       <button class="btn" data-act="close" style="margin-left:auto">완료</button></div>
     <div class="grid">${list.map(m=>card(m,S.team[teamSel]===m.id?'sel':'')).join('')}</div>`;
-  $('sheet').dataset.kind='team';$('overlay').hidden=false;
+  $('sheet').dataset.kind='team';$('sheet').classList.remove('bookmode');$('overlay').hidden=false;
 }
 function closeSheet(){if($('sheet').dataset.kind==='fpick')return pickFloor(false);if($('sheet').dataset.kind==='fall'){$('sheet').dataset.kind='';$('overlay').hidden=true;return enterRun()}if($('sheet').dataset.kind==='runend'){$('overlay').hidden=true;return showTitle()}$('sheet').classList.remove('bookmode');$('overlay').hidden=true;if(!RUN.on){return}renderAll();setTimeout(tryIntro,300)}
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
@@ -1792,14 +1795,16 @@ $('sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const id=+$('sheet').dataset.id, act=b.dataset.act;
   if(act==='close')return closeSheet();
+    if(act==='totitle'){$('overlay').hidden=true;$('sheet').dataset.kind='';return showTitle()}
+    if(act==='fresh'){if(Date.now()-(b._arm||0)>3000){b._arm=Date.now();b.innerHTML='정말 처음부터?<small>한 번 더 누르면 시작</small>';return}
+      try{localStorage.removeItem(KEY)}catch(e){}$('sheet').dataset.kind='';$('overlay').hidden=true;newArm=Date.now();return startRun()}
+    if(act==='again'){$('overlay').hidden=true;return startRun()}
+    if(act==='retry'){$('sheet').dataset.kind='';$('overlay').hidden=true;return enterRun()}
   if($('sheet').dataset.kind==='story'||$('sheet').dataset.kind==='grim')return closeSheet();
   if($('sheet').dataset.kind==='pick'){if(b.dataset.pk!=null){const k=+b.dataset.pk;pickSel.has(k)?pickSel.delete(k):pickSel.add(k);return openPick()}
     if(act==='pickclear'){pickSel.clear();return openPick()}if(act==='pickok')return applyPick();return}
   if($('sheet').dataset.kind==='char'&&act==='promote'){doPromote();return}
   if($('sheet').dataset.kind==='char'){
-    if(act==='totitle'){$('overlay').hidden=true;return showTitle()}
-    if(act==='again'){$('overlay').hidden=true;return startRun()}
-    if(act==='retry'){$('sheet').dataset.kind='';$('overlay').hidden=true;return enterRun()}
     if(act==='wipe'){if(Date.now()-wipeArm>3000){wipeArm=Date.now();return toast('한 번 더 누르면 모든 기록을 지워요')}try{localStorage.removeItem(KEY);localStorage.removeItem(META_KEY)}catch(e){}META={seen:[],recipes:[],intro:[],best:0,runs:0,wins:0,hiFps:false,flt:{mon:0,item:0}};$('overlay').hidden=true;return showTitle()}
     if(act==='gear'){$('overlay').hidden=true;return goTab('gear')}
     if(act==='tree')return openTree();
@@ -1933,7 +1938,7 @@ function openPick(){const cnt={},best={};pickPool().forEach(m=>{cnt[m.sp]=(cnt[m
     <div class="muted">넣을 악마 종류를 누르고 확인하면, 그 종류에서 낮은 등급부터 최대 4마리가 재료 칸에 들어가요. 여러 종류를 고르면 섞어서 넣어요. 팀에 있는 악마는 빼요.</div>
     <div class="pickgrid">${ks.length?ks.map(k=>`<button class="pick ${pickSel.has(k)?'on':''}" data-pk="${k}" aria-pressed="${pickSel.has(k)}">${artHTML(k)}<b>${SPECIES[k][1]}</b><small>${cnt[k]}마리 · 최고 ${gname(best[k])}</small></button>`).join(''):'<div class="muted">넣을 수 있는 악마가 없어요</div>'}</div>
     <div class="row"><button class="btn primary" data-act="pickok" ${n?'':'disabled'}>확인 · ${n}마리 넣기</button><button class="btn" data-act="pickclear">선택 해제</button><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;
-  $('sheet').dataset.kind='pick';$('sheet').scrollTop=0;$('overlay').hidden=false}
+  $('sheet').dataset.kind='pick';$('sheet').classList.remove('bookmode');$('sheet').scrollTop=0;$('overlay').hidden=false}
 function applyPick(){const ms=pickPool().filter(m=>pickSel.has(m.sp)).sort((a,b)=>a.grade-b.grade||a.pot-b.pot).slice(0,4);
   fuseSel=ms.map(m=>m.id);lastResult=null;$('overlay').hidden=true;renderAll();toast(`${ms.length}마리를 재료 칸에 넣었어요`)}
 $('fusePick').onclick=openPick;
@@ -2023,7 +2028,7 @@ const SC={ab:{atk:0,exp:0,gold:0,find:0,ifind:0,crit:0,cdr:0,ult:0,boss:0,regen:
 const sceneQ=[];
 function scenePush(text,color,big,sp){sceneQ.push({text,color,big,sp});if(sceneQ.length>8)sceneQ.shift()}
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
-function sceneSize(){const c=$('scene'),b=c.getBoundingClientRect();SC.dpr=Math.min(S&&S.hiFps?2:1.5,window.devicePixelRatio||1);
+function sceneSize(){const c=$('scene'),b=c.getBoundingClientRect();SC.dpr=Math.min(S&&S.hiFps?2:1.35,window.devicePixelRatio||1);
   /* 화면 전체에 그리되, 전투 마당은 가운데 띠(세로 240~320px)예요. 위아래는 어둠 속 땅 */
   SC.VW=b.width;SC.VH=b.height;SC.W=b.width;SC.H=Math.round(Math.max(240,Math.min(320,b.height*0.4,b.width*0.85)));SC.oy=Math.round((b.height-SC.H)/2);
   c.width=Math.round(b.width*SC.dpr);c.height=Math.round(b.height*SC.dpr)}
@@ -2233,7 +2238,7 @@ function openTree(sel){treeS();sel=sel||$('sheet').dataset.tsel||'seal1';$('shee
       <div class="row">${l<N.max?`<button class="btn primary" data-tl="${sel}" ${tFree()<1||!tOpen(N)?'disabled':''}>배우기 (1점)</button>`:''}
       ${N.a&&l?`<button class="btn ${eq===0?'on':''}" data-te="${sel}" data-slot="0" ${eq===0?'disabled':''}>${eq===0?'✓ 장착 중':'스킬 칸에 장착'}</button>`:''}</div></div>
     <div class="row"><button class="btn danger" data-treset="1">초기화 (${fmt(resetCost())}G)</button><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;
-  $('sheet').dataset.kind='tree';$('overlay').hidden=false}
+  $('sheet').dataset.kind='tree';$('sheet').classList.remove('bookmode');$('overlay').hidden=false}
 $('sheet').addEventListener('click',e=>{if($('sheet').dataset.kind!=='tree')return;const b=e.target.closest('button');if(!b)return;
   if(b.dataset.tn)return openTree(b.dataset.tn);if(b.dataset.tl)return learn(b.dataset.tl);if(b.dataset.te)return equipSk(b.dataset.te,+b.dataset.slot);if(b.dataset.treset)return resetTree()});
 const SUMMONER_SKILL={n:'솔로몬의 인장',t:'seal',cd:7,col:'#F2C24A'};
@@ -2326,10 +2331,10 @@ function storyEntry(key){if(key==='prologue'||key==='ending')return STORY[key];c
 function showNextStory(){if(!storyQ.length||!$('overlay').hidden)return;const e=storyEntry(storyQ.shift());
   $('sheet').innerHTML=`<div class="story"><div class="sub">이야기</div><h3>${e.t}</h3>${e.x.split('\n').map(l=>l?`<p>${l}</p>`:'').join('')}</div>
     <div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">계속</button></div>`;
-  $('sheet').dataset.kind='story';$('sheet').scrollTop=0;$('overlay').hidden=false}
+  $('sheet').dataset.kind='story';$('sheet').classList.remove('bookmode');$('sheet').scrollTop=0;$('overlay').hidden=false}
 function openStoryLog(){const keys=(S.story&&S.story.seen)||[];
   $('sheet').innerHTML=`<div class="story"><div class="sub">지금까지의 이야기</div>${keys.map(k=>{const e=storyEntry(k);return `<h3>${e.t}</h3>${e.x.split('\n').map(l=>l?`<p>${l}</p>`:'').join('')}`}).join('<hr>')||'<p>아직 펼쳐진 이야기가 없어요.</p>'}</div>
-    <div class="row"><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;$('sheet').dataset.kind='story';$('sheet').scrollTop=0;$('overlay').hidden=false}
+    <div class="row"><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;$('sheet').dataset.kind='story';$('sheet').classList.remove('bookmode');$('sheet').scrollTop=0;$('overlay').hidden=false}
 
 const manualMul=()=>SC.manual&&!document.hidden?MANUAL_BONUS:1;
 let lastT=performance.now(), syncT=0;
@@ -2800,7 +2805,7 @@ function sceneDraw(){
    · 어둠 가림막(CSS 마스크)은 빛 위치가 4px 이상 움직일 때만 다시 그림
    · 버튼·막대 같은 화면 글자는 값이 바뀔 때만 고침 */
 let frameAcc=0,uiAcc=0;
-function frameGap(){const cover=!$('overlay').hidden||!$('drawer').hidden||!$('reveal').hidden;return cover?1/12:S&&S.hiFps?1/60:1/30}
+function frameGap(){const cover=!$('overlay').hidden||!$('drawer').hidden||!$('reveal').hidden;return cover?1/8:S&&S.hiFps?1/60:(!SC.boss&&!SC.chest&&!(SC.chestT>0)?1/20:1/30)}
 function sceneLoop(now){
   const rdt=Math.min(0.1,(now-lastT)/1000);lastT=now;frameAcc+=rdt;
   if(frameAcc+0.004<frameGap()){requestAnimationFrame(sceneLoop);return}
@@ -3587,9 +3592,9 @@ function openGrim(k){const sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{}
       ${gm?`<div><span>기믹</span>${GM_INFO[gm][0]} · 파훼: ${GM_INFO[gm][1]}</div>`:''}
       ${rcs.length?`<div><span>조합법</span>${rcs.map(r=>`${SPECIES[r.a][1]} + ${SPECIES[r.b][1]}`).join(' / ')}</div>`:''}
     </div><div class="row"><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div></div>`;
-  $('sheet').dataset.kind='grim';$('sheet').scrollTop=0;$('overlay').hidden=false}
+  $('sheet').dataset.kind='grim';$('sheet').classList.remove('bookmode');$('sheet').scrollTop=0;$('overlay').hidden=false}
 function openGrimLast(){$('sheet').innerHTML=`<div class="story"><div class="sub">그리모어</div><h3>${GRIM_LAST.t}</h3>${GRIM_LAST.x.split('\n\n').map(p=>`<p>${p}</p>`).join('')}<div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">닫기</button></div></div>`;
-  $('sheet').dataset.kind='grim';$('overlay').hidden=false}
+  $('sheet').dataset.kind='grim';$('sheet').classList.remove('bookmode');$('overlay').hidden=false}
 const alive=()=>SC.ms.filter(a=>a.down<=0);
 function hurt(a,frac,col,raw){if(!a||a.down>0)return;if(SC.boss&&SC.boss.gm==='poison'){a.psn=Math.min(5,(a.psn||0)+1);a.psnT=4}if(!raw)frac*=(SC.boss&&SC.boss.dm)||1;frac*=(1-0.04*TL('wis3'))*(SC.ward>0?0.5:1);a.hp-=a.max*frac;a.flash=0.2;
   SC.fx.push({k:'num',x:a.x,y:a.y-26,t:0,life:0.8,txt:'-'+Math.round(frac*100)+'%',col:col||'#FF6B6B',sz:12});
@@ -3927,9 +3932,10 @@ setInterval(()=>{
   const now=performance.now(), dt=Math.min(1000,now-prev)*(S.fast?5:1);prev=now;
   S.gold+=gps()*manualMul()*dt/1000;S.prog+=dt/TICK_MS;
   if(S.prog>=1){S.prog=0;if(explore())renderAll();else{renderExplore();renderStrip()}}
-  renderTop();$('prog').style.width=(S.prog*100)+'%';$('gps').innerHTML=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;
-  saveAcc+=dt;if(saveAcc>3000){saveAcc=0;save()}
-},100);
+  renderTop();const pw=Math.round(S.prog*100)+'%';if(pw!==uiC.prog){uiC.prog=pw;$('prog').style.width=pw}
+  const gh=`<span class="num">+${fmt(expPerTick())}</span> EXP/회 · <span class="num">+${gps().toFixed(1)}</span> G/초`;if(gh!==uiC.gps){uiC.gps=gh;$('gps').innerHTML=gh}
+  saveAcc+=dt;if(saveAcc>10000){saveAcc=0;save()}
+},250);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(RUN.on)save()}else{prev=performance.now();if(RUN.on)renderAll()}});
 </script>
 
