@@ -621,6 +621,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .fpick .btn small{display:block;font-size:10.5px;opacity:.75;font-weight:400;margin-top:2px}.fpick .btn{flex:1;padding:10px 8px}.fpick .row:last-child{gap:8px}
 .fpick .fsave{display:block;width:100%;margin-top:10px;padding:9px}.fpick .fsave.done{color:#7FD08A;border-color:#3d6b45}
 .fallbtns{display:flex;flex-direction:column;gap:8px;margin-top:12px}.fallbtns .btn{width:100%;padding:10px;display:flex;justify-content:space-between;align-items:center}.fallbtns .btn small{font-size:11px;opacity:.7;font-weight:400}
+.seol{font-weight:700;color:var(--sc);font-size:.92em}.seolh{grid-column:1/-1;display:flex;gap:8px;align-items:baseline;margin:10px 0 2px;padding-bottom:4px;border-bottom:1px solid color-mix(in srgb,var(--sc) 40%,transparent)}.seolh b{color:var(--sc);font-family:var(--display)}.seolh span{font-size:12px;color:var(--muted)}
 .skmini .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF5A3A;margin-left:3px;vertical-align:2px}
 .scene .skills{right:10px}
 
@@ -1036,8 +1037,9 @@ function potential(m){return m.atk+m.hp/5+m.def+(m.gAtk+m.gHp/5+m.gDef)*(MAXLV-m
 /* 종족 기본 능력: 높은 층 악마일수록 능력치 배율이 커요(1층 ×1.00 → 56층 ×1.66).
    조합 전용 희귀 악마(57~72층)는 고유 능력(260~377, 레벨에 따라 최대 2.5배)이 더해지고 조합 배율도 곱해져서,
    F등급이라도 같은 레벨의 낮은 층(약 20층 이하) S등급 악마보다 강해요. 등급(성장 운)은 따로 계산돼요. */
-const floorMulOf=sp=>SPECIES[sp][2]===-2?1:1+0.012*(floorOf(sp)-1);
-const innateOf=(sp,lv)=>SPECIES[sp][2]===-2?260*(1+0.03*(floorOf(sp)-57))*(1+1.5*((lv||1)-1)/99):0;
+const seolMulF=f=>SEOL_MUL[seolF(f)]*(1+0.015*((Math.min(f,72)-1)%12));
+const floorMulOf=sp=>SPECIES[sp][2]===-2?SEOL_MUL[seolOf(sp)]/SEOL_MUL[4]:seolMulF(floorOf(sp));
+const innateOf=(sp,lv)=>SPECIES[sp][2]===-2?260*(1+0.03*Math.max(0,floorOf(sp)-57))*(1+1.5*((lv||1)-1)/99):0;
 function power(m){return Math.round(((m.atk+m.hp/5+m.def)*floorMulOf(m.sp)+innateOf(m.sp,m.lv))*STAR_BONUS[starsOf(m)]*spMul(m.sp))}
 /* 레벨업마다 성장률이 변해요: 15% 급성장, 15% 성장 정체, 70% 소폭 변동.
    소폭 변동의 중심값은 '처음 태어났을 때 등급(g0)'에 따라 달라서, 낮은 등급일수록 크게 자라요.
@@ -1082,9 +1084,17 @@ const curStage=()=>curFloor();
    1~56층: 야생 악마 56종(옛 지역·난이도 순서), 57~72층: 조합 전용 16체(마지막 72층은 바알).
    층 기준 수치 E = 1 + (층-1)×1.66 (72층 ≈ 옛 최고 난이도 수준). 7구역(배경)은 층에 따라 바뀌어요. */
 const RECIPE_FLOORS=['자간','마르코시아스','비네','단탈리온','바르바토스','푸르손','안드라스','발람','벨레트','스톨라스','아몬','아스타로트','파이몬','아스모데우스','벨리알','바알'];
-const FLOORS=[...SPECIES.map((x,k)=>k).filter(k=>SPECIES[k][2]>=0).sort((a,b)=>SPECIES[a][2]-SPECIES[b][2]||tierOf(a)-tierOf(b)||SPECIES[a][5]-SPECIES[b][5]),
-  ...RECIPE_FLOORS.map(n=>SPECIES.findIndex(x=>x[1]===n))];
+const RANK_ORD={'기사':0,'백작':1,'총재':2,'후작':3,'군주':4,'공작':5,'왕':6};
+const _old=SPECIES.map((x,k)=>k).filter(k=>SPECIES[k][2]>=0).sort((a,b)=>SPECIES[a][2]-SPECIES[b][2]||tierOf(a)-tierOf(b)||SPECIES[a][5]-SPECIES[b][5]);
+const _rc=RECIPE_FLOORS.map(n=>SPECIES.findIndex(x=>x[1]===n));
+/* 72층 전체를 작위 낮은 순으로(같은 작위면 야생 악마 먼저, 옛 순서 유지). 바알은 72층 */
+const FLOORS=[..._old,..._rc].map((k,i)=>[k,i]).sort((a,b)=>(SPECIES[a[0]][1]==='바알')-(SPECIES[b[0]][1]==='바알')||RANK_ORD[SPECIES[a[0]][4]]-RANK_ORD[SPECIES[b[0]][4]]||a[1]-b[1]).map(x=>x[0]);
+/* 서열: 12층마다 한 단계. 『고에티아』 작위와 인장 금속을 따랐어요 */
+const SEOL=[{n:'기사·백작',m:'납 · 구리와 은',c:'#8C8C8C'},{n:'총재',m:'수은',c:'#9FB8C8'},{n:'후작',m:'은',c:'#D8DEE6'},{n:'군주',m:'주석',c:'#B8B0A0'},{n:'공작',m:'구리',c:'#D88A4A'},{n:'왕',m:'금',c:'#F2C24A'}];
+const SEOL_MUL=[1,1.2,1.42,1.68,1.98,2.3];
+const seolF=f=>Math.max(0,Math.min(5,Math.floor((Math.min(f,72)-1)/12)));
 const NFLOOR=FLOORS.length;
+const seolOf=k=>seolF(floorOf(k));const seolTag=k=>{const t=SEOL[seolOf(k)];return `<b class="seol" style="--sc:${t.c}">${t.n}</b>`};
 const FLOOR_IDX={};const floorOf=k=>FLOOR_IDX[k]||(FLOOR_IDX[k]=FLOORS.indexOf(k)+1);
 const zoneOf=f=>Math.min(MAPS.length-1,Math.floor((f-1)*MAPS.length/NFLOOR));
 const floorE=f=>Math.round(1+(f-1)*1.66);
@@ -1140,7 +1150,7 @@ const stageReq=(E,d)=>Math.round(40*Math.pow(1+(E-1)*0.25,1.3)*(1+Math.max(0,E-6
 /* 층별 요구 전투력: 기준점 사이를 지수(로그 선형)로 이어요.
    목표 팀(악마 3 + 소환사, 장비 보너스 포함 대략): 10층 D등급 30레벨 · 20층 C~B · 30층 A 100레벨 · 40층 S · 50층 SS · 56층 SR · 64층 SSR · 72층 SSR 각성 + 조합 악마 */
 const REQ_PTS=[[1,60],[5,250],[10,600],[20,1300],[30,2200],[40,3300],[50,4800],[56,6000],[64,9000],[72,15000]];
-const floorReq=f=>{if(f<=72)return Math.round((200+17*f)*(0.75+0.6*(f-1)/71)*Math.min(1,0.55+0.45*(f-1)/14));  /* 초반 1~15층 완만하게 */if(f>72)return Math.round(15000*Math.pow(1.07,f-72));for(let i=1;i<REQ_PTS.length;i++){const [f0,r0]=REQ_PTS[i-1],[f1,r1]=REQ_PTS[i];if(f<=f1){const t=(f-f0)/(f1-f0);return Math.round(r0*Math.pow(r1/r0,t))}}return REQ_PTS[REQ_PTS.length-1][1]};
+const floorReq=f=>{if(f<=72)return Math.round((1+0.7*(seolMulF(Math.min(f,56))/(1+0.012*(Math.min(f,56)-1))-1))*(200+17*f)*(0.75+0.6*(f-1)/71)*Math.min(1,0.55+0.45*(f-1)/14));  /* 초반 1~15층 완만하게 */if(f>72)return Math.round(15000*Math.pow(1.07,f-72));for(let i=1;i<REQ_PTS.length;i++){const [f0,r0]=REQ_PTS[i-1],[f1,r1]=REQ_PTS[i];if(f<=f1){const t=(f-f0)/(f1-f0);return Math.round(r0*Math.pow(r1/r0,t))}}return REQ_PTS[REQ_PTS.length-1][1]};
 const reqNow=()=>floorReq(curFloor());
 const gps=()=>(1+0.1*TL('wis5'))*teamPower()/20*(1+(eff()-1)*0.08)*(1+dexBonus().gold+affixBonus().gold)*mapBonus()*awGain();
 const lvCost=m=>Math.round(8*Math.pow(m.lv,1.35)*(1+m.grade*0.15));
@@ -1414,7 +1424,7 @@ function fallBack(why){const f=curFloor();metaSync();S.deaths=(S.deaths||0)+1;SC
 /* 층 클리어 후: 이 층 반복 / 다음 층 도전 */
 function openFloorPick(){const f=SC.pick,n=f+1,tp=teamPower(),rq=floorReq(n),r=tp/rq,cls=r>=1?'ok':r>=0.75?'warn':'bad';
   $('sheet').innerHTML=`<div class="fpick"><div class="sub">${f}층 클리어</div><h3>다음엔 어디로 갈까요?</h3>
-    <div class="fnext ${cls}"><div class="row"><span>${n}층 보스 · ${SPECIES[bossSp(n)][1]}</span></div>
+    <div class="fnext ${cls}"><div class="row"><span>${n}층 보스 · ${SPECIES[bossSp(n)][1]}</span>${seolF(n)>seolF(f)?`<b style="color:${SEOL[seolF(n)].c}">새 서열 · ${SEOL[seolF(n)].n}</b>`:`<span class="muted">${SEOL[seolF(n)].n}의 서열</span>`}</div>
       <div class="row"><span>권장 전투력</span><b>${fmt(rq)}</b></div><div class="row"><span>내 팀 전투력</span><b>${fmt(tp)}</b></div>
       <div class="hint">${r>=1?'충분해요. 도전해볼 만해요':r>=0.75?'조금 부족해요. 장비·합성으로 보강하면 좋아요':'많이 부족해요. 이 층을 반복해 키우는 걸 권해요'}</div></div>
     <div class="row"><button class="btn" data-fp="stay">${f}층 반복<small>골드·경험치 일부 · 상자</small></button><button class="btn primary" data-fp="next" style="margin-left:auto">${n}층 도전<small>오르면 되돌아갈 수 없어요</small></button></div>
@@ -1514,7 +1524,7 @@ function sorted(){
 }
 function card(m,extra=''){
   const inTeam=S.team.includes(m.id);
-  return `<button class="card ${m.isNew?'new':''} ${extra} ${m.grade>=7?'aura'+Math.min(9,m.grade):''}" data-id="${m.id}">${inTeam?'<span class="tag">팀</span>':''}<span class="em">${em(m)}</span><span class="nm">${nm(m)}</span><span>${mb(m)} <span class="meta">Lv${m.lv}</span></span><span class="meta">⚔ ${fmt(power(m))}${cardEl(m)[0]}</span><span class="meta">${where(m)}</span>${cardEl(m)[1]}</button>`;
+  return `<button class="card ${m.isNew?'new':''} ${extra} ${m.grade>=7?'aura'+Math.min(9,m.grade):''}" data-id="${m.id}">${inTeam?'<span class="tag">팀</span>':''}<span class="em">${em(m)}</span><span class="nm">${nm(m)}</span><span>${mb(m)} <span class="meta">Lv${m.lv}</span></span><span class="meta">⚔ ${fmt(power(m))}${cardEl(m)[0]}</span><span class="meta">${seolTag(m.sp)} ${where(m)}</span>${cardEl(m)[1]}</button>`;
 }
 function renderMons(){
   $('odds').innerHTML=GRADES.map((g,i)=>`<span class="dexitem">${badge(i)}<span class="num">${CAPTURE[i]>=1?CAPTURE[i].toFixed(1):CAPTURE[i]>=0.01?CAPTURE[i].toFixed(2):CAPTURE[i].toFixed(4)}%</span></span>`).join('');
@@ -1529,7 +1539,8 @@ function fusePreview(){
   const sps=new Set(ms.map(m=>m.sp));
   const recipes=RECIPES.map((r,i)=>({...r,i})).filter(r=>sps.has(r.a)&&sps.has(r.b));
   const rc=Math.min(0.95,RECIPE_BASE+RECIPE_PER_EXTRA*(ms.length-2)+dexBonus().rc);
-  return {ms,avg,base,up1,up2,recipes,rc,cost:fuseCost(ms)};
+  const sl=ms.map(m=>seolOf(m.sp));
+  return {ms,avg,base,up1,up2,recipes,rc,cost:fuseCost(ms),sLo:Math.min(...sl),sHi:Math.max(...sl)};
 }
 let fuseMode='fuse', rebSel=[], lastReb=null;
 function renderReb(){
@@ -1577,6 +1588,7 @@ function renderFuse(){
   $('fslots').innerHTML=h;
   const p=fusePreview();
   $('fprev').innerHTML=p?`평균 등급 <span class="num">${p.avg.toFixed(2)}</span> → 기본 ${badge(p.base)} · 대성공(+1) <b class="num">${Math.round(p.up1*100)}%</b> · 초대성공(+2) <b class="num">${Math.round(p.up2*100)}%</b>`
+    +`<div style="margin-top:6px">나올 악마 서열 · ${p.sLo===p.sHi?seolTag(FLOORS[p.sLo*12]):`${SEOL[p.sLo].n} ~ ${SEOL[p.sHi].n}`} 안에서 (조합법은 예외)</div>`
     +(p.recipes.map(r=>`<div style="margin-top:6px">조합법 일치 · ${artHTML(r.r)} <b>${SPECIES[r.r][1]}</b> 탄생 확률 <b class="num">${Math.round(p.rc*100)}%</b> · 기본 능력치 ×${recipeMul(r)}</div>`).join(''))
     :'<span class="muted">아래에서 재료를 2마리 이상 골라주세요.</span>';
   renderRecipes();
@@ -1696,7 +1708,7 @@ function openDetail(id,fromTeam){
   else teamBtns=S.team.map((tid,i)=>`<button class="btn" data-act="swap" data-slot="${i}">${i+1}번(${byId(tid)?em(byId(tid)):'빈 자리'})과 교체</button>`).join('');
   $('sheet').innerHTML=`
     <div class="head"><span class="em">${em(m)}</span><div><h3>${nm(m)} ${mb(m)}</h3>
-      <div class="muted">${where(m)} · 출처 ${m.origin}${m.reb?` · 환생 ${m.reb}회`:''} · Lv <span class="num">${m.lv}/${MAXLV}</span> · 전투력 <span class="num">${fmt(power(m))}</span></div></div></div>
+      <div class="muted">${seolTag(m.sp)} 서열 · 능력치 ×${floorMulOf(m.sp).toFixed(2)} · ${where(m)} · 출처 ${m.origin}${m.reb?` · 환생 ${m.reb}회`:''} · Lv <span class="num">${m.lv}/${MAXLV}</span> · 전투력 <span class="num">${fmt(power(m))}</span></div></div></div>
     ${lvBox}
     ${atkInfo(m)}
     ${xpBox}
@@ -1865,7 +1877,8 @@ function doFuse(quiet){
   S.mons=S.mons.filter(m=>!fuseSel.includes(m.id));
   let sp, rare=null;
   if(p.recipes.length&&Math.random()<p.rc){rare=anyOf(p.recipes);sp=rare.r}
-  else{/* 일반 결과: 조합 전용(16체)을 뺀 모든 악마 중, 재료로 넣은 종류를 빼고 랜덤 */const used=new Set(p.ms.map(x=>x.sp));let pool=SPECIES.map((x,k)=>k).filter(k=>SPECIES[k][2]!==-2&&!used.has(k));if(!pool.length)pool=SPECIES.map((x,k)=>k).filter(k=>SPECIES[k][2]!==-2);sp=anyOf(pool)}
+  else{/* 일반 결과: 재료 악마들의 서열 범위(가장 낮은~가장 높은) 안에서, 재료와 다른 종류로 랜덤 */const used=new Set(p.ms.map(x=>x.sp)),inR=k=>seolOf(k)>=p.sLo&&seolOf(k)<=p.sHi;
+    let pool=FLOORS.filter(k=>SPECIES[k][2]!==-2&&inR(k)&&!used.has(k));if(!pool.length)pool=FLOORS.filter(k=>SPECIES[k][2]!==-2&&inR(k));if(!pool.length)pool=FLOORS.filter(k=>inR(k)&&!used.has(k));if(!pool.length)pool=FLOORS.filter(inR);sp=anyOf(pool)}
   const m=makeMonster(rand(TH[g]+3,TH[g+1]-3),sp,rare?'조합':'합성');
   const keys=Object.keys(LABEL), bon=[];
   for(let t=0;t<(rare?2:1);t++){const k=anyOf(keys), mul=rand(1.08,1.3);
@@ -1995,7 +2008,7 @@ $('floors').addEventListener('click',e=>{const b=e.target.closest('[data-fl]');i
 let awArm=false;
 $('abyss').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.abyss){setFloor(S.top);return}if(b.id==='awBtn'){if(!awArm){awArm=true;$('floors').dataset.k='';renderFloors();return}awArm=false;doAwaken()}});
 function renderFloors(){const f=curFloor(),top=Math.min(S.top||1,NFLOOR),T=S.top||1;
-  $('floorName').textContent=`${f>NFLOOR?'심연 ':''}${f}층 · ${SPECIES[bossSp(f)][1]}`;
+  $('floorName').textContent=`${f>NFLOOR?'심연 ':''}${f}층 · ${SEOL[seolF(f)].n}의 서열 · ${SPECIES[bossSp(f)][1]}`;
   $('floorInfo').textContent=`${f>NFLOOR?'🕳 심연':`${MAPS[zoneOf(f)].e} ${MAPS[zoneOf(f)].n}`} · 도달 ${Math.min(T,9999)}층${T>NFLOOR?' · 72층 정복':''}`;
   $('floorPrev').disabled=f<=1;$('floorNext').disabled=f>=T;
   $('abyss').hidden=T<=NFLOOR&&!awPts();
@@ -2004,7 +2017,7 @@ function renderFloors(){const f=curFloor(),top=Math.min(S.top||1,NFLOOR),T=S.top
     <div class="note">인장 각성: 1층부터 다시 오르는 대신 각성 인장을 얻어요(1 + 72층 이후 10층마다 1). 악마·장비·골드·승급은 그대로예요.</div>`:'<div class="note">72층을 다시 정복하면 심연과 인장 각성이 열려요.</div>'}`;$('autoClimb').checked=S.autoClimb!==false;
   const key=f+'/'+S.top+'/'+S.seen.length;if($('floors').dataset.k===key)return;$('floors').dataset.k=key;
   $('floors').innerHTML=FLOORS.map((k,n)=>{const fl=n+1,open=fl<=top,seen=S.seen.includes(k);
-    return `<button class="fl ${fl===f?'cur':''} ${cleared(fl)?'done':''} ${open?'':'locked'} ${SPECIES[k][2]===-2?'rare':''}" data-fl="${fl}" ${open?'':'disabled'} aria-label="${fl}층 ${open?SPECIES[k][1]:'잠김'}">
+    return (n%12===0?`<div class="seolh" style="--sc:${SEOL[n/12].c}"><b>${SEOL[n/12].n}의 서열</b><span>${n+1}~${n+12}층 · 인장 ${SEOL[n/12].m} · 능력치 ×${SEOL_MUL[n/12]}</span></div>`:'')+`<button class="fl ${fl===f?'cur':''} ${cleared(fl)?'done':''} ${open?'':'locked'} ${SPECIES[k][2]===-2?'rare':''}" data-fl="${fl}" ${open?'':'disabled'} aria-label="${fl}층 ${open?SPECIES[k][1]:'잠김'}">
       <small>${fl}</small>${open||seen||SPECIES[k][2]===-2?artHTML(k):'<span class="lk">🔒</span>'}<span>${open||SPECIES[k][2]===-2?SPECIES[k][1]:'？'}</span></button>`}).join('')}
 $('fast').onchange=e=>{S.fast=e.target.checked;save()};
 let resetArmed=false;
@@ -2122,7 +2135,7 @@ function openChests(ft,name){const box=$('chests');if(!box)return;const bk=name?
   const step=()=>{if(SC.chest!==S2)return;set(st);if(st>=o.t){S2.tm=setTimeout(()=>openChest(),550+o.t*150);return}st++;S2.tm=setTimeout(step,480+st*120)};
   const S2=SC.chest;S2.tm=setTimeout(step,350)}
 function chestGive(o,got){
-  if(o.mon!=null){const sp=spForFloor()!=null?spForFloor():anyOf(FLOORS.slice(0,Math.min(56,curFloor()+6)).filter(k=>SPECIES[k][2]!==-2));
+  if(o.mon!=null){const sp=spForFloor()!=null?spForFloor():anyOf(FLOORS.slice(0,Math.min(72,curFloor()+6)).filter(k=>SPECIES[k][2]!==-2));
     if(S.mons.length>=invMax())got.push('<span class="dim">보관함이 가득 차 악마를 놓쳤어요</span>');
     else{const mm=makeMonster(rand(Math.max(P_MIN,TH[o.mon])+2,TH[o.mon+1]-2),sp,`${curFloor()}층 상자`);{const tl=Math.min(MAXLV-1,Math.round(curFloor()*1.3));let need=0;for(let L=1;L<tl;L++)need+=expNeed(L);gainExp(mm,need,true)}if(!S.seen.includes(mm.sp)){S.seen.push(mm.sp)}
       if(keepMon(mm)){S.mons.push(mm);got.push(`귀속 · ${nm(mm)} ${mb(mm)}`);addLog(`상자에서 ${nm(mm)} 귀속 · ${gname(mm.grade)}등급`,mm.grade>=5)}else{const g=releaseGold(mm);S.gold+=g;got.push(`<span class="dim">${nm(mm)} ${gname(mm.grade)} 퇴마 +${fmt(g)}G</span>`)}}}
@@ -3544,7 +3557,7 @@ function gimmickStep(m,dt){const g=m.gm;if(!g)return;m.gt=(m.gt==null?6:m.gt)-dt
   else if(g==='charm'){if(m.gt<=0){m.gt=11;const c=alive().filter(a=>a.key!=='char');if(c.length){const a=anyOf(c);a.charm=4.5;SC.fx.push({k:'num',x:a.x,y:a.y-50,t:0,life:1.4,txt:'매혹!',col:'#FF7AB8',sz:14})}}}
   else if(g==='flood'){if(m.gt<=0){m.gt=12;const top=Math.random()<0.5,yc=top?SC.H*0.25:SC.H*0.75;m.xt=m.xt||[];m.xt.push(tele({s:'line',x:-40,y:yc,x1:SC.W+40,y1:yc,w:SC.H*0.52,dur:1.7,dmg:0.3,surge:1}));say('범람!','#5AB8FF')}}
   else if(g==='bolt'){if(m.gt<=0){m.gt=9;m.bw=2;m.bwt=0}if(m.bw>0){m.bwt-=dt;if(m.bwt<=0){m.bw--;m.bwt=1;m.xt=m.xt||[];alive().forEach(p=>m.xt.push(tele({s:'circle',x:p.x,y:p.y,r:28,dur:0.9,dmg:0.25})))}}}
-  else if(g==='summon'){if(m.gt<=0){m.gt=14;const n=SC.mobs.filter(x=>x.minion).length;if(n<3){const pool=FLOORS.slice(0,Math.max(5,Math.min(56,m.floor||10)));
+  else if(g==='summon'){if(m.gt<=0){m.gt=14;const n=SC.mobs.filter(x=>x.minion).length;if(n<3){const pool=FLOORS.slice(0,Math.max(5,Math.min(72,m.floor||10))).filter(k=>SPECIES[k][2]!==-2);
       for(let i=0;i<2;i++){const hp=Math.round(m.max*0.035);SC.mobs.push({x:m.x+rand(-60,60),y:Math.max(20,Math.min(SC.H-20,m.y+rand(-50,50))),hp,max:hp,sp:46,k:anyOf(pool),minion:1,hit:0,cd:rand(0.6,1.2),slam:0,wind:0,kx:0,ky:0})}say('권속 소환!','#C9A0FF')}}}
   else if(g==='enrage'){if(!m.enr&&m.hp<m.max*0.3){m.enr=1;m.dm*=1.5;say('광폭화!','#FF3A2A');if(!RM)SC.shake=10}}
   if(m.xt){m.xt=m.xt.filter(T=>{T.t+=dt;if(T.t>=T.dur){teleHit(T,m);SC.tele=SC.tele.filter(x=>x!==T);return false}return true})}}
@@ -3591,7 +3604,7 @@ function openGrim(k){const sp=SPECIES[k],no=sp[5],G=GRIM[no],st=STYLE[sp[1]]||{}
     <div class="gtop">${artHTML(k)}<div><h3>${sp[1]}</h3><div class="muted">제${no}위 ${sp[4]} · ${G?G[0]+' 군단':''}</div></div></div>
     ${G?`<p><b>모습</b> ${G[1]}</p><p><b>능력</b> ${G[2]}</p>`:''}
     <hr><div class="ginfo">
-      <div><span>층</span>${f<=56?`${f}층 보스`:`${f}층 보스 · 조합 전용`}</div>
+      <div><span>층</span>${SPECIES[bossSp(f)][2]!==-2?`${f}층 보스`:`${f}층 보스 · 조합 전용`}</div>
       <div><span>속성</span>${elTag(el)} · 약점 ${elTag(EL_WEAK[el])} · 내성 ${elTag(el)}</div>
       <div><span>공격</span>${MNAME[st.m]||''} — ${st.d||''}</div>
       ${bs?`<div><span>주술</span>「${bs.n}」 ${bs.d}</div>`:''}
