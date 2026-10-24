@@ -939,12 +939,16 @@ function solSrc(r){r=r==null?rankOf():r;return CRIG[r]?CRIG[r].f:'data:image/svg
 /* 승급은 소환사 레벨로: Lv 4·8·12·16·20·25·30·35에 한 단계씩 */
 const PROMO_LV=[0,4,8,12,16,20,25,30,35];
 function promoState(){const r=rankOf();if(r>=SOL_STAGES.length-1)return null;const need=PROMO_LV[r+1];return {to:r+1,need,lv:S.charLv,ok:S.charLv>=need}}
-function doPromote(){const P=promoState();if(!P||!P.ok)return;S.rank=P.to;SPRI[0]=null;save();
-  addLog(`승급! ${SOL_STAGES[S.rank].n}`,true);
+function showPromo(){S.promoShow=0;
   $('sheet').innerHTML=`<div class="promo"><div class="sub">승급</div><img alt="${SOL_STAGES[S.rank].n}" src="${solSrc()}"><h3>${SOL_STAGES[S.rank].n}</h3><p>${SOL_STAGES[S.rank].d}</p>
     <p class="muted">소환사 기본 전투력 ×${(1+0.3*S.rank).toFixed(1)}</p><div class="row"><button class="btn primary" data-act="close" style="margin-left:auto">계속</button></div></div>`;
   $('sheet').dataset.kind='char';$('overlay').hidden=false;renderTop();renderExplore()}
-let promoNotified=-1;function checkPromo(){const P=promoState();if(P&&P.ok&&promoNotified!==P.to){promoNotified=P.to;toast(`승급할 수 있어요: ${SOL_STAGES[P.to].n} (소환사 정보에서)`)}}
+/* 레벨이 조건에 닿으면 자동 승급. 연출 창은 전투가 끝난 뒤(층 선택 전) 보여줘요 */
+function checkPromo(){if(!S)return;let P=promoState(),up=0;while(P&&P.ok){S.rank=P.to;up=1;addLog(`승급! ${SOL_STAGES[S.rank].n} (소환사 Lv ${P.need})`,true);P=promoState()}
+  if(!up)return;SPRI[0]=null;S.promoShow=1;skBarKey='';toast(`승급! ${SOL_STAGES[S.rank].n} · 기본 전투력 ×${(1+0.3*S.rank).toFixed(1)}`);
+  const c=SC.ms&&SC.ms.find(a=>a.key==='char');if(c&&SC.fx){SC.fx.push({k:'ring',x:c.x,y:c.y,t:0,life:1,r:110,col:'#F2C24A',w:6},{k:'num',x:c.x,y:c.y-80,t:0,life:1.8,txt:'승급!',col:'#F2C24A',sz:20})}
+  save();renderTop()}
+function doPromote(){checkPromo()}
 const GRADES=['F','E','D','C','B','A','S','SS','SR','SSR'];
 const TOP=GRADES.length-1;
 /* 등급별 잠재력 구간 (F는 60부터, SSR은 1200까지) */
@@ -1100,7 +1104,7 @@ const gearPower=()=>S.equip.reduce((a,id)=>{const it=id!=null&&itemById(id);retu
 /* 소환사도 사냥 경험치로 레벨업 (악마와 같은 경험치 곡선, 레벨당 기본 전투력 +6) */
 function gainCharExp(x){S.charExp=(S.charExp||0)+x;let ups=0;
   while(S.charExp>=expNeed(S.charLv)){S.charExp-=expNeed(S.charLv);S.charLv++;ups++;
-    if(S.charLv%5===0)addLog(`소환사 Lv${S.charLv} 달성`);
+    if(S.charLv%5===0)addLog(`소환사 Lv${S.charLv} 달성`);if(PROMO_LV.includes(S.charLv))setTimeout(checkPromo,0);
     pushFeed(`소환사 Lv${S.charLv}`,'lv')}
   return ups}
 /* 골드 사용처: 악마 합성 비용, 장비 레벨업 (이후 콘텐츠용) */
@@ -1374,7 +1378,7 @@ function showTitle(){RUN.on=false;$('title').hidden=false;$('tContinue').disable
   $('tStats').innerHTML=META.runs?`${META.bestScore?`최고 점수 <b>${fmt(META.bestScore)}</b> · `:''}최고 <b>${META.best}층</b> · ${META.runs}판 도전 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72`:'일흔두 악마가 72층의 탑에서 기다려요';
   document.body.classList.add('titled')}
 function enterRun(){$('title').hidden=true;document.body.classList.remove('titled');RUN.on=true;SC.mobs=[];SC.boss=null;SC.bossT=1.2;SC.tele=[];SC.chest=null;SC.chestT=0;$('chests').hidden=true;
-  skBarKey='';syncTeam();renderAll();save();setTimeout(()=>floorIntro(curFloor()),500)}
+  skBarKey='';syncTeam();checkPromo();S.promoShow=0;renderAll();save();setTimeout(()=>floorIntro(curFloor()),500)}
 function startRun(){if(hasRun()&&!confirmNew())return;newGame();S.seen=[...META.seen];S.recipes=[...META.recipes];S.intro=[...META.intro];S.hiFps=META.hiFps;S.flt=META.flt||S.flt;S.mons.forEach(m=>{if(!S.seen.includes(m.sp))S.seen.push(m.sp)});META.runs=(META.runs||0)+1;enterRun()}
 let newArm=0;function confirmNew(){if(Date.now()-newArm<3000)return true;newArm=Date.now();toast('진행 중인 판이 있어요 · 한 번 더 누르면 새로 시작해요');return false}
 function continueRun(){if(!load())return toast('이어할 판이 없어요');enterRun()}
@@ -1746,8 +1750,8 @@ function openChar(){
       <div class="muted">전투력 <span class="num">${fmt(charPower()+gearPower())}</span> = 기본 <span class="num">${fmt(charPower())}</span> + 장비 <span class="num">${fmt(gearPower())}</span></div></div></div>
     <div><div class="row" style="justify-content:space-between"><span class="muted">경험치</span><span class="num">${fmt(xp)} / ${fmt(need)}</span></div>
       <div class="gauge"><i style="width:${Math.min(100,xp/need*100)}%"></i></div>
-      <div class="note">다음 레벨까지 약 ${mins<60?mins+'분':(mins/60).toFixed(1)+'시간'}</div></div>
-    <div class="note">소환사는 사냥하며 경험치를 얻고, 레벨이 오를 때마다 기본 전투력이 6씩 올라요. 장비는 탐험 중 약 12분에 1개 발견돼요.</div>
+      <div class="note">보스전 기준 다음 레벨까지 약 ${mins<60?mins+'분':(mins/60).toFixed(1)+'시간'}</div></div>
+    <div class="note">소환사는 보스전에서 경험치를 얻고, 레벨이 오를 때마다 기본 전투력이 6씩 올라요. Lv 4·8·12·16·20·25·30·35에 자동으로 승급해요.</div>
     ${promoHTML()}
     <table><thead><tr><th>부위</th><th style="text-align:left">장비</th><th>전투력</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="row">
@@ -1764,7 +1768,7 @@ function promoHTML(){const P=promoState(),r=rankOf();
   return `<div class="promobox"><div class="row"><b>승급</b><span class="muted">다음: 「${SOL_STAGES[P.to].n}」 · 기본 전투력 ×${(1+0.3*P.to).toFixed(1)}</span></div>
     <div class="psteps">${steps}</div>
     <div class="preq ${okL?'ok':''}">${okL?'✓':'○'} 소환사 Lv ${P.need} 이상 · 지금 Lv ${P.lv}</div>
-    <div class="row"><button class="btn primary" data-act="promote" ${P.ok?'':'disabled'}>${P.ok?'승급하기':'조건을 채우면 승급할 수 있어요'}</button></div></div>`}
+    <div class="muted" style="font-size:12px">소환사 레벨이 오르면 자동으로 승급해요</div></div>`}
 let teamSel=0;
 function openTeam(slot){
   if(slot!=null)teamSel=slot;
@@ -2353,7 +2357,7 @@ function sceneStep(dt){
   /* 보스: 한 번에 한 마리. 쓰러뜨리면 잠시 전진한 뒤 다음 보스 */
   if(SC.chestT>0){SC.chestT-=dt;if(SC.chestT<=0){if(SC.chest){(SC.chestQ=SC.chestQ||[]).push([null,null])}else openChests()}}
   if(SC.boss&&!SC.gob&&!SC.bossIntro&&!SC.boss.act&&Math.random()<dt/90)spawnGob();
-  if(!SC.boss||!SC.mobs.includes(SC.boss)){SC.boss=null;if(SC.pick){if(!SC.chest&&!(SC.chestT>0)&&$('chests').hidden&&$('overlay').hidden&&!(SC.chestQ&&SC.chestQ.length))openFloorPick()}else{if(!SC.chest&&!(SC.chestT>0))SC.bossT-=dt;if(SC.bossT<=0&&!SC.mobs.length)spawnBoss()}}
+  if(!SC.boss||!SC.mobs.includes(SC.boss)){SC.boss=null;if(SC.pick){if(!SC.chest&&!(SC.chestT>0)&&$('chests').hidden&&$('overlay').hidden&&!(SC.chestQ&&SC.chestQ.length)){if(S.promoShow)showPromo();else openFloorPick()}}else{if(!SC.chest&&!(SC.chestT>0))SC.bossT-=dt;if(SC.bossT<=0&&!SC.mobs.length)spawnBoss()}}
   if(SC.bossIntro>0)SC.bossIntro=Math.max(0,SC.bossIntro-dt);
   SC.tele.forEach(T=>{});
   /* 근처에 적이 없으면 파티가 전진(배경이 흘러요) */
