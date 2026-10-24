@@ -400,6 +400,7 @@ body{font-size:14.5px;letter-spacing:-0.005em}
 @keyframes castp{from{opacity:.65}to{opacity:1}}
 .bossbar .bs{color:#CDBEA6;font-size:12px}
 .scene .modebtn{top:auto;right:14px;bottom:calc(var(--menuH) + env(safe-area-inset-bottom,0px) + 72px);width:44px;height:44px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;border-color:var(--line2);background:rgba(18,13,11,.82);color:#D8C8A8}
+.scene .modebtn{z-index:5;flex-direction:column;gap:0;width:48px;height:48px}.scene .modebtn svg{width:18px;height:18px}.scene .modebtn b{font:700 11px var(--body);line-height:1.1}
 .scene .modebtn[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1A120C}
 .ult{min-width:44px;width:92px;height:44px;border-radius:12px;border-color:#7A5A20;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.4)}
 .ult:not(:disabled){border-color:#F2D27A;box-shadow:0 0 14px rgba(233,196,106,.55);animation:ultr 1.2s ease-in-out infinite alternate}
@@ -613,6 +614,11 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .skills button.empty{opacity:.55;border-style:dashed}
 .skills .skmini2{display:flex;gap:2px}.skills .skmini2 .skmini{width:26px;font-size:9.5px}
 .runend .score{margin:10px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:rgba(14,9,7,.6);display:flex;flex-direction:column;gap:5px;font-size:13px}.runend .score .row{display:flex;justify-content:space-between}.runend .score b{font-variant-numeric:tabular-nums;color:#E7C27A}.runend .score .tot{border-top:1px solid var(--line2);padding-top:6px;margin-top:2px;font-size:15px}.runend .score .tot b{font-size:18px;color:#F2C24A}
+.fpick .sub{color:#C94A3A;letter-spacing:.3em;font-size:12px;text-align:center}.fpick h3{text-align:center;margin:4px 0 12px}
+.fnext{border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:5px;font-size:13px;background:rgba(14,9,7,.6)}
+.fnext .row{display:flex;justify-content:space-between}.fnext b{font-variant-numeric:tabular-nums}.fnext .hint{font-size:12px;margin-top:2px}
+.fnext.ok b,.fnext.ok .hint{color:#7FD08A}.fnext.warn b,.fnext.warn .hint{color:#E7C27A}.fnext.bad b,.fnext.bad .hint{color:#E8604C}
+.fpick .btn small{display:block;font-size:10.5px;opacity:.75;font-weight:400;margin-top:2px}.fpick .btn{flex:1;padding:10px 8px}.fpick .row:last-child{gap:8px}
 .skmini .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF5A3A;margin-left:3px;vertical-align:2px}
 .scene .skills{right:10px}
 
@@ -646,7 +652,7 @@ body.titled .top,body.titled .menu,body.titled .scene .skills,body.titled .scene
           <canvas id="scene" aria-label="자동 사냥 장면" role="img"></canvas>
           <div class="bossbar" id="bossBar" hidden role="button" tabindex="0" aria-label="보스 정보 펼치기"><div class="bn"></div><div class="bh"><i></i></div><div class="bmeta"><span class="btm"></span><span class="bel"></span></div><div class="bmore"><div class="bt"></div><div class="bs"></div><div class="bgm"></div></div><div class="bcast"></div></div>
           <div class="hud"><span id="hudKills">처치 0</span><span id="hudLoot"></span><span id="hudMode"></span></div>
-          <button class="modebtn" id="modeBtn" aria-pressed="false" aria-label="직접 조작" title="직접 조작"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg></button>
+          <button class="modebtn" id="modeBtn" aria-pressed="false" aria-label="직접 조작" title="직접 조작"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg><b id="modeTxt">자동</b></button>
           <div class="skills" id="skills"></div>
         </div>
 <header class="top">
@@ -1395,6 +1401,17 @@ function fallBack(why){const f=curFloor();metaSync();S.deaths=(S.deaths||0)+1;RU
     <p class="note">악마·장비·골드·레벨·스킬은 그대로 두고 1층부터 다시 올라가요. 다시 깨는 층에서도 보상을 받아요.</p>
     <div class="row"><button class="btn" data-act="totitle">타이틀로</button><button class="btn primary" data-act="retry" style="margin-left:auto">1층부터 다시</button></div></div>`;
   $('sheet').dataset.kind='fall';$('overlay').hidden=false}
+/* 층 클리어 후: 이 층 반복 / 다음 층 도전 */
+function openFloorPick(){const f=SC.pick,n=f+1,tp=teamPower(),rq=floorReq(n),r=tp/rq,cls=r>=1?'ok':r>=0.75?'warn':'bad';
+  $('sheet').innerHTML=`<div class="fpick"><div class="sub">${f}층 클리어</div><h3>다음엔 어디로 갈까요?</h3>
+    <div class="fnext ${cls}"><div class="row"><span>${n}층 보스 · ${SPECIES[bossSp(n)][1]}</span></div>
+      <div class="row"><span>권장 전투력</span><b>${fmt(rq)}</b></div><div class="row"><span>내 팀 전투력</span><b>${fmt(tp)}</b></div>
+      <div class="hint">${r>=1?'충분해요. 도전해볼 만해요':r>=0.75?'조금 부족해요. 장비·합성으로 보강하면 좋아요':'많이 부족해요. 이 층을 반복해 키우는 걸 권해요'}</div></div>
+    <div class="row"><button class="btn" data-fp="stay">${f}층 반복<small>골드·경험치 일부 · 상자</small></button><button class="btn primary" data-fp="next" style="margin-left:auto">${n}층 도전<small>오르면 되돌아갈 수 없어요</small></button></div></div>`;
+  $('sheet').dataset.kind='fpick';$('overlay').hidden=false}
+function pickFloor(next){const f=SC.pick;SC.pick=0;$('sheet').dataset.kind='';$('overlay').hidden=true;SC.bossT=1.2;
+  if(next&&f){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;floorIntro(S.floor)}save();renderAll()}
+$('sheet').addEventListener('click',e=>{const b=e.target.closest('[data-fp]');if(b&&$('sheet').dataset.kind==='fpick')pickFloor(b.dataset.fp==='next')});
 function openSettings(){const S0=S||{};$('sheet').innerHTML=`<div class="row"><h3>설정</h3></div>
    <div class="setrow"><label for="sHi">고화질 · 초당 60번 그리기(발열·배터리 소모 늘어남)</label><input type="checkbox" id="sHi" ${META.hiFps?'checked':''}></div>
    <div class="setrow"><span>기록</span><span class="muted">최고 ${META.best}층 · ${META.runs}판 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72</span></div>${(META.scores||[]).length?`<div class="setrow"><span>점수 순위</span><span class="muted">${META.scores.map((x,i)=>`${i+1}위 ${fmt(x.t)}점(쓰러짐 ${x.d}회)`).join(' · ')}</span></div>`:''}
@@ -1763,7 +1780,7 @@ function openTeam(slot){
     <div class="grid">${list.map(m=>card(m,S.team[teamSel]===m.id?'sel':'')).join('')}</div>`;
   $('sheet').dataset.kind='team';$('overlay').hidden=false;
 }
-function closeSheet(){if($('sheet').dataset.kind==='fall'){$('sheet').dataset.kind='';$('overlay').hidden=true;return enterRun()}if($('sheet').dataset.kind==='runend'){$('overlay').hidden=true;return showTitle()}$('sheet').classList.remove('bookmode');$('overlay').hidden=true;if(!RUN.on){return}renderAll();setTimeout(tryIntro,300)}
+function closeSheet(){if($('sheet').dataset.kind==='fpick')return pickFloor(false);if($('sheet').dataset.kind==='fall'){$('sheet').dataset.kind='';$('overlay').hidden=true;return enterRun()}if($('sheet').dataset.kind==='runend'){$('overlay').hidden=true;return showTitle()}$('sheet').classList.remove('bookmode');$('overlay').hidden=true;if(!RUN.on){return}renderAll();setTimeout(tryIntro,300)}
 $('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeSheet()});
 $('sheet').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -2036,7 +2053,6 @@ function clearFloor(f){if(cleared(f))return false;const rw=Math.round(floorReq(f
   if(f===NFLOOR){addLog('72층 정복! 솔로몬의 인장이 모든 악마를 굴복시켰어요',true);setTimeout(()=>runOver(true),3500)}
   else if(zoneOf(f+1)!==zoneOf(f)){queueStory('clear'+zoneOf(f));queueStory('ch'+zoneOf(f+1))}
   if(f===NFLOOR){addLog('심연이 열렸어요! 73층부터 끝없이 이어지고, 언제든 인장 각성을 할 수 있어요',true)}
-  if(f<NFLOOR){S.floor=f+1;S.map=zoneOf(S.floor);S.prog=0;floorIntro(S.floor)}
   save();renderTop();renderExplore();return true}
 
 /* ===================== 흥미 요소 4종 =====================
@@ -2113,7 +2129,9 @@ function fuseReveal(m,jump,rare){const el=$('reveal');if(!el)return;const top=Ma
     card.innerHTML=m.item?`<span class="em ic">${SLOTS[m.item.slot].e}</span><div class="rvg">${mb(m.item)}</div><h3>${m.item.name}</h3><div class="rvm">${jump>=2?'초대성공!':jump?'대성공!':'합성 완료'} · 미감정</div>`:`<span class="em">${em(m)}</span><div class="rvg">${mb(m)}</div><h3>${nm(m)}</h3><div class="rvm">${rare?'희귀 조합 성공!':jump>=2?'초대성공!':jump?'대성공!':'합성 완료'}${m.bonus?' · '+m.bonus:''}</div>`;card.hidden=false;el.querySelector('.rvskip').textContent='누르면 닫기'};
   let tm;const step=()=>{setT(st);if(st>=top){tm=setTimeout(show,500);return}st++;tm=setTimeout(step,420+st*90)};step();
   el.onclick=()=>{if(!done)show();else{el.hidden=true;el.onclick=null}}}
-function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor){S.clrT=S.clrT||{};S.clrT[mob.floor]=Math.max(0,BOSS_TIME-(mob.tl||0));clearFloor(mob.floor)}
+function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor){S.clrT=S.clrT||{};S.clrT[mob.floor]=Math.max(0,BOSS_TIME-(mob.tl||0));
+    if(cleared(mob.floor)){const rw=Math.round(floorReq(mob.floor)*0.25);S.gold+=rw;const x=expPerTick()*2;S.team.forEach(id=>{const m=id!=null&&byId(id);if(m)gainExp(m,x)});gainCharExp(x);checkPromo();toast(`${mob.floor}층 반복 처치 · +${fmt(rw)}G`)}
+    else clearFloor(mob.floor);if(RUN.on&&mob.floor<NFLOOR)SC.pick=mob.floor}
   if(mob.boss){SC.chestBoss=mob.k;SC.slowmo={t:0,dur:1.5,x:mob.x,y:mob.y,col:(FXCOL[mob.st.f]||FXCOL.blood)[0]};SC.chestT=1.7;for(let i=0;i<46;i++)SC.fx.push({k:'p',x:mob.x+rand(-30,30),y:mob.y-rand(0,90),vx:rand(-220,220),vy:rand(-260,40),t:0,life:rand(0.8,1.4),col:Math.random()<0.5?SC.slowmo.col:'#1a0e0a'});SC.mobs.forEach(x=>{if(x.minion||x.gob)x.hp=x.gob?x.hp:0});SC.ms.forEach(a=>{a.charm=0;a.psn=0});S.bossKills=(S.bossKills||0)+1;checkPromo();SC.boss=null;SC.bossT=2.2;SC.tele=[];if(!RM)SC.shake=12;burst3D(mob);burst3D(mob);
     SC.fx.push({k:'ring',x:mob.x,y:mob.y,t:0,life:0.8,r:120,col:'#FFD166',w:6},{k:'num',x:mob.x,y:mob.y-70,t:0,life:1.6,txt:`${SPECIES[mob.k][1]} 퇴치!`,col:'#FFD166',sz:18});
     sceneQ.length=0;
@@ -2129,7 +2147,7 @@ function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burs
 /* ===== 수동 조작: 화면을 끌면 가상 조이스틱, 적을 톡 누르면 집중 공격, 키보드 WASD·방향키 ===== */
 SC.inp={x:0,y:0};SC.keys={};SC.manual=false;
 const MANUAL_BONUS=1.25;
-function setManual(on){SC.manual=on;SC.trail=[{x:SC.lead?SC.lead.x:0,y:SC.lead?SC.lead.y:0}];SC.idle=1;SC.ms.forEach(a=>{a.vx=0;a.vy=0;a.go=false});$('modeBtn').setAttribute('aria-pressed',on);$('modeBtn').setAttribute('aria-label',on?'자동 사냥으로 돌아가기':'직접 조작');$('modeBtn').title=on?'자동 사냥으로':'직접 조작';if(!on)toast('자동 사냥으로 돌아왔어요');$('sceneBox').classList.toggle('manual',on);
+function setManual(on){SC.manual=on;SC.trail=[{x:SC.lead?SC.lead.x:0,y:SC.lead?SC.lead.y:0}];SC.idle=1;SC.ms.forEach(a=>{a.vx=0;a.vy=0;a.go=false});$('modeBtn').setAttribute('aria-pressed',on);$('modeBtn').setAttribute('aria-label',on?'자동 사냥으로 돌아가기':'직접 조작');$('modeBtn').title=on?'자동 사냥으로':'직접 조작';$('modeTxt').textContent=on?'수동':'자동';if(!on)toast('자동 사냥으로 돌아왔어요');$('sceneBox').classList.toggle('manual',on);
   SC.inp={x:0,y:0};SC.joy=null;SC.focus=null;$('hudMode').textContent=on?'수동 · 경험치·골드 +25%':'';
   if(on)toast('화면을 끌어 이동, 적을 눌러 집중 공격, 왼쪽 아래 스킬(1~4키). 경험치·골드 +25%')}
 $('modeBtn').onclick=()=>setManual(!SC.manual);
@@ -2335,7 +2353,7 @@ function sceneStep(dt){
   /* 보스: 한 번에 한 마리. 쓰러뜨리면 잠시 전진한 뒤 다음 보스 */
   if(SC.chestT>0){SC.chestT-=dt;if(SC.chestT<=0){if(SC.chest){(SC.chestQ=SC.chestQ||[]).push([null,null])}else openChests()}}
   if(SC.boss&&!SC.gob&&!SC.bossIntro&&!SC.boss.act&&Math.random()<dt/90)spawnGob();
-  if(!SC.boss||!SC.mobs.includes(SC.boss)){SC.boss=null;if(!SC.chest&&!(SC.chestT>0))SC.bossT-=dt;if(SC.bossT<=0&&!SC.mobs.length)spawnBoss()}
+  if(!SC.boss||!SC.mobs.includes(SC.boss)){SC.boss=null;if(SC.pick){if(!SC.chest&&!(SC.chestT>0)&&$('chests').hidden&&$('overlay').hidden&&!(SC.chestQ&&SC.chestQ.length))openFloorPick()}else{if(!SC.chest&&!(SC.chestT>0))SC.bossT-=dt;if(SC.bossT<=0&&!SC.mobs.length)spawnBoss()}}
   if(SC.bossIntro>0)SC.bossIntro=Math.max(0,SC.bossIntro-dt);
   SC.tele.forEach(T=>{});
   /* 근처에 적이 없으면 파티가 전진(배경이 흘러요) */
