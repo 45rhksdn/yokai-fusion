@@ -612,6 +612,7 @@ details.help p{margin:0;line-height:1.6;padding:10px 12px;background:var(--surfa
 .btn.on{border-color:var(--gold);color:var(--gold)}
 .skills button.empty{opacity:.55;border-style:dashed}
 .skills .skmini2{display:flex;gap:2px}.skills .skmini2 .skmini{width:26px;font-size:9.5px}
+.runend .score{margin:10px 0;padding:10px 12px;border:1px solid var(--line2);border-radius:10px;background:rgba(14,9,7,.6);display:flex;flex-direction:column;gap:5px;font-size:13px}.runend .score .row{display:flex;justify-content:space-between}.runend .score b{font-variant-numeric:tabular-nums;color:#E7C27A}.runend .score .tot{border-top:1px solid var(--line2);padding-top:6px;margin-top:2px;font-size:15px}.runend .score .tot b{font-size:18px;color:#F2C24A}
 .skmini .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF5A3A;margin-left:3px;vertical-align:2px}
 .scene .skills{right:10px}
 
@@ -818,7 +819,7 @@ body.titled .top,body.titled .menu,body.titled .scene .skills,body.titled .scene
 
 <div class="overlay" id="overlay" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="title" id="title" hidden><div class="tbg"></div><div class="tin">
-  <div class="tsub">SIGILLUM SALOMONIS</div><h1>솔로몬의 인장</h1><p class="tdesc">일흔두 악마, 일흔두 층. 쓰러지면 처음부터.</p>
+  <div class="tsub">SIGILLUM SALOMONIS</div><h1>솔로몬의 인장</h1><p class="tdesc">일흔두 악마, 일흔두 층. 쓰러지면 가진 그대로 1층부터.</p>
   <div class="tbtns"><button class="tbtn primary" id="tStart">시작하기</button><button class="tbtn" id="tContinue">이어하기</button><button class="tbtn" id="tSet">설정</button></div>
   <div class="tstats" id="tStats"></div></div></div>
 <div class="chests" id="chests" hidden></div>
@@ -1351,7 +1352,7 @@ function newGame(){
   [80,95,120].forEach((p,i)=>{const m=makeMonster(p,[0,2,4][i],'시작');m.isNew=false;S.mons.push(m);S.team[i]=m.id});
   for(let i=0;i<4;i++){const m=makeMonster(wildP(1),FLOORS[i%2],'1층');m.isNew=false;S.mons.push(m)}
   giveStarterItem();
-  addLog('새로운 판을 시작해요. 1층부터 72층까지, 쓰러지면 처음부터예요.');S.story={seen:[]};S.intro=[];
+  addLog('새로운 판을 시작해요. 1층부터 72층까지, 쓰러지면 가진 그대로 1층부터예요.');S.story={seen:[]};S.intro=[];
 }
 function addLog(text,hi){const d=new Date();S.log.unshift({t:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,text,hi:!!hi});S.log.length=Math.min(S.log.length,40)}
 function save(){if(!S||!RUN.on)return;S.last=Date.now();metaSync();try{localStorage.setItem(KEY,JSON.stringify(S));localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}}
@@ -1364,18 +1365,26 @@ const RUN={on:false};
 function metaSync(){if(!S)return;META.seen=[...new Set([...(META.seen||[]),...(S.seen||[])])];META.recipes=[...new Set([...(META.recipes||[]),...(S.recipes||[])])];META.intro=[...new Set([...(META.intro||[]),...(S.intro||[])])];META.best=Math.max(META.best||0,(S.top||1)-1);META.hiFps=!!S.hiFps;if(S.flt)META.flt=S.flt}
 function hasRun(){try{return !!localStorage.getItem(KEY)}catch(e){return false}}
 function showTitle(){RUN.on=false;$('title').hidden=false;$('tContinue').disabled=!hasRun();
-  $('tStats').innerHTML=META.runs?`최고 <b>${META.best}층</b> · ${META.runs}판 도전 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72`:'일흔두 악마가 72층의 탑에서 기다려요';
+  $('tStats').innerHTML=META.runs?`${META.bestScore?`최고 점수 <b>${fmt(META.bestScore)}</b> · `:''}최고 <b>${META.best}층</b> · ${META.runs}판 도전 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72`:'일흔두 악마가 72층의 탑에서 기다려요';
   document.body.classList.add('titled')}
 function enterRun(){$('title').hidden=true;document.body.classList.remove('titled');RUN.on=true;SC.mobs=[];SC.boss=null;SC.bossT=1.2;SC.tele=[];SC.chest=null;SC.chestT=0;$('chests').hidden=true;
   skBarKey='';syncTeam();renderAll();save();setTimeout(()=>floorIntro(curFloor()),500)}
 function startRun(){if(hasRun()&&!confirmNew())return;newGame();S.seen=[...META.seen];S.recipes=[...META.recipes];S.intro=[...META.intro];S.hiFps=META.hiFps;S.flt=META.flt||S.flt;S.mons.forEach(m=>{if(!S.seen.includes(m.sp))S.seen.push(m.sp)});META.runs=(META.runs||0)+1;enterRun()}
 let newArm=0;function confirmNew(){if(Date.now()-newArm<3000)return true;newArm=Date.now();toast('진행 중인 판이 있어요 · 한 번 더 누르면 새로 시작해요');return false}
 function continueRun(){if(!load())return toast('이어할 판이 없어요');enterRun()}
-function runOver(win,why){if(!RUN.on)return;metaSync();if(win)META.wins=(META.wins||0)+1;const f=curFloor(),got=S.mons.length;RUN.on=false;
+/* 최종 점수: 72층 정복 시 */
+function finalScore(){const T=S.clrT||{},d=S.deaths||0;let tb=0,nt=0;for(let f=1;f<=NFLOOR;f++){if(T[f]!=null){tb+=Math.round(Math.max(0,BOSS_TIME-T[f])*(10+f)*0.3);nt++}}
+  const ds=S.mons.reduce((a,m)=>a+20*(1+m.grade)**2+(m.lv||1),0),gs=S.items.reduce((a,it)=>a+15*(1+it.grade)**2+5*(it.lv||0),0);
+  const base=NFLOOR*1000,rv=Math.round(30000/(1+d));return {base,rv,d,ds,gs,tb,nt,total:base+rv+ds+gs+tb}}
+function runOver(win,why){if(!RUN.on)return;metaSync();if(win)META.wins=(META.wins||0)+1;let sc=null;
+  if(win){sc=finalScore();META.bestScore=Math.max(META.bestScore||0,sc.total);META.scores=[...(META.scores||[]),{t:sc.total,d:sc.d,at:Date.now()}].sort((a,b)=>b.t-a.t).slice(0,5)}const f=curFloor(),got=S.mons.length;RUN.on=false;
   try{localStorage.removeItem(KEY);localStorage.setItem(META_KEY,JSON.stringify(META))}catch(e){}
   $('sheet').innerHTML=`<div class="runend ${win?'win':''}"><div class="sub">${win?'72층 정복':'한 판 종료'}</div><h3>${win?'일흔두 악마를 모두 굴복시켰어요':`${f}층에서 쓰러졌어요`}</h3>
     <p class="muted">${win?'솔로몬의 인장이 다시 완전해졌어요.':why||''}</p>
     <div class="rstats"><div><b>${win?72:f-1}</b><small>돌파한 층</small></div><div><b>${META.best}</b><small>최고 기록</small></div><div><b>Lv ${S.charLv}</b><small>소환사</small></div><div><b>${got}</b><small>귀속한 악마</small></div></div>
+    ${sc?`<div class="score"><div class="row"><span>72층 돌파</span><b>${fmt(sc.base)}</b></div><div class="row"><span>부활 보너스 · 쓰러짐 ${sc.d}회</span><b>${fmt(sc.rv)}</b></div>
+      <div class="row"><span>악마 점수 · ${S.mons.length}마리</span><b>${fmt(sc.ds)}</b></div><div class="row"><span>장비 점수 · ${S.items.length}개</span><b>${fmt(sc.gs)}</b></div>
+      <div class="row"><span>보스 처치 시간 보너스 · ${sc.nt}층</span><b>${fmt(sc.tb)}</b></div><div class="row tot"><span>최종 점수${sc.total>=META.bestScore?' · 최고 기록!':''}</span><b>${fmt(sc.total)}</b></div></div>`:''}
     <p class="note">도감 ${META.seen.length}/72 · 조합법과 층 소개 기록은 다음 판에도 남아요.</p>
     <div class="row"><button class="btn" data-act="totitle">타이틀로</button><button class="btn primary" data-act="again" style="margin-left:auto">다시 도전</button></div></div>`;
   $('sheet').dataset.kind='runend';$('overlay').hidden=false;SC.mobs=[];SC.boss=null;SC.tele=[]}
@@ -1388,7 +1397,7 @@ function fallBack(why){const f=curFloor();metaSync();S.deaths=(S.deaths||0)+1;RU
   $('sheet').dataset.kind='fall';$('overlay').hidden=false}
 function openSettings(){const S0=S||{};$('sheet').innerHTML=`<div class="row"><h3>설정</h3></div>
    <div class="setrow"><label for="sHi">고화질 · 초당 60번 그리기(발열·배터리 소모 늘어남)</label><input type="checkbox" id="sHi" ${META.hiFps?'checked':''}></div>
-   <div class="setrow"><span>기록</span><span class="muted">최고 ${META.best}층 · ${META.runs}판 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72</span></div>
+   <div class="setrow"><span>기록</span><span class="muted">최고 ${META.best}층 · ${META.runs}판 · 정복 ${META.wins}회 · 도감 ${META.seen.length}/72</span></div>${(META.scores||[]).length?`<div class="setrow"><span>점수 순위</span><span class="muted">${META.scores.map((x,i)=>`${i+1}위 ${fmt(x.t)}점(쓰러짐 ${x.d}회)`).join(' · ')}</span></div>`:''}
    <div class="row"><button class="btn danger" data-act="wipe">모든 기록 지우기</button><button class="btn" data-act="close" style="margin-left:auto">닫기</button></div>`;
   $('sheet').dataset.kind='settings';$('overlay').hidden=false;$('sHi').onchange=e=>{META.hiFps=e.target.checked;if(S)S.hiFps=META.hiFps;try{localStorage.setItem(META_KEY,JSON.stringify(META))}catch(x){}sceneSize()}}
 let wipeArm=0;
@@ -2104,7 +2113,7 @@ function fuseReveal(m,jump,rare){const el=$('reveal');if(!el)return;const top=Ma
     card.innerHTML=m.item?`<span class="em ic">${SLOTS[m.item.slot].e}</span><div class="rvg">${mb(m.item)}</div><h3>${m.item.name}</h3><div class="rvm">${jump>=2?'초대성공!':jump?'대성공!':'합성 완료'} · 미감정</div>`:`<span class="em">${em(m)}</span><div class="rvg">${mb(m)}</div><h3>${nm(m)}</h3><div class="rvm">${rare?'희귀 조합 성공!':jump>=2?'초대성공!':jump?'대성공!':'합성 완료'}${m.bonus?' · '+m.bonus:''}</div>`;card.hidden=false;el.querySelector('.rvskip').textContent='누르면 닫기'};
   let tm;const step=()=>{setT(st);if(st>=top){tm=setTimeout(show,500);return}st++;tm=setTimeout(step,420+st*90)};step();
   el.onclick=()=>{if(!done)show();else{el.hidden=true;el.onclick=null}}}
-function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor)clearFloor(mob.floor);
+function killMob(mob){if(mob.gob)return gobLoot(mob);S.kills=(S.kills||0)+1;burst3D(mob);if(mob.boss&&mob.floor){S.clrT=S.clrT||{};S.clrT[mob.floor]=Math.max(0,BOSS_TIME-(mob.tl||0));clearFloor(mob.floor)}
   if(mob.boss){SC.chestBoss=mob.k;SC.slowmo={t:0,dur:1.5,x:mob.x,y:mob.y,col:(FXCOL[mob.st.f]||FXCOL.blood)[0]};SC.chestT=1.7;for(let i=0;i<46;i++)SC.fx.push({k:'p',x:mob.x+rand(-30,30),y:mob.y-rand(0,90),vx:rand(-220,220),vy:rand(-260,40),t:0,life:rand(0.8,1.4),col:Math.random()<0.5?SC.slowmo.col:'#1a0e0a'});SC.mobs.forEach(x=>{if(x.minion||x.gob)x.hp=x.gob?x.hp:0});SC.ms.forEach(a=>{a.charm=0;a.psn=0});S.bossKills=(S.bossKills||0)+1;checkPromo();SC.boss=null;SC.bossT=2.2;SC.tele=[];if(!RM)SC.shake=12;burst3D(mob);burst3D(mob);
     SC.fx.push({k:'ring',x:mob.x,y:mob.y,t:0,life:0.8,r:120,col:'#FFD166',w:6},{k:'num',x:mob.x,y:mob.y-70,t:0,life:1.6,txt:`${SPECIES[mob.k][1]} 퇴치!`,col:'#FFD166',sz:18});
     sceneQ.length=0;
